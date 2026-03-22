@@ -8,335 +8,61 @@
   <style>
     :root {
       --bg: #08101d;
-      --panel: #0f1930;
-      --panel2: #14203c;
-      --border: #2a3b66;
-      --text: #f5f7fb;
-      --muted: #b7c1d8;
-      --gold: #d3a63f;
-      --gold2: #f0c96a;
-      --blue: #31497f;
-      --danger: #b65252;
-      --success: #4b9962;
+      --panel: #0f1a2e;
+      --panel-2: #14233d;
+      --border: #24385e;
+      --text: #f3f5fb;
+      --muted: #b6c2dc;
+      --gold: #d0a23c;
+      --danger: #c85c5c;
+      --blue: #334a79;
     }
-
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, sans-serif;
-      background: linear-gradient(180deg, #07101d 0%, #091226 100%);
-      color: var(--text);
-    }
-
-    .wrap {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    .hero {
-      margin-bottom: 20px;
-    }
-
-    .hero h1 {
-      margin: 0 0 6px 0;
-      font-size: 3rem;
-    }
-
-    .hero p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 1.1rem;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 10px;
-      margin: 18px 0 22px;
-      flex-wrap: wrap;
-    }
-
-    .tab {
-      border: 1px solid var(--border);
-      background: var(--blue);
-      color: white;
-      border-radius: 12px;
-      padding: 12px 18px;
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .tab.active {
-      background: var(--gold);
-      color: #1c1406;
-      border-color: transparent;
-    }
-
-    .view { display: none; }
-    .view.active { display: block; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 360px 1fr;
-      gap: 20px;
-    }
-
-    .panel {
-      background: rgba(15, 25, 48, 0.95);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 18px;
-      box-shadow: 0 18px 40px rgba(0,0,0,0.22);
-    }
-
-    .panel h2, .panel h3, .panel h4 {
-      margin-top: 0;
-    }
-
-    .stack > * + * {
-      margin-top: 12px;
-    }
-
-    label {
-      display: block;
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 6px;
-    }
-
-    input, select, button, textarea {
-      width: 100%;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      padding: 12px 14px;
-      font-size: 15px;
-      background: #0b1428;
-      color: var(--text);
-    }
-
-    textarea {
-      min-height: 80px;
-      resize: vertical;
-    }
-
-    button {
-      background: var(--gold);
-      color: #1c1406;
-      border: none;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    button.secondary {
-      background: var(--blue);
-      color: white;
-    }
-
-    button.danger {
-      background: var(--danger);
-      color: white;
-    }
-
-    button.small {
-      width: auto;
-      padding: 8px 12px;
-      font-size: 13px;
-      border-radius: 8px;
-    }
-
-    button:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-    .status {
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: #0b1428;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      white-space: pre-wrap;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .row > * {
-      flex: 1;
-      min-width: 120px;
-    }
-
-    .list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .list-row {
-      background: #0b1428;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-    }
-
-    .title-row {
-      display: flex;
-      align-items: start;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .muted {
-      color: var(--muted);
-    }
-
-    .pill {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: #23355f;
-      color: #dfebff;
-      font-size: 12px;
-      margin-right: 6px;
-      margin-top: 6px;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 14px;
-    }
-
-    .card {
-      background: var(--panel2);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-    }
-
-    .item-name {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .price {
-      color: var(--gold2);
-      font-weight: 800;
-      font-size: 1.05rem;
-      margin-bottom: 8px;
-    }
-
-    .meta {
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-
-    .wallet-box {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      align-items: center;
-      border: 1px solid var(--border);
-      background: #0b1428;
-      border-radius: 12px;
-      padding: 12px 14px;
-    }
-
-    .wallet-value {
-      color: var(--gold2);
-      font-weight: 800;
-      font-size: 1.1rem;
-    }
-
-    .section-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      word-break: break-all;
-      background: #08101d;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
-      font-size: 13px;
-    }
-
-    .right-grid {
-      display: grid;
-      gap: 20px;
-    }
-
-    .cart-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #0b1428;
-      padding: 12px;
-    }
-
-    .divider {
-      height: 1px;
-      background: var(--border);
-      margin: 14px 0;
-    }
-
-    .inventory-editor {
-      display: grid;
-      gap: 10px;
-    }
-
-    .inventory-row {
-      display: grid;
-      grid-template-columns: 1.3fr 0.8fr 0.8fr 0.8fr auto;
-      gap: 10px;
-      align-items: center;
-      background: #0b1428;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px;
-    }
-
-    .tiny {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .spacer { height: 6px; }
-
+    body { margin: 0; font-family: Inter, system-ui, Arial, sans-serif; background: linear-gradient(180deg, var(--bg), #07101d); color: var(--text); }
+    .wrap { max-width: 1380px; margin: 0 auto; padding: 24px; }
+    .hero { margin-bottom: 20px; }
+    .sub, .muted { color: var(--muted); }
+    .grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+    .panel { background: rgba(15, 26, 46, 0.96); border: 1px solid var(--border); border-radius: 18px; padding: 18px; box-shadow: 0 12px 28px rgba(0,0,0,0.25); }
+    .stack > * + * { margin-top: 14px; }
+    label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 14px; }
+    input, select, button { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 15px; }
+    input, select { background: #0d1627; color: var(--text); }
+    button { background: var(--gold); color: #161208; border: none; cursor: pointer; font-weight: 700; }
+    button.secondary { background: var(--blue); color: var(--text); }
+    button.danger { background: var(--danger); color: white; }
+    button.small { width: auto; padding: 8px 12px; font-size: 14px; }
+    .status { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: #0d1627; color: var(--muted); white-space: pre-wrap; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .toolbar > * { flex: 1; min-width: 170px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+    .card { background: var(--panel-2); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+    .row { display: flex; gap: 10px; align-items: center; }
+    .space { justify-content: space-between; }
+    .list { display: grid; gap: 10px; }
+    .list-row { background: #0d1627; border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .pill { display: inline-block; font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #21304e; color: #dce5fa; margin-right: 6px; margin-top: 6px; }
+    .money { color: #f3d27a; font-weight: 700; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
     .hidden { display: none !important; }
-
-    @media (max-width: 1050px) {
-      .grid { grid-template-columns: 1fr; }
-      .inventory-row { grid-template-columns: 1fr; }
-    }
+    .inventory-grid { display: grid; gap: 12px; }
+    .inventory-row { background: #0d1627; border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: minmax(180px, 1fr) 140px 140px 100px auto; gap: 10px; align-items: center; }
+    .tabbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tabbar button { width: auto; min-width: 120px; }
+    .notice { padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: #0d1627; color: var(--muted); margin-bottom: 14px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; font-size: 13px; }
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } .inventory-row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="hero">
       <h1>Merchant Smith</h1>
-      <p>Campaign shops, player wallets, SRD inventory, share links, carts, and DM checkout visibility.</p>
+      <p class="sub">Campaign merchants, wallets, SRD shops, player links, carts, and DM checkout visibility.</p>
     </div>
 
-    <div class="tabs">
-      <button class="tab active" data-view="gmView">GM Dashboard</button>
-      <button class="tab" data-view="playerView">Player Storefront</button>
-    </div>
-
-    <section id="gmView" class="view active">
+    <div id="gmApp">
       <div class="grid">
         <aside class="panel stack">
           <div>
@@ -345,68 +71,44 @@
             <input id="url" placeholder="https://your-project.supabase.co" />
             <label for="key">Publishable key</label>
             <input id="key" placeholder="sb_publishable_..." />
-            <div class="row" style="margin-top:10px;">
-              <button id="saveConfigBtn">Save Config</button>
-              <button id="testConnectionBtn" class="secondary">Test Connection</button>
+            <div class="two-col" style="margin-top:12px;">
+              <button id="saveBtn">Save Config</button>
+              <button id="testBtn" class="secondary">Test Connection</button>
             </div>
           </div>
-
           <div id="status" class="status">Ready.</div>
 
           <div>
-            <h3>Campaign</h3>
+            <h3>Campaigns</h3>
             <label for="campaignName">Campaign name</label>
-            <input id="campaignName" placeholder="Goldcrest - Session 1" />
-            <div class="row" style="margin-top:10px;">
-              <button id="createCampaignBtn">Create Campaign</button>
-              <button id="deleteCampaignBtn" class="danger">Delete Selected</button>
-            </div>
-
-            <label for="selectedCampaign" style="margin-top:10px;">Selected campaign</label>
+            <input id="campaignName" placeholder="Goldcrest Main Campaign" />
+            <button id="createCampaignBtn" style="margin-top:10px;">Create Campaign</button>
+            <div style="height: 12px;"></div>
+            <label for="selectedCampaign">Selected campaign</label>
             <select id="selectedCampaign"></select>
+            <div class="two-col" style="margin-top:10px;">
+              <button id="refreshDataBtn" class="secondary">Refresh Data</button>
+              <button id="deleteCampaignBtn" class="danger">Delete Campaign</button>
+            </div>
           </div>
 
           <div>
             <h3>Players</h3>
             <label for="playerName">Player name</label>
             <input id="playerName" placeholder="Aaravus" />
-
-            <div class="row">
-              <div>
-                <label for="walletGp">Gold</label>
-                <input id="walletGp" type="number" min="0" value="10" />
-              </div>
-              <div>
-                <label for="walletSp">Silver</label>
-                <input id="walletSp" type="number" min="0" value="0" />
-              </div>
-              <div>
-                <label for="walletCp">Copper</label>
-                <input id="walletCp" type="number" min="0" value="0" />
-              </div>
+            <div class="three-col" style="margin-top:10px;">
+              <input id="walletGp" type="number" min="0" step="1" placeholder="GP" />
+              <input id="walletSp" type="number" min="0" step="1" placeholder="SP" />
+              <input id="walletCp" type="number" min="0" step="1" placeholder="CP" />
             </div>
-
-            <div class="row" style="margin-top:10px;">
-              <button id="createPlayerBtn">Add Player to Campaign</button>
-              <button id="deletePlayerBtn" class="danger">Delete Selected Player</button>
-            </div>
-
-            <label for="selectedPlayer" style="margin-top:10px;">Selected player</label>
-            <select id="selectedPlayer"></select>
-
-            <div class="wallet-box" style="margin-top:10px;">
-              <div>Selected Player Wallet</div>
-              <div id="selectedPlayerWallet" class="wallet-value">-</div>
-            </div>
-
-            <div id="playerList" class="list" style="margin-top:12px;"></div>
+            <button id="createPlayerBtn" style="margin-top:10px;">Add Player to Campaign</button>
+            <div class="list" id="playerList" style="margin-top:12px;"></div>
           </div>
 
           <div>
             <h3>Shops</h3>
             <label for="shopName">Shop name</label>
             <input id="shopName" placeholder="The Copper Lantern" />
-
             <label for="shopType" style="margin-top:10px;">Shop type</label>
             <select id="shopType">
               <option value="General">General</option>
@@ -414,154 +116,82 @@
               <option value="Outfitter">Outfitter</option>
               <option value="Arcane">Arcane</option>
             </select>
-
             <label for="regionType" style="margin-top:10px;">Region</label>
             <select id="regionType">
-              <option value="city">city</option>
-              <option value="town">town</option>
-              <option value="village">village</option>
+              <option value="city">City</option>
+              <option value="town">Town</option>
+              <option value="village">Village</option>
             </select>
-
-            <div class="row" style="margin-top:10px;">
-              <button id="createShopBtn">Add Shop to Campaign</button>
-              <button id="deleteShopBtn" class="danger">Delete Selected Shop</button>
-            </div>
-
-            <label for="selectedShop" style="margin-top:10px;">Selected shop</label>
-            <select id="selectedShop"></select>
-
-            <div class="row" style="margin-top:10px;">
-              <button id="generateInventoryBtn" class="secondary">Generate SRD Inventory</button>
-              <button id="loadShopBtn" class="secondary">Load Shop</button>
-            </div>
-
-            <div id="shopList" class="list" style="margin-top:12px;"></div>
+            <button id="createShopBtn" style="margin-top:10px;">Add Shop to Campaign</button>
+            <div class="list" id="shopList" style="margin-top:12px;"></div>
           </div>
         </aside>
 
-        <main class="right-grid">
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <h2 style="margin-bottom:4px;">Shop Inventory</h2>
-                <div id="shopMeta" class="muted">Select a campaign and shop.</div>
-              </div>
+        <main class="panel">
+          <div class="tabbar">
+            <button id="tabInventoryBtn">Shop Inventory</button>
+            <button id="tabLinksBtn" class="secondary">Player Links</button>
+            <button id="tabCheckoutsBtn" class="secondary">Carts & Checkouts</button>
+          </div>
+
+          <section id="inventorySection">
+            <h2>Shop Inventory</h2>
+            <div class="muted" id="inventoryMeta" style="margin-bottom:10px;">Select a shop to manage its inventory.</div>
+            <div class="toolbar">
+              <select id="manageShopSelect"></select>
+              <button id="generateInventoryBtn" class="secondary">Generate from SRD</button>
+              <button id="clearInventoryBtn" class="danger">Clear Inventory</button>
             </div>
-            <div id="inventoryEditor" class="inventory-editor">
-              <div class="muted">No shop loaded.</div>
-            </div>
+            <div class="notice">Prices are stored in copper internally. Override price is shop-specific.</div>
+            <div id="inventoryWrap"><div class="muted">No shop selected.</div></div>
           </section>
 
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <h2 style="margin-bottom:4px;">Temporary Player Link</h2>
-                <div class="muted">Generate a shareable storefront link for one player and one shop.</div>
-              </div>
+          <section id="linksSection" class="hidden">
+            <h2>Player Shop Links</h2>
+            <div class="toolbar">
+              <select id="linkShopSelect"></select>
+              <select id="linkPlayerSelect"></select>
+              <select id="linkExpirySelect">
+                <option value="1">1 hour</option>
+                <option value="6">6 hours</option>
+                <option value="24" selected>24 hours</option>
+                <option value="72">72 hours</option>
+              </select>
+              <button id="createLinkBtn">Create Temporary Link</button>
             </div>
-
-            <div class="row">
-              <div>
-                <label for="linkPlayer">Player</label>
-                <select id="linkPlayer"></select>
-              </div>
-              <div>
-                <label for="linkExpiryHours">Expires in hours</label>
-                <input id="linkExpiryHours" type="number" min="1" value="24" />
-              </div>
-            </div>
-
-            <div class="row" style="margin-top:10px;">
-              <button id="createShareLinkBtn">Create Share Link</button>
-            </div>
-
-            <div id="shareLinkOutput" class="code" style="margin-top:12px;">No link generated yet.</div>
+            <div class="list" id="shareLinkList"></div>
           </section>
 
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <h2 style="margin-bottom:4px;">Open Carts</h2>
-                <div class="muted">DM visibility into what players are preparing to buy.</div>
-              </div>
-            </div>
-            <div id="cartList" class="list">
-              <div class="muted">No carts loaded.</div>
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <h2 style="margin-bottom:4px;">Checkout Events</h2>
-                <div class="muted">Completed purchases by players.</div>
-              </div>
-            </div>
-            <div id="checkoutList" class="list">
-              <div class="muted">No checkout events yet.</div>
-            </div>
+          <section id="checkoutsSection" class="hidden">
+            <h2>Carts & Checkouts</h2>
+            <h3>Open Carts</h3>
+            <div class="list" id="cartList"></div>
+            <div style="height:16px;"></div>
+            <h3>Checkout Events</h3>
+            <div class="list" id="checkoutList"></div>
           </section>
         </main>
       </div>
-    </section>
+    </div>
 
-    <section id="playerView" class="view">
-      <div class="grid">
-        <aside class="panel stack">
-          <div>
-            <h3>Player Access</h3>
-            <label for="playerToken">Temporary link token</label>
-            <input id="playerToken" placeholder="Paste token or use ?token=..." />
-            <div class="row" style="margin-top:10px;">
-              <button id="loadPlayerStoreBtn">Load Store</button>
-            </div>
-          </div>
-
-          <div id="playerStatus" class="status">Enter a token to open a shop.</div>
-
-          <div class="wallet-box">
-            <div>Wallet</div>
-            <div id="playerWalletDisplay" class="wallet-value">-</div>
-          </div>
-
-          <div class="wallet-box">
-            <div>Cart Total</div>
-            <div id="cartTotalDisplay" class="wallet-value">0 gp 0 sp 0 cp</div>
-          </div>
-
-          <button id="checkoutBtn">Checkout Cart</button>
-        </aside>
-
-        <main class="right-grid">
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <h2 style="margin-bottom:4px;">Player Shop</h2>
-                <div id="playerStoreMeta" class="muted">No shop loaded.</div>
-              </div>
-            </div>
-            <div id="playerInventory" class="cards">
-              <div class="muted">No inventory yet.</div>
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <h2 style="margin-bottom:4px;">Cart</h2>
-                <div class="muted">Items the player is preparing to buy.</div>
-              </div>
-            </div>
-            <div id="playerCartList" class="list">
-              <div class="muted">Cart is empty.</div>
-            </div>
-          </section>
-        </main>
+    <div id="playerApp" class="hidden">
+      <div class="panel">
+        <h2>Player Storefront</h2>
+        <div class="muted" id="playerStoreMeta">Loading link...</div>
+        <div style="margin:16px 0;" class="money" id="playerWalletDisplay">-</div>
+        <div id="playerInventoryWrap"><div class="muted">Loading inventory...</div></div>
+        <div style="height:20px;"></div>
+        <h3>Cart</h3>
+        <div id="playerCartWrap" class="list"></div>
+        <div class="row" style="margin-top:14px;">
+          <button id="submitCheckoutBtn">Submit Checkout</button>
+          <button id="reloadPlayerViewBtn" class="secondary">Reload</button>
+        </div>
       </div>
-    </section>
+    </div>
   </div>
 
-  <script>
+<script>
 document.addEventListener('DOMContentLoaded', () => {
   let client = null;
   let currentCampaignId = null;
@@ -569,54 +199,42 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentTokenData = null;
   let currentCartId = null;
 
-  const byId = (id) => document.getElementById(id);
-
-  const urlInput = byId('url');
-  const keyInput = byId('key');
-  const statusEl = byId('status');
-
-  const selectedCampaignEl = byId('selectedCampaign');
-  const campaignNameEl = byId('campaignName');
-
-  const playerNameEl = byId('playerName');
-  const walletGpEl = byId('walletGp');
-  const walletSpEl = byId('walletSp');
-  const walletCpEl = byId('walletCp');
-
-  const shopNameEl = byId('shopName');
-  const shopTypeEl = byId('shopType');
-  const regionTypeEl = byId('regionType');
-
-  const playerListEl = byId('playerList');
-  const shopListEl = byId('shopList');
-
-  const manageShopSelectEl = byId('manageShopSelect');
-  const inventoryWrapEl = byId('inventoryWrap');
-  const inventoryMetaEl = byId('inventoryMeta');
-
-  const linkShopSelectEl = byId('linkShopSelect');
-  const linkPlayerSelectEl = byId('linkPlayerSelect');
-  const linkExpirySelectEl = byId('linkExpirySelect');
-  const shareLinkListEl = byId('shareLinkList');
-
-  const cartListEl = byId('cartList');
-  const checkoutListEl = byId('checkoutList');
-
-  const inventorySectionEl = byId('inventorySection');
-  const linksSectionEl = byId('linksSection');
-  const checkoutsSectionEl = byId('checkoutsSection');
-
-  const gmAppEl = byId('gmApp');
-  const playerAppEl = byId('playerApp');
-
-  const playerStoreMetaEl = byId('playerStoreMeta');
-  const playerWalletDisplayEl = byId('playerWalletDisplay');
-  const playerInventoryWrapEl = byId('playerInventoryWrap');
-  const playerCartWrapEl = byId('playerCartWrap');
-  const cartBadgeEl = byId('cartBadge');
-
+  const $ = (id) => document.getElementById(id);
   const qp = new URLSearchParams(window.location.search);
   const token = qp.get('token');
+
+  const urlInput = $('url');
+  const keyInput = $('key');
+  const statusEl = $('status');
+  const campaignNameEl = $('campaignName');
+  const selectedCampaignEl = $('selectedCampaign');
+  const playerNameEl = $('playerName');
+  const walletGpEl = $('walletGp');
+  const walletSpEl = $('walletSp');
+  const walletCpEl = $('walletCp');
+  const shopNameEl = $('shopName');
+  const shopTypeEl = $('shopType');
+  const regionTypeEl = $('regionType');
+  const playerListEl = $('playerList');
+  const shopListEl = $('shopList');
+  const manageShopSelectEl = $('manageShopSelect');
+  const inventoryWrapEl = $('inventoryWrap');
+  const inventoryMetaEl = $('inventoryMeta');
+  const linkShopSelectEl = $('linkShopSelect');
+  const linkPlayerSelectEl = $('linkPlayerSelect');
+  const linkExpirySelectEl = $('linkExpirySelect');
+  const shareLinkListEl = $('shareLinkList');
+  const cartListEl = $('cartList');
+  const checkoutListEl = $('checkoutList');
+  const inventorySectionEl = $('inventorySection');
+  const linksSectionEl = $('linksSection');
+  const checkoutsSectionEl = $('checkoutsSection');
+  const gmAppEl = $('gmApp');
+  const playerAppEl = $('playerApp');
+  const playerStoreMetaEl = $('playerStoreMeta');
+  const playerWalletDisplayEl = $('playerWalletDisplay');
+  const playerInventoryWrapEl = $('playerInventoryWrap');
+  const playerCartWrapEl = $('playerCartWrap');
 
   function setStatus(msg) {
     if (statusEl) statusEl.textContent = msg;
@@ -632,14 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .replaceAll("'", '&#039;');
   }
 
-  function escapeJs(str) {
-    return String(str ?? '').replaceAll("\\", "\\\\").replaceAll("'", "\\'");
-  }
-
-  function moneyToCp(gp, sp, cp) {
-    return (Number(gp || 0) * 100) + (Number(sp || 0) * 10) + Number(cp || 0);
-  }
-
+  function moneyToCp(gp, sp, cp) { return (Number(gp || 0) * 100) + (Number(sp || 0) * 10) + Number(cp || 0); }
   function cpToParts(totalCp) {
     const cp = Number(totalCp || 0);
     const gp = Math.floor(cp / 100);
@@ -647,19 +258,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const c = cp % 10;
     return { gp, sp, cp: c };
   }
-
   function cpToDisplay(totalCp) {
     const p = cpToParts(totalCp);
     return `${p.gp} gp, ${p.sp} sp, ${p.cp} cp`;
   }
-
   function effectivePriceCp(row) {
     return row.override_price_cp != null ? Number(row.override_price_cp) : Number(row.base_price_cp);
   }
-
-  function randomToken() {
-    return crypto.randomUUID().replaceAll('-', '');
-  }
+  function randomToken() { return crypto.randomUUID().replaceAll('-', ''); }
 
   function initClient() {
     const url = (urlInput?.value || localStorage.getItem('url') || '').trim();
@@ -695,23 +301,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setActiveTab(tab) {
-    if (inventorySectionEl) inventorySectionEl.classList.toggle('hidden', tab !== 'inventory');
-    if (linksSectionEl) linksSectionEl.classList.toggle('hidden', tab !== 'links');
-    if (checkoutsSectionEl) checkoutsSectionEl.classList.toggle('hidden', tab !== 'checkouts');
-
-    byId('tabInventoryBtn')?.classList.toggle('secondary', tab !== 'inventory');
-    byId('tabLinksBtn')?.classList.toggle('secondary', tab !== 'links');
-    byId('tabCheckoutsBtn')?.classList.toggle('secondary', tab !== 'checkouts');
+    inventorySectionEl.classList.toggle('hidden', tab !== 'inventory');
+    linksSectionEl.classList.toggle('hidden', tab !== 'links');
+    checkoutsSectionEl.classList.toggle('hidden', tab !== 'checkouts');
+    $('tabInventoryBtn').classList.toggle('secondary', tab !== 'inventory');
+    $('tabLinksBtn').classList.toggle('secondary', tab !== 'links');
+    $('tabCheckoutsBtn').classList.toggle('secondary', tab !== 'checkouts');
   }
 
   function showGMMode() {
-    gmAppEl?.classList.remove('hidden');
-    playerAppEl?.classList.add('hidden');
+    gmAppEl.classList.remove('hidden');
+    playerAppEl.classList.add('hidden');
   }
-
   function showPlayerMode() {
-    gmAppEl?.classList.add('hidden');
-    playerAppEl?.classList.remove('hidden');
+    gmAppEl.classList.add('hidden');
+    playerAppEl.classList.remove('hidden');
   }
 
   async function createCampaign() {
@@ -719,17 +323,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!name) return setStatus('Enter a campaign name.');
     const { data, error } = await client.from('campaigns').insert({ name }).select().single();
     if (error) throw error;
-    campaignNameEl.value = '';
     currentCampaignId = data.id;
+    campaignNameEl.value = '';
     setStatus(`Campaign created: ${data.name}`);
     await refreshAll();
   }
 
-  async function deleteCampaign() {
-    const id = selectedCampaignEl.value;
-    if (!id) return setStatus('Select a campaign first.');
+  async function deleteCampaign(id) {
+    const campaignId = id || selectedCampaignEl.value;
+    if (!campaignId) return setStatus('Select a campaign first.');
     if (!confirm('Delete this campaign and all related data?')) return;
-    const { error } = await client.from('campaigns').delete().eq('id', id);
+    const { error } = await client.from('campaigns').delete().eq('id', campaignId);
     if (error) throw error;
     currentCampaignId = null;
     setStatus('Campaign deleted.');
@@ -740,9 +344,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const { data, error } = await client.from('campaigns').select('id, name, created_at').order('created_at', { ascending: false });
     if (error) throw error;
     selectedCampaignEl.innerHTML = `<option value="">Select campaign</option>` + data.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
-    if (currentCampaignId && data.some(c => c.id === currentCampaignId)) {
-      selectedCampaignEl.value = currentCampaignId;
-    } else if (data[0]) {
+    if (currentCampaignId && data.some(c => c.id === currentCampaignId)) selectedCampaignEl.value = currentCampaignId;
+    else if (data[0]) {
       currentCampaignId = data[0].id;
       selectedCampaignEl.value = data[0].id;
     }
@@ -755,16 +358,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!displayName) return setStatus('Enter a player name.');
     const balanceCp = moneyToCp(walletGpEl.value, walletSpEl.value, walletCpEl.value);
 
-    const { data: player, error: playerError } = await client
-      .from('campaign_players')
-      .insert({ campaign_id: campaignId, display_name: displayName })
-      .select()
-      .single();
+    const { data: player, error: playerError } = await client.from('campaign_players').insert({ campaign_id: campaignId, display_name: displayName }).select().single();
     if (playerError) throw playerError;
 
-    const { error: walletError } = await client
-      .from('player_wallets')
-      .insert({ player_id: player.id, balance_cp: balanceCp });
+    const { error: walletError } = await client.from('player_wallets').insert({ player_id: player.id, balance_cp: balanceCp });
     if (walletError) throw walletError;
 
     playerNameEl.value = '';
@@ -775,6 +372,16 @@ document.addEventListener('DOMContentLoaded', () => {
     await refreshPlayers();
   }
 
+  async function deletePlayer(id) {
+    if (!confirm('Delete this player?')) return;
+    const { error } = await client.from('campaign_players').delete().eq('id', id);
+    if (error) throw error;
+    setStatus('Player deleted.');
+    await refreshPlayers();
+    await refreshShareLinks();
+    await refreshCartsAndCheckouts();
+  }
+
   async function refreshPlayers() {
     const campaignId = selectedCampaignEl.value;
     if (!campaignId) {
@@ -782,21 +389,13 @@ document.addEventListener('DOMContentLoaded', () => {
       linkPlayerSelectEl.innerHTML = `<option value="">All players / anonymous</option>`;
       return;
     }
-
-    const { data: players, error } = await client
-      .from('campaign_players')
-      .select('id, display_name, created_at')
-      .eq('campaign_id', campaignId)
-      .order('created_at', { ascending: false });
+    const { data: players, error } = await client.from('campaign_players').select('id, display_name, created_at').eq('campaign_id', campaignId).order('created_at', { ascending: false });
     if (error) throw error;
 
     const ids = players.map(p => p.id);
     const walletMap = {};
     if (ids.length) {
-      const { data: wallets, error: wErr } = await client
-        .from('player_wallets')
-        .select('player_id, balance_cp')
-        .in('player_id', ids);
+      const { data: wallets, error: wErr } = await client.from('player_wallets').select('player_id, balance_cp').in('player_id', ids);
       if (wErr) throw wErr;
       wallets.forEach(w => walletMap[w.player_id] = w.balance_cp);
     }
@@ -809,15 +408,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <strong>${escapeHtml(p.display_name)}</strong>
               <div class="muted">${cpToDisplay(walletMap[p.id] || 0)}</div>
             </div>
-            <button class="small danger" data-delete-player="${p.id}">Delete</button>
+            <button class="small danger" data-action="delete-player" data-id="${p.id}">Delete</button>
           </div>
-        </div>
-      `).join('')
+        </div>`).join('')
       : `<div class="muted">No players yet.</div>`;
 
-    linkPlayerSelectEl.innerHTML = `<option value="">All players / anonymous</option>` + players.map(p =>
-      `<option value="${p.id}">${escapeHtml(p.display_name)}</option>`
-    ).join('');
+    linkPlayerSelectEl.innerHTML = `<option value="">All players / anonymous</option>` + players.map(p => `<option value="${p.id}">${escapeHtml(p.display_name)}</option>`).join('');
   }
 
   async function createShop() {
@@ -825,23 +421,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!campaignId) return setStatus('Select a campaign first.');
     const name = shopNameEl.value.trim();
     if (!name) return setStatus('Enter a shop name.');
-
-    const { data, error } = await client
-      .from('campaign_shops')
-      .insert({
-        campaign_id: campaignId,
-        name,
-        shop_type: shopTypeEl.value,
-        region_type: regionTypeEl.value
-      })
-      .select()
-      .single();
+    const { data, error } = await client.from('campaign_shops').insert({
+      campaign_id: campaignId,
+      name,
+      shop_type: shopTypeEl.value,
+      region_type: regionTypeEl.value
+    }).select().single();
     if (error) throw error;
-
+    currentManageShopId = data.id;
     shopNameEl.value = '';
     setStatus(`Shop added: ${data.name}`);
-    currentManageShopId = data.id;
     await refreshShops();
+  }
+
+  async function deleteShop(id) {
+    if (!confirm('Delete this shop?')) return;
+    const { error } = await client.from('campaign_shops').delete().eq('id', id);
+    if (error) throw error;
+    if (currentManageShopId === id) currentManageShopId = null;
+    setStatus('Shop deleted.');
+    await refreshShops();
+    await refreshInventoryEditor();
   }
 
   async function refreshShops() {
@@ -852,12 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
       linkShopSelectEl.innerHTML = `<option value="">Select shop</option>`;
       return;
     }
-
-    const { data: shops, error } = await client
-      .from('campaign_shops')
-      .select('id, name, shop_type, region_type, created_at')
-      .eq('campaign_id', campaignId)
-      .order('created_at', { ascending: false });
+    const { data: shops, error } = await client.from('campaign_shops').select('id, name, shop_type, region_type, created_at').eq('campaign_id', campaignId).order('created_at', { ascending: false });
     if (error) throw error;
 
     shopListEl.innerHTML = shops.length
@@ -868,15 +463,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <strong>${escapeHtml(s.name)}</strong>
               <div><span class="pill">${escapeHtml(s.shop_type)}</span><span class="pill">${escapeHtml(s.region_type)}</span></div>
             </div>
-            <button class="small danger" data-delete-shop="${s.id}">Delete</button>
+            <button class="small danger" data-action="delete-shop" data-id="${s.id}">Delete</button>
           </div>
-        </div>
-      `).join('')
+        </div>`).join('')
       : `<div class="muted">No shops yet.</div>`;
 
-    const options = `<option value="">Select shop</option>` + shops.map(s =>
-      `<option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(s.shop_type)}</option>`
-    ).join('');
+    const options = `<option value="">Select shop</option>` + shops.map(s => `<option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(s.shop_type)}</option>`).join('');
     manageShopSelectEl.innerHTML = options;
     linkShopSelectEl.innerHTML = options;
 
@@ -890,6 +482,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function generateInventoryForShop() {
+    const shopId = manageShopSelectEl.value;
+    if (!shopId) return setStatus('Select a shop first.');
+
+    const { data: shop, error: shopError } = await client.from('campaign_shops').select('id, name, shop_type, region_type').eq('id', shopId).single();
+    if (shopError) throw shopError;
+
+    const { data: items, error: itemsError } = await client.from('srd_items').select('id, name, base_price_cp, default_stock').eq('shop_type', shop.shop_type).order('name', { ascending: true });
+    if (itemsError) throw itemsError;
+    if (!items.length) return setStatus(`No SRD items found for ${shop.shop_type}.`);
+
+    const priceMultiplier = shop.region_type === 'village' ? 1.15 : shop.region_type === 'town' ? 1.05 : 1.0;
+    const rows = items.map(item => ({
+      shop_id: shopId,
+      srd_item_id: item.id,
+      item_name: item.name,
+      base_price_cp: Math.round(item.base_price_cp * priceMultiplier),
+      stock_on_hand: item.default_stock
+    }));
+
+    const { error: insertError } = await client.from('shop_inventory').insert(rows);
+    if (insertError) throw insertError;
+
+    setStatus(`Generated ${rows.length} items for ${shop.name}.`);
+    await refreshInventoryEditor();
+  }
+
+  async function clearInventoryForShop() {
+    const shopId = manageShopSelectEl.value;
+    if (!shopId) return setStatus('Select a shop first.');
+    if (!confirm('Delete all inventory rows for this shop?')) return;
+    const { error } = await client.from('shop_inventory').delete().eq('shop_id', shopId);
+    if (error) throw error;
+    setStatus('Shop inventory cleared.');
+    await refreshInventoryEditor();
+  }
+
   async function refreshInventoryEditor() {
     const shopId = manageShopSelectEl.value;
     if (!shopId) {
@@ -897,41 +526,129 @@ document.addEventListener('DOMContentLoaded', () => {
       inventoryWrapEl.innerHTML = `<div class="muted">No shop selected.</div>`;
       return;
     }
-
-    const { data: shop, error: sErr } = await client
-      .from('campaign_shops')
-      .select('id, name, shop_type, region_type')
-      .eq('id', shopId)
-      .single();
+    const { data: shop, error: sErr } = await client.from('campaign_shops').select('id, name, shop_type, region_type').eq('id', shopId).single();
     if (sErr) throw sErr;
 
     inventoryMetaEl.textContent = `${shop.name} (${shop.shop_type}, ${shop.region_type})`;
-
-    const { data: rows, error } = await client
-      .from('shop_inventory')
-      .select('id, item_name, base_price_cp, override_price_cp, stock_on_hand')
-      .eq('shop_id', shopId)
-      .order('item_name', { ascending: true });
+    const { data: rows, error } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp, stock_on_hand').eq('shop_id', shopId).order('item_name', { ascending: true });
     if (error) throw error;
 
-    inventoryWrapEl.innerHTML = rows.length
-      ? rows.map(r => `
-        <div class="list-row">
-          <strong>${escapeHtml(r.item_name)}</strong>
-          <div class="muted">Base: ${cpToDisplay(r.base_price_cp)}</div>
-          <div class="money">Current: ${cpToDisplay(effectivePriceCp(r))}</div>
-        </div>
-      `).join('')
-      : `<div class="muted">No inventory yet.</div>`;
+    inventoryWrapEl.innerHTML = rows.length ? `
+      <div class="inventory-grid">
+        ${rows.map(r => `
+          <div class="inventory-row">
+            <div>
+              <strong>${escapeHtml(r.item_name)}</strong>
+              <div class="muted">Base: ${cpToDisplay(r.base_price_cp)}</div>
+            </div>
+            <div class="money">${cpToDisplay(effectivePriceCp(r))}</div>
+            <div><input type="number" id="price-${r.id}" placeholder="Override CP" value="${r.override_price_cp ?? ''}"></div>
+            <div><input type="number" id="stock-${r.id}" value="${r.stock_on_hand}"></div>
+            <div class="row">
+              <button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button>
+              <button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button>
+            </div>
+          </div>`).join('')}
+      </div>`
+      : `<div class="muted">No inventory yet. Generate from SRD.</div>`;
+  }
+
+  async function saveInventoryRow(id) {
+    const priceRaw = document.getElementById(`price-${id}`).value;
+    const stockRaw = document.getElementById(`stock-${id}`).value;
+    const payload = { stock_on_hand: Number(stockRaw || 0), override_price_cp: priceRaw === '' ? null : Number(priceRaw) };
+    const { error } = await client.from('shop_inventory').update(payload).eq('id', id);
+    if (error) throw error;
+    setStatus('Inventory row saved.');
+    await refreshInventoryEditor();
+  }
+
+  async function deleteInventoryRow(id) {
+    const { error } = await client.from('shop_inventory').delete().eq('id', id);
+    if (error) throw error;
+    setStatus('Inventory row deleted.');
+    await refreshInventoryEditor();
+  }
+
+  async function createShareLink() {
+    const shopId = linkShopSelectEl.value;
+    if (!shopId) return setStatus('Select a shop first.');
+    const playerId = linkPlayerSelectEl.value || null;
+    const hours = Number(linkExpirySelectEl.value || 24);
+    const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+    const tokenValue = randomToken();
+    const { data, error } = await client.from('shop_share_links').insert({
+      shop_id: shopId,
+      player_id: playerId,
+      token: tokenValue,
+      expires_at: expiresAt
+    }).select().single();
+    if (error) throw error;
+    setStatus('Temporary link created.');
+    await refreshShareLinks();
+    const base = window.location.origin + window.location.pathname;
+    alert(`${base}?token=${data.token}`);
   }
 
   async function refreshShareLinks() {
-    shareLinkListEl.innerHTML = `<div class="muted">Links refresh is wired. Create link logic can be added on top of this stable base.</div>`;
+    const campaignId = selectedCampaignEl.value;
+    if (!campaignId) {
+      shareLinkListEl.innerHTML = `<div class="muted">Select a campaign.</div>`;
+      return;
+    }
+    const { data: shops, error: shopErr } = await client.from('campaign_shops').select('id, name').eq('campaign_id', campaignId);
+    if (shopErr) throw shopErr;
+    if (!shops.length) {
+      shareLinkListEl.innerHTML = `<div class="muted">No shops yet.</div>`;
+      return;
+    }
+    const shopIds = shops.map(s => s.id);
+    const { data: rows, error } = await client.from('shop_share_links').select('id, token, expires_at, shop_id, player_id, created_at').in('shop_id', shopIds).order('created_at', { ascending: false });
+    if (error) throw error;
+    const { data: players } = await client.from('campaign_players').select('id, display_name').eq('campaign_id', campaignId);
+    const shopMap = Object.fromEntries(shops.map(s => [s.id, s.name]));
+    const playerMap = Object.fromEntries((players || []).map(p => [p.id, p.display_name]));
+    const base = window.location.origin + window.location.pathname;
+    shareLinkListEl.innerHTML = rows.length
+      ? rows.map(r => `
+        <div class="list-row">
+          <div><strong>${escapeHtml(shopMap[r.shop_id] || 'Unknown Shop')}</strong></div>
+          <div class="muted">Player: ${escapeHtml(r.player_id ? (playerMap[r.player_id] || 'Unknown Player') : 'Any')}</div>
+          <div class="muted">Expires: ${new Date(r.expires_at).toLocaleString()}</div>
+          <div class="mono">${escapeHtml(base + '?token=' + r.token)}</div>
+        </div>`).join('')
+      : `<div class="muted">No share links yet.</div>`;
   }
 
   async function refreshCartsAndCheckouts() {
-    cartListEl.innerHTML = `<div class="muted">Cart monitor ready.</div>`;
-    checkoutListEl.innerHTML = `<div class="muted">Checkout history ready.</div>`;
+    const campaignId = selectedCampaignEl.value;
+    if (!campaignId) {
+      cartListEl.innerHTML = `<div class="muted">Select a campaign.</div>`;
+      checkoutListEl.innerHTML = `<div class="muted">Select a campaign.</div>`;
+      return;
+    }
+    const { data: shops } = await client.from('campaign_shops').select('id, name').eq('campaign_id', campaignId);
+    const { data: players } = await client.from('campaign_players').select('id, display_name').eq('campaign_id', campaignId);
+    if (!shops.length || !players.length) {
+      cartListEl.innerHTML = `<div class="muted">Need at least one shop and one player.</div>`;
+      checkoutListEl.innerHTML = `<div class="muted">No checkouts yet.</div>`;
+      return;
+    }
+    const shopMap = Object.fromEntries(shops.map(s => [s.id, s.name]));
+    const playerMap = Object.fromEntries(players.map(p => [p.id, p.display_name]));
+    const shopIds = shops.map(s => s.id);
+
+    const { data: carts, error: cartErr } = await client.from('carts').select('id, shop_id, player_id, status, updated_at').in('shop_id', shopIds).order('updated_at', { ascending: false });
+    if (cartErr) throw cartErr;
+    cartListEl.innerHTML = carts.length
+      ? carts.map(c => `<div class="list-row"><strong>${escapeHtml(playerMap[c.player_id] || 'Unknown Player')}</strong><div class="muted">Shop: ${escapeHtml(shopMap[c.shop_id] || 'Unknown Shop')}</div><div class="muted">Status: ${escapeHtml(c.status)}</div></div>`).join('')
+      : `<div class="muted">No carts yet.</div>`;
+
+    const { data: checkouts, error: chkErr } = await client.from('checkout_events').select('id, player_id, shop_id, total_cp, created_at').in('shop_id', shopIds).order('created_at', { ascending: false });
+    if (chkErr) throw chkErr;
+    checkoutListEl.innerHTML = checkouts.length
+      ? checkouts.map(ch => `<div class="list-row"><strong>${escapeHtml(playerMap[ch.player_id] || 'Unknown Player')}</strong><div class="muted">Shop: ${escapeHtml(shopMap[ch.shop_id] || 'Unknown Shop')}</div><div class="money">${cpToDisplay(ch.total_cp)}</div></div>`).join('')
+      : `<div class="muted">No checkout events yet.</div>`;
   }
 
   async function refreshAll() {
@@ -944,27 +661,155 @@ document.addEventListener('DOMContentLoaded', () => {
     await refreshCartsAndCheckouts();
   }
 
-  async function deletePlayer(playerId) {
-    if (!confirm('Delete this player?')) return;
-    const { error } = await client.from('campaign_players').delete().eq('id', playerId);
+  async function ensureCart(playerId, shopId) {
+    const { data: existing, error: exErr } = await client.from('carts').select('id').eq('player_id', playerId).eq('shop_id', shopId).eq('status', 'open').limit(1);
+    if (exErr) throw exErr;
+    if (existing.length) return existing[0].id;
+    const { data, error } = await client.from('carts').insert({ player_id: playerId, shop_id: shopId, status: 'open' }).select().single();
     if (error) throw error;
-    setStatus('Player deleted.');
-    await refreshPlayers();
+    return data.id;
   }
 
-  async function deleteShop(shopId) {
-    if (!confirm('Delete this shop?')) return;
-    const { error } = await client.from('campaign_shops').delete().eq('id', shopId);
+  async function loadPlayerMode() {
+    if (!client) initClient();
+    const { data: link, error: linkErr } = await client.from('shop_share_links').select('id, token, expires_at, shop_id, player_id').eq('token', token).single();
+    if (linkErr) throw linkErr;
+    if (new Date(link.expires_at).getTime() < Date.now()) throw new Error('This temporary link has expired.');
+
+    const { data: shop, error: shopErr } = await client.from('campaign_shops').select('id, name, shop_type').eq('id', link.shop_id).single();
+    if (shopErr) throw shopErr;
+
+    let player = null;
+    if (link.player_id) {
+      const { data: p, error: pErr } = await client.from('campaign_players').select('id, display_name').eq('id', link.player_id).single();
+      if (pErr) throw pErr;
+      player = p;
+    }
+    currentTokenData = { link, shop, player };
+    playerStoreMetaEl.textContent = `${player ? player.display_name : 'Guest'} browsing ${shop.name}`;
+
+    if (player) {
+      const { data: wallet, error: walletErr } = await client.from('player_wallets').select('balance_cp').eq('player_id', player.id).single();
+      if (walletErr) throw walletErr;
+      playerWalletDisplayEl.textContent = cpToDisplay(wallet.balance_cp);
+      currentCartId = await ensureCart(player.id, shop.id);
+    } else {
+      playerWalletDisplayEl.textContent = 'Guest';
+      currentCartId = null;
+    }
+    await renderPlayerInventory();
+    await renderCart();
+  }
+
+  async function renderPlayerInventory() {
+    const { data: items, error } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp, stock_on_hand').eq('shop_id', currentTokenData.shop.id).order('item_name', { ascending: true });
     if (error) throw error;
-    setStatus('Shop deleted.');
-    await refreshShops();
-    await refreshInventoryEditor();
+    playerInventoryWrapEl.innerHTML = items.length
+      ? `<div class="cards">${items.map(i => `
+        <div class="card">
+          <div style="font-size:18px;font-weight:700;margin-bottom:8px;">${escapeHtml(i.item_name)}</div>
+          <div class="muted">Stock: ${i.stock_on_hand}</div>
+          <div class="money" style="margin:10px 0;">${cpToDisplay(effectivePriceCp(i))}</div>
+          ${currentTokenData.player ? `<button data-action="add-to-cart" data-id="${i.id}" ${i.stock_on_hand <= 0 ? 'disabled' : ''}>${i.stock_on_hand <= 0 ? 'Out of Stock' : 'Add to Cart'}</button>` : `<div class="muted">Browse only</div>`}
+        </div>`).join('')}</div>`
+      : `<div class="muted">This shop has no inventory.</div>`;
+  }
+
+  async function addToCart(inventoryId) {
+    if (!currentTokenData.player) return;
+    const { data: inv, error: invErr } = await client.from('shop_inventory').select('id, stock_on_hand').eq('id', inventoryId).single();
+    if (invErr) throw invErr;
+    if (inv.stock_on_hand <= 0) throw new Error('Item is out of stock.');
+
+    const { data: existing, error: exErr } = await client.from('cart_items').select('id, quantity').eq('cart_id', currentCartId).eq('inventory_id', inventoryId).limit(1);
+    if (exErr) throw exErr;
+
+    if (existing.length) {
+      const newQty = existing[0].quantity + 1;
+      if (newQty > inv.stock_on_hand) throw new Error('Not enough stock.');
+      const { error } = await client.from('cart_items').update({ quantity: newQty }).eq('id', existing[0].id);
+      if (error) throw error;
+    } else {
+      const { error } = await client.from('cart_items').insert({ cart_id: currentCartId, inventory_id: inventoryId, quantity: 1 });
+      if (error) throw error;
+    }
+    await renderCart();
+    await refreshCartsAndCheckouts();
+  }
+
+  async function renderCart() {
+    if (!currentCartId) {
+      playerCartWrapEl.innerHTML = `<div class="muted">No cart available.</div>`;
+      return;
+    }
+    const { data: rows, error } = await client.from('cart_items').select('id, inventory_id, quantity').eq('cart_id', currentCartId);
+    if (error) throw error;
+    if (!rows.length) {
+      playerCartWrapEl.innerHTML = `<div class="muted">Cart is empty.</div>`;
+      return;
+    }
+    const invIds = rows.map(r => r.inventory_id);
+    const { data: invRows, error: invErr } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp').in('id', invIds);
+    if (invErr) throw invErr;
+    const invMap = Object.fromEntries(invRows.map(i => [i.id, i]));
+    let totalCp = 0;
+    playerCartWrapEl.innerHTML = rows.map(r => {
+      const inv = invMap[r.inventory_id];
+      const unit = effectivePriceCp(inv);
+      const line = unit * r.quantity;
+      totalCp += line;
+      return `<div class="list-row"><strong>${escapeHtml(inv.item_name)}</strong><div class="muted">Qty ${r.quantity}</div><div class="money">${cpToDisplay(line)}</div></div>`;
+    }).join('') + `<div class="list-row"><strong>Total</strong><div class="money">${cpToDisplay(totalCp)}</div></div>`;
+  }
+
+  async function submitCheckout() {
+    if (!currentTokenData?.player || !currentCartId) return;
+    const playerId = currentTokenData.player.id;
+    const shopId = currentTokenData.shop.id;
+
+    const { data: cartItems, error: cartErr } = await client.from('cart_items').select('id, inventory_id, quantity').eq('cart_id', currentCartId);
+    if (cartErr) throw cartErr;
+    if (!cartItems.length) throw new Error('Cart is empty.');
+
+    const invIds = cartItems.map(r => r.inventory_id);
+    const { data: inventoryRows, error: invErr } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp, stock_on_hand').in('id', invIds);
+    if (invErr) throw invErr;
+
+    const invMap = Object.fromEntries(inventoryRows.map(i => [i.id, i]));
+    let totalCp = 0;
+    for (const ci of cartItems) {
+      const inv = invMap[ci.inventory_id];
+      if (ci.quantity > inv.stock_on_hand) throw new Error(`Not enough stock for ${inv.item_name}.`);
+      totalCp += effectivePriceCp(inv) * ci.quantity;
+    }
+
+    const { data: wallet, error: walletErr } = await client.from('player_wallets').select('balance_cp').eq('player_id', playerId).single();
+    if (walletErr) throw walletErr;
+    if (wallet.balance_cp < totalCp) throw new Error('Not enough money in wallet.');
+
+    const { error: walletUpdateErr } = await client.from('player_wallets').update({ balance_cp: wallet.balance_cp - totalCp }).eq('player_id', playerId);
+    if (walletUpdateErr) throw walletUpdateErr;
+
+    for (const ci of cartItems) {
+      const inv = invMap[ci.inventory_id];
+      const { error: stockErr } = await client.from('shop_inventory').update({ stock_on_hand: inv.stock_on_hand - ci.quantity }).eq('id', ci.inventory_id);
+      if (stockErr) throw stockErr;
+    }
+
+    const { error: eventErr } = await client.from('checkout_events').insert({ cart_id: currentCartId, player_id: playerId, shop_id: shopId, total_cp: totalCp });
+    if (eventErr) throw eventErr;
+
+    const { error: cartStatusErr } = await client.from('carts').update({ status: 'submitted', updated_at: new Date().toISOString() }).eq('id', currentCartId);
+    if (cartStatusErr) throw cartStatusErr;
+
+    alert('Checkout submitted.');
+    currentCartId = await ensureCart(playerId, shopId);
+    await loadPlayerMode();
   }
 
   document.body.addEventListener('click', async (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
-
     try {
       if (btn.id === 'saveBtn') await saveConfig();
       else if (btn.id === 'testBtn') await testConnection();
@@ -973,13 +818,22 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (btn.id === 'refreshDataBtn') await refreshAll();
       else if (btn.id === 'createPlayerBtn') await createPlayer();
       else if (btn.id === 'createShopBtn') await createShop();
+      else if (btn.id === 'generateInventoryBtn') await generateInventoryForShop();
+      else if (btn.id === 'clearInventoryBtn') await clearInventoryForShop();
+      else if (btn.id === 'createLinkBtn') await createShareLink();
       else if (btn.id === 'tabInventoryBtn') setActiveTab('inventory');
       else if (btn.id === 'tabLinksBtn') setActiveTab('links');
       else if (btn.id === 'tabCheckoutsBtn') setActiveTab('checkouts');
-      else if (btn.dataset.deletePlayer) await deletePlayer(btn.dataset.deletePlayer);
-      else if (btn.dataset.deleteShop) await deleteShop(btn.dataset.deleteShop);
+      else if (btn.id === 'submitCheckoutBtn') await submitCheckout();
+      else if (btn.id === 'reloadPlayerViewBtn') await loadPlayerMode();
+      else if (btn.dataset.action === 'delete-player') await deletePlayer(btn.dataset.id);
+      else if (btn.dataset.action === 'delete-shop') await deleteShop(btn.dataset.id);
+      else if (btn.dataset.action === 'save-inventory') await saveInventoryRow(btn.dataset.id);
+      else if (btn.dataset.action === 'delete-inventory') await deleteInventoryRow(btn.dataset.id);
+      else if (btn.dataset.action === 'add-to-cart') await addToCart(btn.dataset.id);
     } catch (err) {
       setStatus(err.message || String(err));
+      console.error(err);
     }
   });
 
@@ -993,22 +847,26 @@ document.addEventListener('DOMContentLoaded', () => {
     try { await refreshInventoryEditor(); } catch (err) { setStatus(err.message); }
   });
 
-  window.addEventListener('error', (e) => {
-    setStatus(`JS error: ${e.message}`);
-  });
+  window.addEventListener('error', (e) => setStatus(`JS error: ${e.message}`));
 
-  try {
-    setActiveTab('inventory');
-    loadSavedConfig();
-    if (token) {
-      showPlayerMode();
-      setStatus('Player mode detected.');
-    } else {
-      showGMMode();
-      if (client) refreshAll().catch(err => setStatus(err.message));
+  (async function bootstrap() {
+    try {
+      setActiveTab('inventory');
+      loadSavedConfig();
+      if (token) {
+        showPlayerMode();
+        if (!client) initClient();
+        await loadPlayerMode();
+      } else {
+        showGMMode();
+        if (client) await refreshAll();
+      }
+    } catch (err) {
+      setStatus(`Startup failed: ${err.message}`);
+      console.error(err);
     }
-  } catch (err) {
-    setStatus(`Startup failed: ${err.message}`);
-  }
+  })();
 });
 </script>
+</body>
+</html>
