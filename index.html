@@ -3,90 +3,79 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Merchant Smith V5</title>
+  <title>Merchant Smith V6 Stable</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root{
       --bg:#08101d; --panel:#101a2d; --panel2:#15233b; --border:#24385e;
       --text:#eef3ff; --muted:#aebad6; --gold:#d4a33f; --blue:#35507f;
-      --green:#34785a; --red:#b95757; --shadow:0 14px 34px rgba(0,0,0,.25);
+      --green:#34785a; --red:#b95757;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:linear-gradient(180deg,#07101d,#091425);color:var(--text)}
+    body{margin:0;font-family:Inter,Arial,sans-serif;background:linear-gradient(180deg,#07101d,#091425);color:var(--text)}
     .app{max-width:1600px;margin:0 auto;padding:24px}
-    h1,h2,h3,h4,p{margin:0}
-    .hero{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
+    .shell{display:grid;grid-template-columns:300px 1fr;gap:18px}
+    .panel{background:#101a2d;border:1px solid var(--border);border-radius:18px;padding:18px}
+    .sidebar .panel+.panel{margin-top:14px}
+    .hidden{display:none!important}
+    .hero{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:18px}
     .sub,.muted,.small-meta{color:var(--muted)}
     .small-meta{font-size:13px}
-    .shell{display:grid;grid-template-columns:300px 1fr;gap:18px}
-    .cost-icons{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
-    .coin{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 8px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid rgba(255,255,255,.08)}
-    .coin.gp{background:#7a5c14;color:#ffe7a1}
-    .coin.sp{background:#5a6474;color:#eef4ff}
-    .coin.cp{background:#6a3f27;color:#ffd4bf}
-    .desc-collapsed{max-height:2.8em;overflow:hidden;position:relative}
-    .desc-collapsed::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1.2em;background:linear-gradient(180deg, rgba(13,22,39,0), rgba(13,22,39,1))}
-    .linkish{background:transparent;border:none;color:#9fc3ff;padding:0;font-size:13px;width:auto}
-    .item-name{display:flex;align-items:center;gap:8px}
-    .item-icon{width:24px;height:24px;border-radius:8px;background:#21304e;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
-    .shop-controls{display:grid;grid-template-columns:1fr 180px 180px;gap:10px;align-items:end}
-    .range-box{display:flex;gap:8px;align-items:center}
-    .range-box input{width:100%}
-    .sticky-actions{display:flex;gap:8px;flex-wrap:wrap}
-
-    .panel{background:rgba(16,26,45,.96);border:1px solid var(--border);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
-    .sidebar .panel+.panel{margin-top:14px}
     .nav{display:grid;gap:10px}
-    .nav button{display:flex;align-items:center;gap:10px;justify-content:flex-start}
-    .nav .active{background:var(--gold);color:#1b1408}
     button,input,select,textarea{width:100%;border-radius:12px;border:1px solid var(--border);padding:12px 14px;font-size:15px}
     input,select,textarea{background:#0d1627;color:var(--text)}
-    textarea{min-height:88px;resize:vertical}
-    button{background:var(--gold);color:#1a1307;font-weight:700;cursor:pointer;border:none;transition:transform .08s ease, filter .15s ease, opacity .15s ease}
-    button:hover{filter:brightness(1.06)}
-    button:active{transform:translateY(1px) scale(.99)}
-    button:disabled{opacity:.55;cursor:not-allowed}
-    .busy{opacity:.75;pointer-events:none}
-    .success-flash{outline:2px solid rgba(52,120,90,.85)}
-    .error-flash{outline:2px solid rgba(185,87,87,.85)}
+    textarea{min-height:84px;resize:vertical}
+    button{background:var(--gold);color:#1a1307;font-weight:700;cursor:pointer;border:none;transition:transform .08s ease, filter .12s ease, opacity .12s ease}
+    button:hover{filter:brightness(1.05)}
+    button:active{transform:translateY(1px)}
+    button:disabled{opacity:.6;cursor:not-allowed}
     button.secondary{background:var(--blue);color:var(--text)}
     button.success{background:var(--green);color:#fff}
     button.danger{background:var(--red);color:#fff}
     button.small{width:auto;padding:8px 12px;font-size:13px}
-    .status{white-space:pre-wrap;color:var(--muted);background:#0d1627;border:1px solid var(--border);border-radius:14px;padding:12px}
+    .status,.notice,.empty{white-space:pre-wrap;color:var(--muted);background:#0d1627;border:1px solid var(--border);border-radius:14px;padding:14px}
+    .empty{border-style:dashed}
     .stack>*+*{margin-top:12px}
     .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
     .toolbar>*{flex:1;min-width:140px}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
     .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-    .card{background:var(--panel2);border:1px solid var(--border);border-radius:18px;padding:16px}
+    .card{background:var(--panel2);border:1px solid var(--border);border-radius:16px;padding:14px}
     .title{font-size:18px;font-weight:800}
     .row{display:flex;gap:10px;align-items:center}
     .space{justify-content:space-between}
     .pill{display:inline-block;background:#21304e;color:#dce5fa;padding:4px 8px;border-radius:999px;font-size:12px;margin-right:6px;margin-top:8px}
     .money{color:#f5d27a;font-weight:800}
-    .hidden{display:none!important}
-    .empty,.notice{padding:16px;border:1px dashed var(--border);border-radius:16px;color:var(--muted)}
-    .notice{border-style:solid;background:#0d1627}
-    .inventory-row,.invoice-card,.cart-item{background:#0d1627;border:1px solid var(--border);border-radius:16px;padding:14px}
-    .inventory-list,.invoice-list{display:grid;gap:12px}
-    .item-desc{color:var(--muted);font-size:14px;line-height:1.45;margin-top:8px;white-space:pre-wrap}
-    .inventory-edit-grid{display:grid;grid-template-columns:1.1fr 130px 100px 1fr auto;gap:10px;align-items:start}
     .compact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:16px}
+    .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:14px}
     table.ms-table{width:100%;border-collapse:collapse;background:#0d1627}
     .ms-table th,.ms-table td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
-    .ms-table th{position:sticky;top:0;background:#12203a;z-index:1}
+    .ms-table th{position:sticky;top:0;background:#12203a}
     .seg{display:inline-flex;background:#0d1627;border:1px solid var(--border);border-radius:12px;overflow:hidden}
-    .seg button{width:auto;border-radius:0;background:transparent;color:var(--text);border:none;padding:10px 12px}
+    .seg button{width:auto;border:none;background:transparent;color:var(--text);padding:10px 12px}
     .seg button.active{background:var(--gold);color:#1a1307}
     .player-header{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0}
     .bigstat{background:#0d1627;border:1px solid var(--border);border-radius:16px;padding:14px}
     .bigstat .label{color:var(--muted);font-size:13px}
     .bigstat .value{font-size:22px;font-weight:800;margin-top:4px}
-    @media (max-width:1250px){
-      .shell,.grid2,.grid3,.player-header,.inventory-edit-grid,.compact-grid{grid-template-columns:1fr}
+    .cost-icons{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .coin{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 8px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid rgba(255,255,255,.08)}
+    .coin.gp{background:#7a5c14;color:#ffe7a1}
+    .coin.sp{background:#5a6474;color:#eef4ff}
+    .coin.cp{background:#6a3f27;color:#ffd4bf}
+    .item-name{display:flex;align-items:center;gap:8px}
+    .item-icon{width:24px;height:24px;border-radius:8px;background:#21304e;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+    .item-desc{color:var(--muted);font-size:14px;line-height:1.45;margin-top:8px;white-space:pre-wrap}
+    .desc-collapsed{max-height:2.8em;overflow:hidden;position:relative}
+    .desc-collapsed::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1.2em;background:linear-gradient(180deg, rgba(13,22,39,0), rgba(13,22,39,1))}
+    .linkish{background:transparent;border:none;color:#9fc3ff;padding:0;font-size:13px;width:auto}
+    .sticky-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .shop-controls{display:grid;grid-template-columns:1fr 180px 180px;gap:10px;align-items:end}
+    .range-box{display:flex;gap:8px;align-items:center}
+    .busy{opacity:.7;pointer-events:none}
+    @media (max-width:1200px){
+      .shell,.grid2,.grid3,.player-header,.compact-grid,.shop-controls{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -94,8 +83,8 @@
 <div class="app">
   <div class="hero">
     <div>
-      <h1>Merchant Smith V5</h1>
-      <p class="sub">Campaign codes, player portal, invoice snapshots, live carts, and inline GM editing.</p>
+      <h1>Merchant Smith V6 Stable</h1>
+      <p class="sub">Clean wiring for GM tools, player portal, invoices, library search, and shop pricing.</p>
     </div>
     <div class="row">
       <a href="?portal=1" style="text-decoration:none"><button class="secondary">Open Player Portal</button></a>
@@ -106,16 +95,12 @@
   <div id="gmApp" class="shell">
     <aside class="sidebar">
       <div class="panel stack">
-        <div>
-          <h3>App Config</h3>
-          <div class="stack" style="margin-top:10px">
-            <div><label>Project URL</label><input id="url" placeholder="https://your-project.supabase.co"></div>
-            <div><label>Publishable key</label><input id="key" placeholder="sb_publishable_..."></div>
-            <div class="grid2">
-              <button id="saveBtn">Save Config</button>
-              <button id="testBtn" class="secondary">Test Connection</button>
-            </div>
-          </div>
+        <h3>App Config</h3>
+        <div><label>Project URL</label><input id="url" placeholder="https://your-project.supabase.co"></div>
+        <div><label>Publishable key</label><input id="key" placeholder="sb_publishable_..."></div>
+        <div class="grid2">
+          <button id="saveBtn">Save Config</button>
+          <button id="testBtn" class="secondary">Test Connection</button>
         </div>
         <div id="status" class="status">Ready.</div>
       </div>
@@ -131,17 +116,13 @@
       </div>
 
       <div class="panel stack">
-        <div>
-          <h3>Campaign Selector</h3>
-          <div class="stack" style="margin-top:10px">
-            <div><label>New campaign</label><input id="campaignName" placeholder="Goldcrest Main Campaign"></div>
-            <button id="createCampaignBtn">Create Campaign</button>
-            <div><label>Selected campaign</label><select id="selectedCampaign"></select></div>
-            <div class="grid2">
-              <button id="refreshBtn" class="secondary">Refresh</button>
-              <button id="deleteCampaignBtn" class="danger">Delete</button>
-            </div>
-          </div>
+        <h3>Campaign Selector</h3>
+        <div><label>New campaign</label><input id="campaignName" placeholder="Goldcrest Main Campaign"></div>
+        <button id="createCampaignBtn">Create Campaign</button>
+        <div><label>Selected campaign</label><select id="selectedCampaign"></select></div>
+        <div class="grid2">
+          <button id="refreshBtn" class="secondary">Refresh</button>
+          <button id="deleteCampaignBtn" class="danger">Delete</button>
         </div>
       </div>
 
@@ -159,22 +140,20 @@
             <p class="sub">Players can join with a campaign code instead of being pre-created.</p>
           </div>
         </div>
-
         <div id="campaignMeta" class="notice">Select or create a campaign.</div>
-
         <div class="grid2" style="margin-top:16px">
           <div class="panel" style="background:#0d1627">
             <div class="hero" style="margin-bottom:12px">
               <div>
                 <h3>Connected Players</h3>
-                <p class="small-meta" style="margin-top:4px">Players can update their own display name and money in the portal. The GM can still edit them here.</p>
+                <p class="small-meta">Players can update their own display name and money in the portal.</p>
               </div>
               <div class="seg">
                 <button id="playerCardViewBtn" class="active">Cards</button>
                 <button id="playerTableViewBtn">Table</button>
               </div>
             </div>
-            <div id="playerCards" class="cards" style="margin-top:16px"></div>
+            <div id="playerCards" class="cards"></div>
           </div>
 
           <div class="panel" style="background:#0d1627">
@@ -200,7 +179,7 @@
         <div class="hero">
           <div>
             <h2>Shop Builder</h2>
-            <p class="sub">Search the library, add items directly to shops, and edit shop inventory inline.</p>
+            <p class="sub">Search the library, add items directly to shops, and edit inventory inline.</p>
           </div>
         </div>
 
@@ -236,7 +215,7 @@
                 <button id="shopInventoryTableViewBtn">Table</button>
               </div>
             </div>
-            <div id="inventoryWrap" class="inventory-list"></div>
+            <div id="inventoryWrap" class="cards"></div>
           </div>
 
           <div class="panel" style="background:#0d1627">
@@ -247,15 +226,16 @@
                 <button id="shopLibraryTableViewBtn">Table</button>
               </div>
             </div>
-            <div class="toolbar" style="margin-top:14px">
+            <div class="toolbar">
               <input id="shopItemSearch" placeholder="Search library items">
               <select id="shopItemTypeFilter"></select>
               <select id="shopItemSourceFilter"></select>
             </div>
             <div id="shopLibraryResults" class="cards"></div>
+
             <div class="notice" style="margin-top:16px">
               <strong>Quick Add Temporary Item</strong>
-              <div class="small-meta" style="margin-top:4px">Adds directly to the current shop without writing to the item library database.</div>
+              <div class="small-meta" style="margin-top:4px">Adds directly to this shop without writing to the library database.</div>
               <div class="compact-grid" style="margin-top:10px">
                 <div><label>Name</label><input id="tempItemName" placeholder="Festival Pie"></div>
                 <div><label>Base price (CP)</label><input id="tempItemPrice" type="number" min="0" placeholder="35"></div>
@@ -308,7 +288,7 @@
 
           <div class="panel" style="background:#0d1627">
             <h3>Search & Filter Library</h3>
-            <div class="toolbar" style="margin-top:14px">
+            <div class="toolbar">
               <input id="librarySearch" placeholder="Search by item name or description">
               <select id="libraryShopTypeFilter"></select>
               <select id="librarySourceFilter"></select>
@@ -327,7 +307,7 @@
             <p class="sub">Permanent purchase snapshots for GM review.</p>
           </div>
         </div>
-        <div id="invoiceWrap" class="invoice-list"></div>
+        <div id="invoiceWrap" class="stack"></div>
       </section>
     </main>
   </div>
@@ -357,7 +337,6 @@
         </div>
         <div class="panel" style="background:#0d1627">
           <h3>Return to Existing Player</h3>
-          <p class="small-meta" style="margin-top:8px">This browser can remember your last player connection automatically.</p>
           <div class="stack" style="margin-top:12px">
             <button id="resumePlayerBtn" class="secondary">Resume Saved Player</button>
             <button id="forgetPlayerBtn" class="danger">Forget Saved Player</button>
@@ -426,7 +405,7 @@
                   <button id="portalInventoryTableViewBtn">Table</button>
                 </div>
               </div>
-              <div id="portalInventoryWrap" class="cards" style="margin-top:12px"></div>
+              <div id="portalInventoryWrap" class="cards"></div>
             </div>
             <div class="panel" style="background:#0d1627">
               <h3>Your Cart</h3>
@@ -444,1375 +423,475 @@
 </div>
 
 <script>
+const APP_CONFIG = { SUPABASE_URL: "https://eelwiyjufnlnclofyjdi.supabase.co", SUPABASE_ANON_KEY: "sb_publishable_y4Fgcc_vXfusEylpu4zpuA_Izg-tefy" };
 const $ = (id) => document.getElementById(id);
-const APP_CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_ANON_KEY: ""
-};
 
-document.addEventListener('DOMContentLoaded', () => {
-  let client = null;
-  let currentCampaignId = null;
-  let currentManageShopId = null;
-  let shopTypeCatalog = [];
-  let libraryViewMode = 'cards';
-  let shopInventoryViewMode = 'cards';
-  let playerViewMode = 'cards';
-  let portalInventoryViewMode = 'cards';
-  let shopLibraryViewMode = 'cards';
-  let appChannel = null;
-  let portalChannel = null;
-  let portalState = {
+const appState = {
+  client: null,
+  appChannel: null,
+  portalChannel: null,
+  currentCampaignId: null,
+  currentManageShopId: null,
+  shopTypeCatalog: [],
+  views: { players:'cards', library:'cards', shopInventory:'cards', shopLibrary:'cards', portalInventory:'cards' },
+  portal: {
     playerId: localStorage.getItem('ms_portal_player_id') || '',
     campaignId: localStorage.getItem('ms_portal_campaign_id') || '',
     shopId: '',
     walletCp: 0,
     cartId: ''
+  }
+};
+
+function setStatus(msg){ const s=$('status'); if(s) s.textContent=msg; console.log(msg); }
+function escapeHtml(str){ return String(str ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#039;"); }
+function cpToParts(totalCp){ const cp=Number(totalCp||0); return { gp:Math.floor(cp/100), sp:Math.floor((cp%100)/10), cp:cp%10 }; }
+function cpToDisplay(totalCp){ const p=cpToParts(totalCp); return `${p.gp} gp, ${p.sp} sp, ${p.cp} cp`; }
+function cpToCostIcons(totalCp){ const p=cpToParts(totalCp); const bits=[]; if(p.gp) bits.push(`<span class="coin gp">${p.gp} gp</span>`); if(p.sp) bits.push(`<span class="coin sp">${p.sp} sp</span>`); if(p.cp||!bits.length) bits.push(`<span class="coin cp">${p.cp} cp</span>`); return `<span class="cost-icons">${bits.join('')}</span>`; }
+function moneyToCp(gp,sp,cp){ return Number(gp||0)*100 + Number(sp||0)*10 + Number(cp||0); }
+function effectivePriceCp(row){ return row.override_price_cp != null ? Number(row.override_price_cp) : Number(row.base_price_cp); }
+function itemIconFor(text){ const t=String(text||'').toLowerCase(); if (/(weapon|sword|axe|dagger|bow|hammer|mace|spear|arrow|bolt)/.test(t)) return '⚔️'; if (/(armor|shield|helm|mail|plate|breastplate)/.test(t)) return '🛡️'; if (/(potion|philter|elixir|oil|salve)/.test(t)) return '🧪'; if (/(scroll|book|map|tome|grimoire|journal)/.test(t)) return '📜'; if (/(wand|rod|staff|arcane|focus|ring|amulet|wondrous|relic)/.test(t)) return '✨'; if (/(tool|kit|artisan|trade good)/.test(t)) return '🧰'; if (/(instrument|lute|lyre|drum|flute|harp|horn)/.test(t)) return '🎵'; if (/(mount|saddle|barding|horse|pony|camel|griffon)/.test(t)) return '🐎'; if (/(vehicle|wagon|cart|boat|ship|chariot|spelljammer)/.test(t)) return '🛶'; if (/(gear|rope|pack|tent|lantern|torch|rations|waterskin)/.test(t)) return '🎒'; return '📦'; }
+function shopLabel(slug){ const f=appState.shopTypeCatalog.find(s=>s.slug===slug); return f ? f.name : slug; }
+function randomCode(){ const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({length:6},()=>chars[Math.floor(Math.random()*chars.length)]).join(''); }
+function setBusy(btn,busy=true){ if(!btn) return; btn.classList.toggle('busy',busy); btn.disabled=busy; }
+function toggleDescById(id, btn){ const el=$(id); if(!el) return; el.classList.toggle('desc-collapsed'); if(btn) btn.textContent = el.classList.contains('desc-collapsed') ? 'More' : 'Less'; }
+function syncViewButtons(){
+  const map = {
+    playerCardViewBtn: appState.views.players==='cards',
+    playerTableViewBtn: appState.views.players==='table',
+    libraryCardViewBtn: appState.views.library==='cards',
+    libraryTableViewBtn: appState.views.library==='table',
+    shopInventoryCardViewBtn: appState.views.shopInventory==='cards',
+    shopInventoryTableViewBtn: appState.views.shopInventory==='table',
+    shopLibraryCardViewBtn: appState.views.shopLibrary==='cards',
+    shopLibraryTableViewBtn: appState.views.shopLibrary==='table',
+    portalInventoryCardViewBtn: appState.views.portalInventory==='cards',
+    portalInventoryTableViewBtn: appState.views.portalInventory==='table'
   };
+  Object.entries(map).forEach(([id,active])=>{ const el=$(id); if(el) el.classList.toggle('active', active); });
+}
+function setScreen(name){
+  const ids={campaign:'screenCampaign',shops:'screenShops',library:'screenLibrary',invoices:'screenInvoices'};
+  Object.values(ids).forEach(id=>$(id)?.classList.add('hidden'));
+  $(ids[name])?.classList.remove('hidden');
+  $('navCampaign').className = name==='campaign' ? 'active' : 'secondary';
+  $('navShops').className = name==='shops' ? 'active' : 'secondary';
+  $('navLibrary').className = name==='library' ? 'active' : 'secondary';
+  $('navInvoices').className = name==='invoices' ? 'active' : 'secondary';
+}
 
-  const $ = (id) => document.getElementById(id);
-  const qp = new URLSearchParams(window.location.search);
-  const isPortalMode = qp.get('portal') === '1';
+function initClient(){
+  const url = APP_CONFIG.SUPABASE_URL || ($('url')?.value || localStorage.getItem('url') || '').trim();
+  const key = APP_CONFIG.SUPABASE_ANON_KEY || ($('key')?.value || localStorage.getItem('key') || '').trim();
+  if(!url || !key) throw new Error('Add your Supabase project URL and anon key in APP_CONFIG or save them in the config form.');
+  if($('url')) $('url').value=url;
+  if($('key')) $('key').value=key;
+  appState.client = window.supabase.createClient(url, key);
+  return appState.client;
+}
+function ensureClient(){ if(!appState.client) initClient(); return appState.client; }
 
-  const screens = {
-    campaign: $('screenCampaign'),
-    shops: $('screenShops'),
-    library: $('screenLibrary'),
-    invoices: $('screenInvoices')
-  };
-
-  function setStatus(msg) { if ($('status')) $('status').textContent = msg; console.log(msg); }
-  function escapeHtml(str) {
-    return String(str ?? '')
-      .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+async function loadShopTypeCatalog(){
+  const client=ensureClient();
+  const {data,error}=await client.from('shop_type_catalog').select('slug, name, description').order('name');
+  if(error){
+    appState.shopTypeCatalog = [
+      {slug:'general-store', name:'General Store', description:'Everyday provisions and common gear.'},
+      {slug:'outfitter', name:'Outfitter', description:'Travel gear and survival supplies.'},
+      {slug:'blacksmith', name:'Blacksmith', description:'Common weapons and metalwork.'},
+      {slug:'armorer', name:'Armorer', description:'Armor and shields.'},
+      {slug:'alchemist', name:'Alchemist & Apothecary', description:'Potions and alchemical goods.'},
+      {slug:'arcane-dealer', name:'Arcane Dealer', description:'Arcane focuses and magical tools.'}
+    ];
+    return;
   }
-  function cpToParts(totalCp) {
-    const cp = Number(totalCp || 0);
-    return { gp: Math.floor(cp / 100), sp: Math.floor((cp % 100) / 10), cp: cp % 10 };
+  appState.shopTypeCatalog = data || [];
+}
+function populateShopTypeSelects(){
+  const options = appState.shopTypeCatalog.map(t=>`<option value="${t.slug}">${escapeHtml(t.name)}</option>`).join('');
+  if($('shopType')) $('shopType').innerHTML=options;
+  if($('itemShopType')) $('itemShopType').innerHTML=options;
+  if($('libraryShopTypeFilter')) $('libraryShopTypeFilter').innerHTML=`<option value="">All shop types</option>`+options;
+  if($('shopItemTypeFilter')) $('shopItemTypeFilter').innerHTML=`<option value="">Compatible with selected shop</option>`+options;
+  if($('shopTypeCatalogList')) $('shopTypeCatalogList').innerHTML = appState.shopTypeCatalog.map(t=>`<div class="notice"><strong>${escapeHtml(t.name)}</strong><div class="small-meta">${escapeHtml(t.slug)}</div><div class="item-desc">${escapeHtml(t.description||'')}</div></div>`).join('');
+}
+function teardownRealtime(){
+  const client=appState.client;
+  if(!client) return;
+  if(appState.appChannel){ client.removeChannel(appState.appChannel); appState.appChannel=null; }
+  if(appState.portalChannel){ client.removeChannel(appState.portalChannel); appState.portalChannel=null; }
+}
+function setupRealtime(){
+  const client=ensureClient();
+  if(appState.appChannel) client.removeChannel(appState.appChannel);
+  appState.appChannel = client.channel('merchant-smith-v6')
+    .on('postgres_changes',{event:'*',schema:'public',table:'campaign_players'}, async()=>{ if(!$('gmApp').classList.contains('hidden')) await refreshPlayers(); if(appState.portal.playerId) await loadPortalWorkspace(); })
+    .on('postgres_changes',{event:'*',schema:'public',table:'player_wallets'}, async()=>{ if(!$('gmApp').classList.contains('hidden')) await refreshPlayers(); if(appState.portal.playerId) await loadPortalWorkspace(); })
+    .on('postgres_changes',{event:'*',schema:'public',table:'campaign_shops'}, async()=>{ if(!$('gmApp').classList.contains('hidden')) await refreshShops(); if(appState.portal.campaignId) await loadPortalShops(); })
+    .on('postgres_changes',{event:'*',schema:'public',table:'shop_inventory'}, async()=>{ if(!$('gmApp').classList.contains('hidden')) await refreshShopBuilder(); if(appState.portal.shopId) await loadPortalShop(); })
+    .on('postgres_changes',{event:'*',schema:'public',table:'srd_items'}, async()=>{ if(!$('gmApp').classList.contains('hidden')) { await refreshLibrary(); await renderShopLibrarySearch(); } })
+    .on('postgres_changes',{event:'*',schema:'public',table:'checkout_invoices'}, async()=>{ if(!$('gmApp').classList.contains('hidden')) await refreshInvoices(); })
+    .subscribe();
+}
+function setupPortalRealtime(){
+  const client=ensureClient();
+  if(!appState.portal.playerId || !appState.portal.campaignId) return;
+  if(appState.portalChannel) client.removeChannel(appState.portalChannel);
+  appState.portalChannel = client.channel(`portal-${appState.portal.playerId}`)
+    .on('postgres_changes',{event:'*',schema:'public',table:'player_wallets'}, async()=>{ await loadPortalWorkspace(); })
+    .on('postgres_changes',{event:'*',schema:'public',table:'shop_inventory'}, async()=>{ if(appState.portal.shopId) await loadPortalShop(); })
+    .on('postgres_changes',{event:'*',schema:'public',table:'cart_items'}, async()=>{ if(appState.portal.shopId) await renderPortalCart(); })
+    .on('postgres_changes',{event:'*',schema:'public',table:'checkout_invoices'}, async()=>{ await loadPortalWorkspace(); })
+    .subscribe();
+}
+
+async function saveConfig(){ localStorage.setItem('url',$('url').value.trim()); localStorage.setItem('key',$('key').value.trim()); initClient(); await loadShopTypeCatalog(); populateShopTypeSelects(); setupRealtime(); await refreshAll(); }
+async function testConnection(){ const client=ensureClient(); const {error}=await client.from('campaigns').select('id').limit(1); if(error) throw error; await loadShopTypeCatalog(); populateShopTypeSelects(); setupRealtime(); await refreshAll(); }
+
+async function createCampaign(){
+  const client=ensureClient();
+  const name=$('campaignName').value.trim();
+  if(!name) return setStatus('Enter a campaign name.');
+  const {data,error}=await client.from('campaigns').insert({name, join_code: randomCode()}).select().single();
+  if(error) throw error;
+  appState.currentCampaignId=data.id;
+  $('campaignName').value='';
+  await refreshAll();
+}
+async function deleteCampaign(){
+  const client=ensureClient();
+  const id=$('selectedCampaign').value;
+  if(!id) return setStatus('Select a campaign first.');
+  if(!confirm('Delete this campaign and all related data?')) return;
+  const {error}=await client.from('campaigns').delete().eq('id',id);
+  if(error) throw error;
+  appState.currentCampaignId=null;
+  await refreshAll();
+}
+async function refreshCampaigns(){
+  const client=ensureClient();
+  const {data,error}=await client.from('campaigns').select('id,name,join_code,created_at').order('created_at',{ascending:false});
+  if(error) throw error;
+  $('selectedCampaign').innerHTML = `<option value="">Select campaign</option>` + data.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  if(appState.currentCampaignId && data.some(c=>c.id===appState.currentCampaignId)) $('selectedCampaign').value=appState.currentCampaignId;
+  else if(data[0]) { appState.currentCampaignId=data[0].id; $('selectedCampaign').value=appState.currentCampaignId; }
+  const current=data.find(c=>c.id===appState.currentCampaignId);
+  $('campaignMeta').innerHTML = current ? `<strong>${escapeHtml(current.name)}</strong><div class="small-meta" style="margin-top:6px">Campaign Code: <span class="money">${escapeHtml(current.join_code||'')}</span></div>` : 'Select or create a campaign.';
+}
+
+async function refreshPlayers(){
+  const client=ensureClient();
+  const campaignId=$('selectedCampaign').value;
+  if(!campaignId){ $('playerCards').innerHTML=`<div class="empty">Select a campaign.</div>`; return; }
+  const {data:players,error}=await client.from('campaign_players').select('id,display_name,last_seen_at').eq('campaign_id',campaignId).order('display_name');
+  if(error) throw error;
+  const ids=players.map(p=>p.id);
+  const walletMap={};
+  if(ids.length){
+    const {data:wallets,error:wErr}=await client.from('player_wallets').select('player_id,balance_cp').in('player_id',ids);
+    if(wErr) throw wErr;
+    wallets.forEach(w=>walletMap[w.player_id]=w.balance_cp);
   }
-  function cpToDisplay(totalCp) {
-    const p = cpToParts(totalCp);
-    return `${p.gp} gp, ${p.sp} sp, ${p.cp} cp`;
+  if(!players.length){ $('playerCards').className=''; $('playerCards').innerHTML=`<div class="empty">No connected players yet.</div>`; syncViewButtons(); return; }
+
+  if(appState.views.players==='table'){
+    $('playerCards').className='';
+    $('playerCards').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Name</th><th>Last Seen</th><th>GP</th><th>SP</th><th>CP</th><th>Actions</th></tr></thead><tbody>${
+      players.map(p=>{ const parts=cpToParts(walletMap[p.id]||0); return `<tr><td><strong>${escapeHtml(p.display_name||'Unnamed Player')}</strong></td><td>${p.last_seen_at?new Date(p.last_seen_at).toLocaleString():'Never'}</td><td><input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}"></td><td><input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}"></td><td><input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}"></td><td><div class="row"><button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button><button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button></div></td></tr>`; }).join('')
+    }</tbody></table></div>`;
+  } else {
+    $('playerCards').className='cards';
+    $('playerCards').innerHTML=players.map(p=>{ const parts=cpToParts(walletMap[p.id]||0); return `<div class="card"><div class="title">🧝 ${escapeHtml(p.display_name||'Unnamed Player')}</div><div class="small-meta">Last seen: ${p.last_seen_at?new Date(p.last_seen_at).toLocaleString():'Never'}</div><div class="grid3" style="margin-top:10px"><input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}"><input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}"><input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}"></div><div class="row" style="margin-top:12px"><button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button><button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button></div></div>`; }).join('');
   }
-  function cpToCostIcons(totalCp) {
-    const p = cpToParts(totalCp);
-    const bits = [];
-    if (p.gp) bits.push(`<span class="coin gp">${p.gp} gp</span>`);
-    if (p.sp) bits.push(`<span class="coin sp">${p.sp} sp</span>`);
-    if (p.cp || !bits.length) bits.push(`<span class="coin cp">${p.cp} cp</span>`);
-    return `<span class="cost-icons">${bits.join('')}</span>`;
+  syncViewButtons();
+}
+async function saveGMPlayerWallet(id){ const client=ensureClient(); const cp=moneyToCp($('gm-gp-'+id).value,$('gm-sp-'+id).value,$('gm-cp-'+id).value); const {error}=await client.from('player_wallets').update({balance_cp:cp}).eq('player_id',id); if(error) throw error; await refreshPlayers(); }
+async function deletePlayer(id){ const client=ensureClient(); if(!confirm('Remove this player from the campaign?')) return; const {error}=await client.from('campaign_players').delete().eq('id',id); if(error) throw error; await refreshPlayers(); }
+
+async function createShop(){ const client=ensureClient(); const campaignId=$('selectedCampaign').value; if(!campaignId) return setStatus('Select a campaign first.'); const name=$('shopName').value.trim(); if(!name) return setStatus('Enter a shop name.'); const {data,error}=await client.from('campaign_shops').insert({campaign_id:campaignId,name,shop_type:$('shopType').value,region_type:$('regionType').value}).select().single(); if(error) throw error; appState.currentManageShopId=data.id; $('shopName').value=''; await refreshShops(); await loadPortalShops(); }
+async function deleteShop(id){ const client=ensureClient(); if(!confirm('Delete this shop?')) return; const {error}=await client.from('campaign_shops').delete().eq('id',id); if(error) throw error; if(appState.currentManageShopId===id) appState.currentManageShopId=null; await refreshShops(); }
+async function refreshShops(){
+  const client=ensureClient(); const campaignId=$('selectedCampaign').value;
+  if(!campaignId){ $('shopCards').innerHTML=`<div class="empty">Select a campaign.</div>`; $('manageShopSelect').innerHTML=`<option value="">Select shop</option>`; return; }
+  const {data:shops,error}=await client.from('campaign_shops').select('id,name,shop_type,region_type').eq('campaign_id',campaignId).order('name'); if(error) throw error;
+  $('shopCards').innerHTML = shops.length ? shops.map(s=>`<div class="card"><div class="title">🏪 ${escapeHtml(s.name)}</div><div><span class="pill">${escapeHtml(shopLabel(s.shop_type))}</span><span class="pill">${escapeHtml(s.region_type)}</span></div><div class="small-meta">${escapeHtml(s.shop_type)}</div><div class="row" style="margin-top:14px"><button class="small secondary" data-action="manage-shop" data-id="${s.id}">Manage</button><button class="small danger" data-action="delete-shop" data-id="${s.id}">Remove</button></div></div>`).join('') : `<div class="empty">No shops yet.</div>`;
+  const options=`<option value="">Select shop</option>`+shops.map(s=>`<option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(shopLabel(s.shop_type))}</option>`).join('');
+  $('manageShopSelect').innerHTML=options;
+  if(appState.currentManageShopId && shops.some(s=>s.id===appState.currentManageShopId)) $('manageShopSelect').value=appState.currentManageShopId;
+  else if(shops[0]) { appState.currentManageShopId=shops[0].id; $('manageShopSelect').value=appState.currentManageShopId; }
+  await refreshShopBuilder();
+}
+
+async function buildSourceFilters(){ const client=ensureClient(); const {data,error}=await client.from('srd_items').select('source').not('source','is',null); if(error) return; const unique=[...new Set((data||[]).map(r=>r.source).filter(Boolean))].sort(); const options=`<option value="">All sources</option>`+unique.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join(''); if($('librarySourceFilter')) $('librarySourceFilter').innerHTML=options; if($('shopItemSourceFilter')) $('shopItemSourceFilter').innerHTML=options; }
+
+async function createLibraryItem(){ const client=ensureClient(); const name=$('itemName').value.trim(); if(!name) return setStatus('Enter an item name.'); const payload={ name, category:$('itemCategory').value.trim()||$('itemItemType').value.trim()||'Misc', item_type:$('itemItemType').value.trim()||null, source:$('itemSource').value.trim()||null, shop_type:$('itemShopType').value, shop_type_slugs:$('itemShopType').value, base_price_cp:Number($('itemBaseCp').value||0), default_stock:Number($('itemStock').value||0), description:$('itemDescription').value.trim()||null }; const {error}=await client.from('srd_items').insert(payload); if(error) throw error; ['itemName','itemCategory','itemItemType','itemSource','itemBaseCp','itemStock','itemDescription'].forEach(id=>$(id).value=''); await refreshLibrary(); }
+async function saveLibraryItem(id){ const client=ensureClient(); const payload={ name:$('lib-name-'+id).value.trim(), category:$('lib-category-'+id).value.trim()||null, item_type:$('lib-type-'+id).value.trim()||null, source:$('lib-source-'+id).value.trim()||null, shop_type:$('lib-shoptype-'+id).value, shop_type_slugs:$('lib-shoptypes-'+id).value.trim()||$('lib-shoptype-'+id).value, base_price_cp:Number($('lib-price-'+id).value||0), default_stock:Number($('lib-stock-'+id).value||0), description:$('lib-desc-'+id).value.trim()||null }; const {error}=await client.from('srd_items').update(payload).eq('id',id); if(error) throw error; await refreshLibrary(); await renderShopLibrarySearch(); }
+async function deleteLibraryItem(id){ const client=ensureClient(); if(!confirm('Delete this library item?')) return; const {error}=await client.from('srd_items').delete().eq('id',id); if(error) throw error; await refreshLibrary(); await renderShopLibrarySearch(); }
+
+async function refreshLibrary(){
+  const client=ensureClient();
+  await buildSourceFilters();
+  const search=$('librarySearch').value.trim().toLowerCase();
+  const shopTypeFilter=$('libraryShopTypeFilter').value;
+  const sourceFilter=$('librarySourceFilter').value;
+  const {data,error}=await client.from('srd_items').select('id,name,category,shop_type,shop_type_slugs,base_price_cp,default_stock,description,item_type,source').order('name');
+  if(error) throw error;
+  let rows=(data||[]).filter(item=>{ const hay=`${item.name||''} ${item.description||''}`.toLowerCase(); return (!search||hay.includes(search)) && (!shopTypeFilter||item.shop_type===shopTypeFilter||String(item.shop_type_slugs||'').split('|').includes(shopTypeFilter)) && (!sourceFilter||item.source===sourceFilter); });
+  if(!rows.length){ $('libraryWrap').className=''; $('libraryWrap').innerHTML=`<div class="empty">No items match your current filters.</div>`; syncViewButtons(); return; }
+
+  if(appState.views.library==='table'){
+    $('libraryWrap').className='';
+    $('libraryWrap').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Name</th><th>Shop Type</th><th>Type</th><th>Source</th><th>Cost</th><th>Stock</th><th>Actions</th></tr></thead><tbody>${
+      rows.map(item=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(item.item_type||item.category||item.name)}</span><strong>${escapeHtml(item.name)}</strong></div><div class="small-meta">${escapeHtml((item.description||'').slice(0,110))}${(item.description||'').length>110?'…':''}</div></td><td>${escapeHtml(shopLabel(item.shop_type))}</td><td>${escapeHtml(item.item_type||item.category||'')}</td><td>${escapeHtml(item.source||'')}</td><td>${cpToCostIcons(item.base_price_cp)}</td><td>${item.default_stock??1}</td><td><div class="row"><button class="small secondary" data-action="toggle-library-details" data-id="${item.id}">Details</button><button class="small danger" data-action="delete-library-item" data-id="${item.id}">Delete</button></div><div id="lib-extra-${item.id}" class="hidden" style="margin-top:10px"><div class="compact-grid"><div><label>Name</label><input id="lib-name-${item.id}" value="${escapeHtml(item.name)}"></div><div><label>Category</label><input id="lib-category-${item.id}" value="${escapeHtml(item.category||'')}"></div><div><label>Type</label><input id="lib-type-${item.id}" value="${escapeHtml(item.item_type||'')}"></div><div><label>Source</label><input id="lib-source-${item.id}" value="${escapeHtml(item.source||'')}"></div><div><label>Shop type</label><select id="lib-shoptype-${item.id}">${appState.shopTypeCatalog.map(t=>`<option value="${t.slug}" ${t.slug===item.shop_type?'selected':''}>${escapeHtml(t.name)}</option>`).join('')}</select></div><div><label>Shop tags</label><input id="lib-shoptypes-${item.id}" value="${escapeHtml(item.shop_type_slugs||item.shop_type||'')}"></div><div><label>Base CP</label><input type="number" id="lib-price-${item.id}" value="${item.base_price_cp??0}"></div><div><label>Stock</label><input type="number" id="lib-stock-${item.id}" value="${item.default_stock??1}"></div></div><div style="margin-top:10px"><label>Description</label><textarea id="lib-desc-${item.id}">${escapeHtml(item.description||'')}</textarea></div><div class="row" style="margin-top:10px"><button class="small secondary" data-action="save-library-item" data-id="${item.id}">Save</button></div></div></td></tr>`).join('')
+    }</tbody></table></div>`;
+  } else {
+    $('libraryWrap').className='cards';
+    $('libraryWrap').innerHTML=rows.map(item=>`<div class="card"><div class="item-name"><span class="item-icon">${itemIconFor(item.item_type||item.category||item.name)}</span><div class="title">${escapeHtml(item.name)}</div></div><div><span class="pill">${escapeHtml(shopLabel(item.shop_type))}</span><span class="pill">${escapeHtml(item.item_type||item.category||'')}</span></div><div style="margin-top:8px">${cpToCostIcons(item.base_price_cp)}</div><div class="small-meta">${item.source?escapeHtml(item.source)+' • ':''}Stock ${item.default_stock??1}</div><div style="margin-top:10px"><label>Category</label><input id="lib-category-${item.id}" value="${escapeHtml(item.category||'')}"></div><div class="compact-grid" style="margin-top:10px"><div><label>Name</label><input id="lib-name-${item.id}" value="${escapeHtml(item.name)}"></div><div><label>Type</label><input id="lib-type-${item.id}" value="${escapeHtml(item.item_type||'')}"></div><div><label>Source</label><input id="lib-source-${item.id}" value="${escapeHtml(item.source||'')}"></div><div><label>Shop type</label><select id="lib-shoptype-${item.id}">${appState.shopTypeCatalog.map(t=>`<option value="${t.slug}" ${t.slug===item.shop_type?'selected':''}>${escapeHtml(t.name)}</option>`).join('')}</select></div><div><label>Shop tags</label><input id="lib-shoptypes-${item.id}" value="${escapeHtml(item.shop_type_slugs||item.shop_type||'')}"></div><div><label>Base CP</label><input type="number" id="lib-price-${item.id}" value="${item.base_price_cp??0}"></div><div><label>Stock</label><input type="number" id="lib-stock-${item.id}" value="${item.default_stock??1}"></div></div><div style="margin-top:10px"><label>Description</label><textarea id="lib-desc-${item.id}">${escapeHtml(item.description||'')}</textarea></div><div class="row" style="margin-top:14px"><button class="small secondary" data-action="save-library-item" data-id="${item.id}">Save</button><button class="small danger" data-action="delete-library-item" data-id="${item.id}">Delete</button></div></div>`).join('');
   }
-  function itemIconFor(text) {
-    const t = String(text || '').toLowerCase();
-    if (/(weapon|sword|axe|dagger|bow|hammer|mace|spear|arrow|bolt)/.test(t)) return '⚔️';
-    if (/(armor|shield|helm|mail|plate|breastplate)/.test(t)) return '🛡️';
-    if (/(potion|philter|elixir|oil|salve)/.test(t)) return '🧪';
-    if (/(scroll|book|map|tome|grimoire|journal)/.test(t)) return '📜';
-    if (/(wand|rod|staff|arcane|focus|ring|amulet|wondrous|relic)/.test(t)) return '✨';
-    if (/(tool|kit|artisan|trade good)/.test(t)) return '🧰';
-    if (/(instrument|lute|lyre|drum|flute|harp|horn)/.test(t)) return '🎵';
-    if (/(mount|saddle|barding|horse|pony|camel|griffon)/.test(t)) return '🐎';
-    if (/(vehicle|wagon|cart|boat|ship|chariot|spelljammer)/.test(t)) return '🛶';
-    if (/(gear|rope|pack|tent|lantern|torch|rations|waterskin)/.test(t)) return '🎒';
-    return '📦';
+  syncViewButtons();
+}
+
+async function generateInventoryForShop(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,name,shop_type,region_type').eq('id',shopId).single(); if(sErr) throw sErr; const {data:items,error:iErr}=await client.from('srd_items').select('id,name,base_price_cp,default_stock,description,shop_type,shop_type_slugs').order('name'); if(iErr) throw iErr; const matching=(items||[]).filter(item=>item.shop_type===shop.shop_type||String(item.shop_type_slugs||'').split('|').includes(shop.shop_type)); if(!matching.length) return setStatus(`No library items found for ${shopLabel(shop.shop_type)}.`); const mult=shop.region_type==='village'?1.15:shop.region_type==='town'?1.05:1; const rows=matching.map(item=>({shop_id:shopId,srd_item_id:item.id,item_name:item.name,base_price_cp:item.base_price_cp==null?null:Math.round(item.base_price_cp*mult),stock_on_hand:item.default_stock||1,description:item.description||null})).filter(r=>r.base_price_cp!=null); const {error}=await client.from('shop_inventory').insert(rows); if(error) throw error; await refreshShopBuilder(); }
+
+async function addLibraryItemToShop(itemId){
+  const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.');
+  const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,name,region_type').eq('id',shopId).single(); if(sErr) throw sErr;
+  const {data:item,error:iErr}=await client.from('srd_items').select('id,name,base_price_cp,default_stock,description').eq('id',itemId).single(); if(iErr) throw iErr;
+  if(item.base_price_cp==null) return setStatus('That item has no parsed price and cannot be added.');
+  const mult=shop.region_type==='village'?1.15:shop.region_type==='town'?1.05:1;
+  const payload={shop_id:shopId,srd_item_id:item.id,item_name:item.name,base_price_cp:Math.round(item.base_price_cp*mult),stock_on_hand:item.default_stock||1,description:item.description||null};
+  const {data:existing,error:exErr}=await client.from('shop_inventory').select('id,stock_on_hand').eq('shop_id',shopId).eq('item_name',item.name).limit(1);
+  if(exErr) throw exErr;
+  if(existing.length){ const {error}=await client.from('shop_inventory').update({stock_on_hand:Number(existing[0].stock_on_hand||0)+Number(payload.stock_on_hand||0)}).eq('id',existing[0].id); if(error) throw error; await refreshShopBuilder(); return; }
+  const {error}=await client.from('shop_inventory').insert(payload); if(error) throw error; await refreshShopBuilder();
+}
+
+async function addTemporaryItemToShop(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const name=$('tempItemName').value.trim(); if(!name) return setStatus('Enter a temporary item name.'); const payload={ shop_id:shopId, srd_item_id:null, item_name:name, base_price_cp:Number($('tempItemPrice').value||0), stock_on_hand:Number($('tempItemStock').value||0), description:$('tempItemDesc').value.trim()||null }; const {error}=await client.from('shop_inventory').insert(payload); if(error) throw error; ['tempItemName','tempItemPrice','tempItemStock','tempItemDesc'].forEach(id=>$(id).value=''); await refreshShopBuilder(); }
+async function clearInventoryForShop(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); if(!confirm('Delete all inventory rows for this shop?')) return; const {error}=await client.from('shop_inventory').delete().eq('shop_id',shopId); if(error) throw error; await refreshShopBuilder(); }
+
+async function renderShopLibrarySearch(){
+  const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return;
+  const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,shop_type').eq('id',shopId).single(); if(sErr) return;
+  const search=$('shopItemSearch').value.trim().toLowerCase(); const typeFilter=$('shopItemTypeFilter').value||shop.shop_type; const sourceFilter=$('shopItemSourceFilter').value;
+  const {data:items,error}=await client.from('srd_items').select('id,name,description,base_price_cp,default_stock,shop_type,shop_type_slugs,source,item_type,category').order('name'); if(error){ $('shopLibraryResults').innerHTML=`<div class="empty">${escapeHtml(error.message)}</div>`; return; }
+  let rows=(items||[]).filter(item=>item.shop_type===typeFilter||String(item.shop_type_slugs||'').split('|').includes(typeFilter));
+  rows=rows.filter(item=>{ const hay=`${item.name||''} ${item.description||''}`.toLowerCase(); return (!search||hay.includes(search)) && (!sourceFilter||item.source===sourceFilter); });
+  if(!rows.length){ $('shopLibraryResults').className=''; $('shopLibraryResults').innerHTML=`<div class="empty">No compatible items match your current filters.</div>`; syncViewButtons(); return; }
+
+  if(appState.views.shopLibrary==='table'){
+    $('shopLibraryResults').className='';
+    $('shopLibraryResults').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Item</th><th>Type</th><th>Source</th><th>Cost</th><th>Stock</th><th>Description</th><th>Action</th></tr></thead><tbody>${
+      rows.map(item=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(item.item_type||item.category||item.name)}</span><strong>${escapeHtml(item.name)}</strong></div></td><td>${escapeHtml(item.item_type||item.category||'')}</td><td>${escapeHtml(item.source||'')}</td><td>${item.base_price_cp==null?'—':cpToCostIcons(item.base_price_cp)}</td><td>${item.default_stock??1}</td><td><div id="shoplib-desc-${item.id}" class="item-desc desc-collapsed">${escapeHtml(item.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="shoplib-desc-${item.id}">More</button></td><td><button class="small secondary" data-action="add-library-item-to-shop" data-id="${item.id}">Add</button></td></tr>`).join('')
+    }</tbody></table></div>`;
+  } else {
+    $('shopLibraryResults').className='cards';
+    $('shopLibraryResults').innerHTML=rows.map(item=>`<div class="card"><div class="item-name"><span class="item-icon">${itemIconFor(item.item_type||item.category||item.name)}</span><div class="title">${escapeHtml(item.name)}</div></div><div><span class="pill">${escapeHtml(shopLabel(item.shop_type))}</span><span class="pill">${escapeHtml(item.item_type||item.category||'')}</span></div><div style="margin-top:8px">${item.base_price_cp==null?'No parsed price':cpToCostIcons(item.base_price_cp)}</div><div class="small-meta">${item.source?escapeHtml(item.source)+' • ':''}Default stock: ${item.default_stock??1}</div><div id="shoplib-card-desc-${item.id}" class="item-desc desc-collapsed">${escapeHtml(item.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="shoplib-card-desc-${item.id}">More</button><button style="margin-top:14px" class="secondary" data-action="add-library-item-to-shop" data-id="${item.id}">Add to Shop</button></div>`).join('');
   }
-  function moneyToCp(gp, sp, cp) {
-    return (Number(gp || 0) * 100) + (Number(sp || 0) * 10) + Number(cp || 0);
+  syncViewButtons();
+}
+
+async function refreshShopBuilder(){
+  const client=ensureClient(); const shopId=$('manageShopSelect').value;
+  if(!shopId){ $('shopSummary').innerHTML='Select a shop to start.'; $('inventoryWrap').innerHTML=''; $('shopLibraryResults').innerHTML=`<div class="empty">Select a shop to browse compatible items.</div>`; return; }
+  const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,name,shop_type,region_type').eq('id',shopId).single(); if(sErr) throw sErr;
+  $('shopSummary').innerHTML=`<strong>${escapeHtml(shop.name)}</strong><div class="small-meta" style="margin-top:6px">${escapeHtml(shopLabel(shop.shop_type))} • ${escapeHtml(shop.region_type)}</div>`;
+  const {data:rows,error}=await client.from('shop_inventory').select('id,item_name,base_price_cp,override_price_cp,stock_on_hand,description').eq('shop_id',shopId).order('item_name'); if(error) throw error;
+  if(!rows.length){ $('inventoryWrap').innerHTML=`<div class="empty">No inventory yet. Generate from the library or add items below.</div>`; await renderShopLibrarySearch(); syncViewButtons(); return; }
+
+  if(appState.views.shopInventory==='table'){
+    $('inventoryWrap').className='';
+    $('inventoryWrap').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Item</th><th>Current</th><th>Base</th><th>Stock</th><th>Override</th><th>Description</th><th>Actions</th></tr></thead><tbody>${
+      rows.map(r=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(r.item_name+' '+(r.description||''))}</span><strong>${escapeHtml(r.item_name)}</strong></div></td><td>${cpToCostIcons(effectivePriceCp(r))}</td><td>${cpToCostIcons(r.base_price_cp)}</td><td><input type="number" id="stock-${r.id}" value="${r.stock_on_hand}"></td><td><input type="number" id="price-${r.id}" value="${r.override_price_cp??''}" placeholder="Blank = base"></td><td><div id="inv-desc-${r.id}" class="item-desc desc-collapsed">${escapeHtml(r.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="inv-desc-${r.id}">More</button><div id="inventory-extra-${r.id}" class="hidden" style="margin-top:10px"><label>Edit Description</label><textarea id="desc-${r.id}">${escapeHtml(r.description||'')}</textarea></div></td><td><div class="sticky-actions"><button class="small secondary" data-action="toggle-inventory-details" data-id="${r.id}">Edit</button><button class="small secondary" data-action="shuffle-item-price" data-id="${r.id}">🎲</button><button class="small secondary" data-action="reset-item-price" data-id="${r.id}">↺</button><button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button><button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button></div></td></tr>`).join('')
+    }</tbody></table></div>`;
+  } else {
+    $('inventoryWrap').className='cards';
+    $('inventoryWrap').innerHTML=rows.map(r=>`<div class="card"><div class="item-name"><span class="item-icon">${itemIconFor(r.item_name+' '+(r.description||''))}</span><strong>${escapeHtml(r.item_name)}</strong></div><div style="margin-top:6px">${cpToCostIcons(effectivePriceCp(r))}</div><div class="small-meta">Base: ${cpToDisplay(r.base_price_cp)}</div><div class="compact-grid" style="margin-top:10px"><div><label>Override CP</label><input type="number" id="price-${r.id}" value="${r.override_price_cp??''}" placeholder="Blank = base"></div><div><label>Stock</label><input type="number" id="stock-${r.id}" value="${r.stock_on_hand}"></div></div><div id="inv-card-desc-${r.id}" class="item-desc desc-collapsed" style="margin-top:10px">${escapeHtml(r.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="inv-card-desc-${r.id}">More</button><div style="margin-top:10px"><label>Description</label><textarea id="desc-${r.id}">${escapeHtml(r.description||'')}</textarea></div><div class="sticky-actions" style="margin-top:12px"><button class="small secondary" data-action="shuffle-item-price" data-id="${r.id}">🎲 Shuffle</button><button class="small secondary" data-action="reset-item-price" data-id="${r.id}">↺ Default</button><button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button><button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button></div></div>`).join('');
   }
-  function effectivePriceCp(row) {
-    return row.override_price_cp != null ? Number(row.override_price_cp) : Number(row.base_price_cp);
+  await renderShopLibrarySearch(); syncViewButtons();
+}
+
+async function shuffleItemPrice(id){ const client=ensureClient(); const min=Number($('shopRangeMin').value||0), max=Number($('shopRangeMax').value||0); const low=Math.min(min,max), high=Math.max(min,max); const {data,error}=await client.from('shop_inventory').select('base_price_cp').eq('id',id).single(); if(error) throw error; const pct=low + Math.random()*(high-low); $('price-'+id).value=Math.max(0,Math.round(Number(data.base_price_cp||0)*(1+pct/100))); }
+async function resetItemPrice(id){ $('price-'+id).value=''; }
+async function applyShopShuffle(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const min=Number($('shopRangeMin').value||0), max=Number($('shopRangeMax').value||0); const low=Math.min(min,max), high=Math.max(min,max); const {data:rows,error}=await client.from('shop_inventory').select('id,base_price_cp').eq('shop_id',shopId); if(error) throw error; for(const r of rows||[]){ const pct=low + Math.random()*(high-low); const override_price_cp=Math.max(0,Math.round(Number(r.base_price_cp||0)*(1+pct/100))); const {error:uErr}=await client.from('shop_inventory').update({override_price_cp}).eq('id',r.id); if(uErr) throw uErr; } await refreshShopBuilder(); }
+async function resetShopPrices(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const {error}=await client.from('shop_inventory').update({override_price_cp:null}).eq('shop_id',shopId); if(error) throw error; await refreshShopBuilder(); }
+async function saveInventoryRow(id){ const client=ensureClient(); const payload={ override_price_cp:$('price-'+id).value===''?null:Number($('price-'+id).value), stock_on_hand:Number($('stock-'+id).value||0), description:$('desc-'+id).value.trim()||null }; const {error}=await client.from('shop_inventory').update(payload).eq('id',id); if(error) throw error; await refreshShopBuilder(); }
+async function deleteInventoryRow(id){ const client=ensureClient(); const {error}=await client.from('shop_inventory').delete().eq('id',id); if(error) throw error; await refreshShopBuilder(); }
+
+async function refreshInvoices(){ const client=ensureClient(); const campaignId=$('selectedCampaign').value; if(!campaignId){ $('invoiceWrap').innerHTML=`<div class="empty">Select a campaign.</div>`; return; } const {data:invoices,error}=await client.from('checkout_invoices').select('id,player_id,shop_id,player_name_snapshot,shop_name_snapshot,total_cp,created_at').eq('campaign_id',campaignId).order('created_at',{ascending:false}).limit(50); if(error) throw error; if(!invoices.length){ $('invoiceWrap').innerHTML=`<div class="empty">No submitted invoices yet.</div>`; return; } const invoiceIds=invoices.map(i=>i.id); const {data:lines}=await client.from('checkout_invoice_items').select('invoice_id,srd_item_id,item_name_snapshot,quantity,unit_price_cp,line_total_cp').in('invoice_id',invoiceIds); const grouped={}; (lines||[]).forEach(l=>{ if(!grouped[l.invoice_id]) grouped[l.invoice_id]=[]; grouped[l.invoice_id].push(l); }); $('invoiceWrap').innerHTML=invoices.map(inv=>`<div class="card"><div class="row space"><div><strong>${escapeHtml(inv.player_name_snapshot||'Unknown Player')}</strong><div class="small-meta">${escapeHtml(inv.shop_name_snapshot||'Unknown Shop')} • ${new Date(inv.created_at).toLocaleString()}</div></div><div class="money">${cpToDisplay(inv.total_cp)}</div></div><div style="margin-top:10px">${(grouped[inv.id]||[]).map(line=>`<div class="row space" style="padding:6px 0;border-top:1px solid var(--border)"><div><strong>${escapeHtml(line.item_name_snapshot)}</strong><div class="small-meta">Qty ${line.quantity} • Unit ${cpToDisplay(line.unit_price_cp)}</div></div><div class="row"><span>${cpToDisplay(line.line_total_cp)}</span>${line.srd_item_id?`<button class="small secondary" data-action="lookup-invoice-item" data-id="${line.srd_item_id}">Look up</button>`:''}</div></div>`).join('')}</div></div>`).join(''); }
+async function lookupInvoiceItem(id){ const client=ensureClient(); const {data,error}=await client.from('srd_items').select('name,item_type,source,description').eq('id',id).single(); if(error) throw error; alert(`${data.name}\n${data.item_type||''}${data.source?' • '+data.source:''}\n\n${data.description||'No description.'}`); }
+
+async function joinCampaignFromPortal(){ const client=ensureClient(); const code=$('portalCampaignCode').value.trim().toUpperCase(); const name=$('portalPlayerName').value.trim(); if(!code||!name) return alert('Enter a campaign code and display name.'); const {data:campaign,error:cErr}=await client.from('campaigns').select('id,name,join_code').eq('join_code',code).single(); if(cErr) throw cErr; const {data:player,error:pErr}=await client.from('campaign_players').insert({campaign_id:campaign.id,display_name:name,last_seen_at:new Date().toISOString()}).select().single(); if(pErr) throw pErr; const balanceCp=moneyToCp($('portalGp').value,$('portalSp').value,$('portalCp').value); const {error:wErr}=await client.from('player_wallets').insert({player_id:player.id,balance_cp:balanceCp}); if(wErr) throw wErr; appState.portal.playerId=player.id; appState.portal.campaignId=campaign.id; localStorage.setItem('ms_portal_player_id',player.id); localStorage.setItem('ms_portal_campaign_id',campaign.id); await loadPortalWorkspace(); }
+async function updateLastSeen(){ const client=ensureClient(); if(!appState.portal.playerId) return; await client.from('campaign_players').update({last_seen_at:new Date().toISOString()}).eq('id',appState.portal.playerId); }
+async function resumePlayer(){ if(!appState.portal.playerId || !appState.portal.campaignId) return alert('No saved player found in this browser.'); await loadPortalWorkspace(); }
+function forgetPlayer(){ localStorage.removeItem('ms_portal_player_id'); localStorage.removeItem('ms_portal_campaign_id'); appState.portal={playerId:'',campaignId:'',shopId:'',walletCp:0,cartId:''}; $('playerJoinPanel').classList.remove('hidden'); $('playerWorkspace').classList.add('hidden'); }
+async function loadPortalWorkspace(){ const client=ensureClient(); if(!appState.portal.playerId || !appState.portal.campaignId) return; await updateLastSeen(); const {data:campaign,error:cErr}=await client.from('campaigns').select('id,name,join_code').eq('id',appState.portal.campaignId).single(); if(cErr) throw cErr; const {data:player,error:pErr}=await client.from('campaign_players').select('id,display_name').eq('id',appState.portal.playerId).single(); if(pErr) throw pErr; const {data:wallet,error:wErr}=await client.from('player_wallets').select('balance_cp').eq('player_id',player.id).single(); if(wErr) throw wErr; appState.portal.walletCp=Number(wallet.balance_cp||0); $('playerJoinPanel').classList.add('hidden'); $('playerWorkspace').classList.remove('hidden'); $('portalCampaignTitle').textContent=campaign.name; $('portalPlayerMeta').textContent=`Joined with campaign code ${campaign.join_code}`; $('portalWalletDisplay').textContent=cpToDisplay(appState.portal.walletCp); $('portalRemainingDisplay').textContent=cpToDisplay(appState.portal.walletCp); $('portalEditName').value=player.display_name||''; const parts=cpToParts(appState.portal.walletCp); $('portalEditGp').value=parts.gp; $('portalEditSp').value=parts.sp; $('portalEditCp').value=parts.cp; await loadPortalShops(); if(appState.portal.shopId) await loadPortalShop(); setupPortalRealtime(); }
+async function loadPortalShops(){ const client=ensureClient(); if(!appState.portal.campaignId) return; const {data,error}=await client.from('campaign_shops').select('id,name,shop_type').eq('campaign_id',appState.portal.campaignId).order('name'); if(error) throw error; $('portalShopSelect').innerHTML=`<option value="">Select shop</option>`+(data||[]).map(s=>`<option value="${s.id}" ${s.id===appState.portal.shopId?'selected':''}>${escapeHtml(s.name)} - ${escapeHtml(shopLabel(s.shop_type))}</option>`).join(''); }
+async function savePortalProfile(){ const client=ensureClient(); const name=$('portalEditName').value.trim(); if(!name) return alert('Enter a display name.'); const balanceCp=moneyToCp($('portalEditGp').value,$('portalEditSp').value,$('portalEditCp').value); const {error:pErr}=await client.from('campaign_players').update({display_name:name,last_seen_at:new Date().toISOString()}).eq('id',appState.portal.playerId); if(pErr) throw pErr; const {error:wErr}=await client.from('player_wallets').update({balance_cp:balanceCp}).eq('player_id',appState.portal.playerId); if(wErr) throw wErr; await loadPortalWorkspace(); }
+async function openPortalShop(){ appState.portal.shopId=$('portalShopSelect').value; if(!appState.portal.shopId) return; await loadPortalShop(); }
+async function ensurePortalCart(){ const client=ensureClient(); const {data:existing,error}=await client.from('carts').select('id').eq('player_id',appState.portal.playerId).eq('shop_id',appState.portal.shopId).eq('status','open').limit(1); if(error) throw error; if(existing.length){ appState.portal.cartId=existing[0].id; return; } const {data,error:cErr}=await client.from('carts').insert({player_id:appState.portal.playerId,shop_id:appState.portal.shopId,status:'open'}).select().single(); if(cErr) throw cErr; appState.portal.cartId=data.id; }
+
+async function loadPortalShop(){
+  const client=ensureClient(); if(!appState.portal.shopId) return; await ensurePortalCart();
+  const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,name,shop_type').eq('id',appState.portal.shopId).single(); if(sErr) throw sErr;
+  $('portalShopArea').classList.remove('hidden'); $('portalShopTitle').textContent=shop.name; $('portalShopMeta').textContent=shopLabel(shop.shop_type);
+  const {data:inventory,error}=await client.from('shop_inventory').select('id,item_name,base_price_cp,override_price_cp,stock_on_hand,description').eq('shop_id',appState.portal.shopId).order('item_name'); if(error) throw error;
+  const search=($('portalItemSearch')?.value||'').trim().toLowerCase(), typeFilter=($('portalTypeFilter')?.value||'').trim().toLowerCase(), sourceFilter=($('portalSourceFilter')?.value||'').trim().toLowerCase();
+  const filtered=(inventory||[]).filter(i=>{ const hay=`${i.item_name||''} ${i.description||''}`.toLowerCase(); const desc=(i.description||'').toLowerCase(); return (!search||hay.includes(search)) && (!typeFilter||desc.includes(typeFilter)) && (!sourceFilter||desc.includes(sourceFilter)); });
+  const allText=(inventory||[]).map(i=>i.description||'').join(' ');
+  const guessedTypes=[...new Set((allText.match(/weapon|armor|shield|potion|scroll|tool|gear|wand|ring|vehicle|mount|instrument/gi)||[]).map(x=>x.toLowerCase()))].sort();
+  const guessedSources=[...new Set((allText.match(/phb'?24|dmg'?24|xge|tce|aag|tdcsr|scc/gi)||[]).map(x=>x.toUpperCase()))].sort();
+  $('portalTypeFilter').innerHTML=`<option value="">All item types</option>`+guessedTypes.map(t=>`<option value="${t}" ${t===typeFilter?'selected':''}>${t}</option>`).join('');
+  $('portalSourceFilter').innerHTML=`<option value="">All sources</option>`+guessedSources.map(s=>`<option value="${s.toLowerCase()}" ${s.toLowerCase()===sourceFilter?'selected':''}>${s}</option>`).join('');
+
+  if(appState.views.portalInventory==='table'){
+    $('portalInventoryWrap').className='';
+    $('portalInventoryWrap').innerHTML=filtered.length?`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Item</th><th>Price</th><th>Stock</th><th>Description</th><th>Action</th></tr></thead><tbody>${
+      filtered.map(i=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(i.item_name+' '+(i.description||''))}</span><strong>${escapeHtml(i.item_name)}</strong></div></td><td>${cpToCostIcons(effectivePriceCp(i))}</td><td>${i.stock_on_hand}</td><td><div id="portal-desc-${i.id}" class="item-desc desc-collapsed">${escapeHtml(i.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="portal-desc-${i.id}">More</button></td><td><button class="small secondary" data-action="portal-add-to-cart" data-id="${i.id}" ${i.stock_on_hand<=0?'disabled':''}>${i.stock_on_hand<=0?'Out':'Add'}</button></td></tr>`).join('')
+    }</tbody></table></div>`:`<div class="empty">No items match your current filters.</div>`;
+  } else {
+    $('portalInventoryWrap').className='cards';
+    $('portalInventoryWrap').innerHTML=filtered.length?filtered.map(i=>`<div class="card"><div class="item-name"><span class="item-icon">${itemIconFor(i.item_name+' '+(i.description||''))}</span><div class="title">${escapeHtml(i.item_name)}</div></div><div style="margin-top:8px">${cpToCostIcons(effectivePriceCp(i))}</div><div class="small-meta">Stock: ${i.stock_on_hand}</div><div id="portal-card-desc-${i.id}" class="item-desc desc-collapsed">${escapeHtml(i.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="portal-card-desc-${i.id}">More</button><button style="margin-top:14px" data-action="portal-add-to-cart" data-id="${i.id}" ${i.stock_on_hand<=0?'disabled':''}>${i.stock_on_hand<=0?'Out of Stock':'Add to Cart'}</button></div>`).join(''):`<div class="empty">No items match your current filters.</div>`;
   }
-  function randomCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    return Array.from({length: 6}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-  }
-  function shopLabel(slug) {
-    const found = shopTypeCatalog.find(s => s.slug === slug);
-    return found ? found.name : slug;
-  }
-  function syncViewButtons() {
-    if ($('libraryCardViewBtn')) $('libraryCardViewBtn').classList.toggle('active', libraryViewMode === 'cards');
-    if ($('libraryTableViewBtn')) $('libraryTableViewBtn').classList.toggle('active', libraryViewMode === 'table');
-    if ($('shopInventoryCardViewBtn')) $('shopInventoryCardViewBtn').classList.toggle('active', shopInventoryViewMode === 'cards');
-    if ($('shopInventoryTableViewBtn')) $('shopInventoryTableViewBtn').classList.toggle('active', shopInventoryViewMode === 'table');
-    if ($('playerCardViewBtn')) $('playerCardViewBtn').classList.toggle('active', playerViewMode === 'cards');
-    if ($('playerTableViewBtn')) $('playerTableViewBtn').classList.toggle('active', playerViewMode === 'table');
-    if ($('portalInventoryCardViewBtn')) $('portalInventoryCardViewBtn').classList.toggle('active', portalInventoryViewMode === 'cards');
-    if ($('portalInventoryTableViewBtn')) $('portalInventoryTableViewBtn').classList.toggle('active', portalInventoryViewMode === 'table');
-    if ($('shopLibraryCardViewBtn')) $('shopLibraryCardViewBtn').classList.toggle('active', shopLibraryViewMode === 'cards');
-    if ($('shopLibraryTableViewBtn')) $('shopLibraryTableViewBtn').classList.toggle('active', shopLibraryViewMode === 'table');
-  }
-  function setBusy(btn, busy=true) {
-    if (!btn) return;
-    btn.classList.toggle('busy', busy);
-    btn.disabled = busy;
-  }
-  function flashButton(btn, ok=true) {
-    if (!btn) return;
-    btn.classList.remove('success-flash','error-flash');
-    btn.classList.add(ok ? 'success-flash' : 'error-flash');
-    setTimeout(() => btn.classList.remove('success-flash','error-flash'), 700);
-  }
-
-  function initClient() {
-    const url = APP_CONFIG.SUPABASE_URL || ($('url')?.value || localStorage.getItem('url') || '').trim();
-    const key = APP_CONFIG.SUPABASE_ANON_KEY || ($('key')?.value || localStorage.getItem('key') || '').trim();
-    if (!url || !key) throw new Error('Add your Supabase project URL and anon key in APP_CONFIG or save them in the config form.');
-    if ($('url')) $('url').value = url;
-    if ($('key')) $('key').value = key;
-    client = window.supabase.createClient(url, key);
-    return client;
-  }
-  function ensureClient() {
-    if (!client) initClient();
-    return client;
-  }
-
-  function loadSavedConfig() {
-    if ($('url')) $('url').value = APP_CONFIG.SUPABASE_URL || localStorage.getItem('url') || '';
-    if ($('key')) $('key').value = APP_CONFIG.SUPABASE_ANON_KEY || localStorage.getItem('key') || '';
-    if ((APP_CONFIG.SUPABASE_URL && APP_CONFIG.SUPABASE_ANON_KEY) || (($('url')?.value || '') && ($('key')?.value || ''))) {
-      initClient();
-      setStatus('Loaded app config.');
-    }
-  }
-
-  function setScreen(name) {
-    Object.entries(screens).forEach(([k, el]) => el.classList.toggle('hidden', k !== name));
-    $('navCampaign').className = name === 'campaign' ? 'active' : 'secondary';
-    $('navShops').className = name === 'shops' ? 'active' : 'secondary';
-    $('navLibrary').className = name === 'library' ? 'active' : 'secondary';
-    $('navInvoices').className = name === 'invoices' ? 'active' : 'secondary';
-  }
-
-  async function saveConfig() {
-    localStorage.setItem('url', $('url').value.trim());
-    localStorage.setItem('key', $('key').value.trim());
-    initClient();
-    await loadShopTypeCatalog();
-    populateShopTypeSelects();
-    setupRealtime();
-    setStatus('Config saved.');
-    await refreshAll();
-  }
-
-  async function testConnection() {
-    if (!client) initClient();
-    const { error } = await client.from('campaigns').select('id').limit(1);
-    if (error) throw error;
-    await loadShopTypeCatalog();
-    populateShopTypeSelects();
-    setupRealtime();
-    setStatus('Connection successful.');
-    await refreshAll();
-  }
-
-  async function loadShopTypeCatalog() {
-    const { data, error } = await client.from('shop_type_catalog').select('slug, name, description').order('name');
-    if (error) {
-      shopTypeCatalog = [
-        {slug:'general-store', name:'General Store', description:'Everyday provisions and common gear.'},
-        {slug:'outfitter', name:'Outfitter', description:'Travel gear and survival supplies.'},
-        {slug:'blacksmith', name:'Blacksmith', description:'Common weapons and metalwork.'},
-        {slug:'armorer', name:'Armorer', description:'Armor and shields.'},
-        {slug:'fletcher-bowyer', name:'Fletcher & Bowyer', description:'Bows and ammunition.'},
-        {slug:'alchemist', name:'Alchemist & Apothecary', description:'Potions and alchemical goods.'},
-        {slug:'arcane-dealer', name:'Arcane Dealer', description:'Arcane focuses and magical tools.'},
-        {slug:'enchanter-relics', name:'Enchanter & Relics', description:'Magic items and relics.'},
-        {slug:'scribe-cartographer', name:'Scribe & Cartographer', description:'Books, maps, and scrolls.'},
-        {slug:'temple-supplier', name:'Temple Supplier', description:'Holy items and devotional goods.'},
-        {slug:'jeweler', name:'Jeweler', description:'Jewelry and gems.'},
-        {slug:'artisan-supplier', name:'Artisan Supplier', description:'Tools and workshop goods.'},
-        {slug:'instrument-maker', name:'Instrument Maker', description:'Musical instruments.'},
-        {slug:'stable-beasts', name:'Stable & Beasts', description:'Mounts and tack.'},
-        {slug:'vehicle-dealer', name:'Vehicle Dealer', description:'Vehicles and parts.'},
-        {slug:'curio-trader', name:'Curio Trader', description:'Oddities and unusual stock.'}
-      ];
-      return;
-    }
-    shopTypeCatalog = data || [];
-  }
-
-  function populateShopTypeSelects() {
-    const options = shopTypeCatalog.map(t => `<option value="${t.slug}">${escapeHtml(t.name)}</option>`).join('');
-    if ($('shopType')) $('shopType').innerHTML = options;
-    if ($('itemShopType')) $('itemShopType').innerHTML = options;
-    if ($('libraryShopTypeFilter')) $('libraryShopTypeFilter').innerHTML = `<option value="">All shop types</option>` + options;
-    if ($('shopItemTypeFilter')) $('shopItemTypeFilter').innerHTML = `<option value="">Compatible with selected shop</option>` + options;
-    if ($('shopTypeCatalogList')) $('shopTypeCatalogList').innerHTML = shopTypeCatalog.map(t => `<div class="notice"><strong>${escapeHtml(t.name)}</strong><div class="small-meta">${escapeHtml(t.slug)}</div><div class="item-desc">${escapeHtml(t.description || '')}</div></div>`).join('');
-  }
-
-  function teardownRealtime() {
-    if (!client) return;
-    if (appChannel) { client.removeChannel(appChannel); appChannel = null; }
-    if (portalChannel) { client.removeChannel(portalChannel); portalChannel = null; }
-  }
-
-  function setupRealtime() {
-    if (!client) return;
-    if (appChannel) client.removeChannel(appChannel);
-    appChannel = client.channel('merchant-smith-v5')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'campaign_players' }, async () => { await refreshPlayers(); await refreshInvoices(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_wallets' }, async () => { await refreshPlayers(); await refreshInvoices(); if (portalState.playerId) await loadPortalWorkspace(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'campaign_shops' }, async () => { await refreshShops(); await loadPortalShops(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'shop_inventory' }, async () => { await refreshShopBuilder(); if (portalState.shopId) await loadPortalShop(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'srd_items' }, async () => { await refreshLibrary(); await renderShopLibrarySearch(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'checkout_invoices' }, async () => { await refreshInvoices(); })
-      .subscribe();
-  }
-
-  function setupPortalRealtime() {
-    if (!client || !portalState.playerId || !portalState.campaignId) return;
-    if (portalChannel) client.removeChannel(portalChannel);
-    portalChannel = client.channel(`portal-${portalState.playerId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_wallets' }, async () => { await loadPortalWorkspace(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'shop_inventory' }, async () => { if (portalState.shopId) await loadPortalShop(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cart_items' }, async () => { if (portalState.shopId) await loadPortalShop(); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'checkout_invoices' }, async () => { await loadPortalWorkspace(); })
-      .subscribe();
-  }
-
-  async function createCampaign() {
-    const name = $('campaignName').value.trim();
-    if (!name) return setStatus('Enter a campaign name.');
-    const joinCode = randomCode();
-    const { data, error } = await client.from('campaigns').insert({ name, join_code: joinCode }).select().single();
-    if (error) throw error;
-    currentCampaignId = data.id;
-    $('campaignName').value = '';
-    setStatus(`Campaign created: ${data.name}`);
-    await refreshAll();
-  }
-
-  async function deleteCampaign() {
-    const id = $('selectedCampaign').value;
-    if (!id) return setStatus('Select a campaign first.');
-    if (!confirm('Delete this campaign and all related data?')) return;
-    const { error } = await client.from('campaigns').delete().eq('id', id);
-    if (error) throw error;
-    currentCampaignId = null;
-    setStatus('Campaign deleted.');
-    await refreshAll();
-  }
-
-  async function refreshCampaigns() {
-    const { data, error } = await client.from('campaigns').select('id, name, join_code, created_at').order('created_at', { ascending:false });
-    if (error) throw error;
-    $('selectedCampaign').innerHTML = `<option value="">Select campaign</option>` + data.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
-    if (currentCampaignId && data.some(c => c.id === currentCampaignId)) $('selectedCampaign').value = currentCampaignId;
-    else if (data[0]) { currentCampaignId = data[0].id; $('selectedCampaign').value = currentCampaignId; }
-
-    const current = data.find(c => c.id === currentCampaignId);
-    $('campaignMeta').innerHTML = current
-      ? `<strong>${escapeHtml(current.name)}</strong><div class="small-meta" style="margin-top:6px">Campaign Code: <span class="money">${escapeHtml(current.join_code || 'Missing')}</span></div>`
-      : 'Select or create a campaign.';
-  }
-
-  async function refreshPlayers() {
-    const campaignId = $('selectedCampaign').value;
-    if (!campaignId) { $('playerCards').innerHTML = `<div class="empty">Select a campaign.</div>`; return; }
-
-    const { data: players, error } = await client.from('campaign_players').select('id, display_name, last_seen_at').eq('campaign_id', campaignId).order('display_name');
-    if (error) throw error;
-    const ids = players.map(p => p.id);
-    const walletMap = {};
-    if (ids.length) {
-      const { data: wallets, error: wErr } = await client.from('player_wallets').select('player_id, balance_cp').in('player_id', ids);
-      if (wErr) throw wErr;
-      wallets.forEach(w => walletMap[w.player_id] = w.balance_cp);
-    }
-
-    if (!players.length) {
-      $('playerCards').innerHTML = `<div class="empty">No connected players yet.</div>`;
-      syncViewButtons();
-      return;
-    }
-
-    if (playerViewMode === 'table') {
-      $('playerCards').className = '';
-      $('playerCards').innerHTML = `
-        <div class="table-wrap">
-          <table class="ms-table">
-            <thead><tr><th>Name</th><th>Last Seen</th><th>GP</th><th>SP</th><th>CP</th><th>Actions</th></tr></thead>
-            <tbody>
-              ${players.map(p => {
-                const parts = cpToParts(walletMap[p.id] || 0);
-                return `<tr>
-                  <td><strong>${escapeHtml(p.display_name || 'Unnamed Player')}</strong></td>
-                  <td>${p.last_seen_at ? new Date(p.last_seen_at).toLocaleString() : 'Never'}</td>
-                  <td><input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}"></td>
-                  <td><input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}"></td>
-                  <td><input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}"></td>
-                  <td><div class="row"><button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button><button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button></div></td>
-                </tr>`;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>`;
-    } else {
-      $('playerCards').className = 'cards';
-      $('playerCards').innerHTML = players.map(p => {
-        const parts = cpToParts(walletMap[p.id] || 0);
-        return `
-          <div class="card">
-            <div class="title">🧝 ${escapeHtml(p.display_name || 'Unnamed Player')}</div>
-            <div class="small-meta">Last seen: ${p.last_seen_at ? new Date(p.last_seen_at).toLocaleString() : 'Never'}</div>
-            <div class="grid3" style="margin-top:10px">
-              <input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}">
-              <input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}">
-              <input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}">
-            </div>
-            <div class="row" style="margin-top:12px">
-              <button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button>
-              <button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button>
-            </div>
-          </div>`;
-      }).join('');
-    }
-    syncViewButtons();
-  }
-
-  async function saveGMPlayerWallet(id) {
-    const cp = moneyToCp($('gm-gp-' + id).value, $('gm-sp-' + id).value, $('gm-cp-' + id).value);
-    const { error } = await client.from('player_wallets').update({ balance_cp: cp }).eq('player_id', id);
-    if (error) throw error;
-    setStatus('Player wallet updated.');
-    await refreshPlayers();
-  }
-
-  async function deletePlayer(id) {
-    if (!confirm('Remove this player from the campaign?')) return;
-    const { error } = await client.from('campaign_players').delete().eq('id', id);
-    if (error) throw error;
-    setStatus('Player removed.');
-    await refreshPlayers();
-  }
-
-  async function createShop() {
-    const campaignId = $('selectedCampaign').value;
-    if (!campaignId) return setStatus('Select a campaign first.');
-    const name = $('shopName').value.trim();
-    if (!name) return setStatus('Enter a shop name.');
-    const { data, error } = await client.from('campaign_shops').insert({
-      campaign_id: campaignId,
-      name,
-      shop_type: $('shopType').value,
-      region_type: $('regionType').value
-    }).select().single();
-    if (error) throw error;
-    currentManageShopId = data.id;
-    $('shopName').value = '';
-    setStatus(`Shop added: ${data.name}`);
-    await refreshShops();
-    await loadPortalShops();
-  }
-
-  async function deleteShop(id) {
-    if (!confirm('Delete this shop?')) return;
-    const { error } = await client.from('campaign_shops').delete().eq('id', id);
-    if (error) throw error;
-    if (currentManageShopId === id) currentManageShopId = null;
-    setStatus('Shop deleted.');
-    await refreshShops();
-  }
-
-  async function refreshShops() {
-    const campaignId = $('selectedCampaign').value;
-    if (!campaignId) {
-      $('shopCards').innerHTML = `<div class="empty">Select a campaign.</div>`;
-      $('manageShopSelect').innerHTML = `<option value="">Select shop</option>`;
-      return;
-    }
-    const { data: shops, error } = await client.from('campaign_shops').select('id, name, shop_type, region_type').eq('campaign_id', campaignId).order('name');
-    if (error) throw error;
-
-    $('shopCards').innerHTML = shops.length ? shops.map(s => `
-      <div class="card">
-        <div class="title">🏪 ${escapeHtml(s.name)}</div>
-        <div><span class="pill">${escapeHtml(shopLabel(s.shop_type))}</span><span class="pill">${escapeHtml(s.region_type)}</span></div>
-        <div class="small-meta">${escapeHtml(s.shop_type)}</div>
-        <div class="row" style="margin-top:14px">
-          <button class="small secondary" data-action="manage-shop" data-id="${s.id}">Manage</button>
-          <button class="small danger" data-action="delete-shop" data-id="${s.id}">Remove</button>
-        </div>
-      </div>`).join('') : `<div class="empty">No shops yet.</div>`;
-
-    const options = `<option value="">Select shop</option>` + shops.map(s => `<option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(shopLabel(s.shop_type))}</option>`).join('');
-    $('manageShopSelect').innerHTML = options;
-    if (currentManageShopId && shops.some(s => s.id === currentManageShopId)) $('manageShopSelect').value = currentManageShopId;
-    else if (shops[0]) { currentManageShopId = shops[0].id; $('manageShopSelect').value = currentManageShopId; }
-    await refreshShopBuilder();
-  }
-
-  async function buildSourceFilters() {
-    const { data, error } = await client.from('srd_items').select('source').not('source', 'is', null);
-    if (error) return;
-    const unique = [...new Set((data || []).map(r => r.source).filter(Boolean))].sort();
-    const options = `<option value="">All sources</option>` + unique.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
-    $('librarySourceFilter').innerHTML = options;
-    $('shopItemSourceFilter').innerHTML = options;
-  }
-
-  async function createLibraryItem() {
-    const name = $('itemName').value.trim();
-    if (!name) return setStatus('Enter an item name.');
-    const payload = {
-      name,
-      category: $('itemCategory').value.trim() || $('itemItemType').value.trim() || 'Misc',
-      item_type: $('itemItemType').value.trim() || null,
-      source: $('itemSource').value.trim() || null,
-      shop_type: $('itemShopType').value,
-      shop_type_slugs: $('itemShopType').value,
-      base_price_cp: Number($('itemBaseCp').value || 0),
-      default_stock: Number($('itemStock').value || 0),
-      description: $('itemDescription').value.trim() || null
-    };
-    const { error } = await client.from('srd_items').insert(payload);
-    if (error) throw error;
-    ['itemName','itemCategory','itemItemType','itemSource','itemBaseCp','itemStock','itemDescription'].forEach(id => $(id).value = '');
-    setStatus('Library item added.');
-    await refreshLibrary();
-  }
-
-  async function saveLibraryItem(id) {
-    const payload = {
-      name: $('lib-name-' + id).value.trim(),
-      category: $('lib-category-' + id).value.trim() || null,
-      item_type: $('lib-type-' + id).value.trim() || null,
-      source: $('lib-source-' + id).value.trim() || null,
-      shop_type: $('lib-shoptype-' + id).value,
-      shop_type_slugs: $('lib-shoptypes-' + id).value.trim() || $('lib-shoptype-' + id).value,
-      base_price_cp: Number($('lib-price-' + id).value || 0),
-      default_stock: Number($('lib-stock-' + id).value || 0),
-      description: $('lib-desc-' + id).value.trim() || null
-    };
-    const { error } = await client.from('srd_items').update(payload).eq('id', id);
-    if (error) throw error;
-    setStatus('Library item saved.');
-    await refreshLibrary();
-    await renderShopLibrarySearch();
-  }
-
-  async function deleteLibraryItem(id) {
-    if (!confirm('Delete this library item?')) return;
-    const { error } = await client.from('srd_items').delete().eq('id', id);
-    if (error) throw error;
-    setStatus('Library item deleted.');
-    await refreshLibrary();
-    await renderShopLibrarySearch();
-  }
-
-  async function refreshLibrary() {
-    await buildSourceFilters();
-    const search = $('librarySearch').value.trim().toLowerCase();
-    const shopTypeFilter = $('libraryShopTypeFilter').value;
-    const sourceFilter = $('librarySourceFilter').value;
-    const { data, error } = await client.from('srd_items')
-      .select('id, name, category, shop_type, shop_type_slugs, base_price_cp, default_stock, description, item_type, source')
-      .order('name');
-    if (error) throw error;
-
-    let rows = (data || []).filter(item => {
-      const hay = `${item.name || ''} ${item.description || ''}`.toLowerCase();
-      const matchSearch = !search || hay.includes(search);
-      const matchShop = !shopTypeFilter || item.shop_type === shopTypeFilter || String(item.shop_type_slugs || '').split('|').includes(shopTypeFilter);
-      const matchSource = !sourceFilter || item.source === sourceFilter;
-      return matchSearch && matchShop && matchSource;
-    });
-
-    if (!rows.length) {
-      $('libraryWrap').className = '';
-      $('libraryWrap').innerHTML = `<div class="empty">No items match your current filters.</div>`;
-      syncViewButtons();
-      return;
-    }
-
-    if (libraryViewMode === 'table') {
-      $('libraryWrap').className = '';
-      $('libraryWrap').innerHTML = `
-        <div class="table-wrap">
-          <table class="ms-table">
-            <thead>
-              <tr><th>Name</th><th>Shop Type</th><th>Type</th><th>Source</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
-            </thead>
-            <tbody>
-              ${rows.map(item => `
-                <tr>
-                  <td><strong>${escapeHtml(item.name)}</strong><div class="small-meta">${escapeHtml((item.description || '').slice(0, 110))}${(item.description || '').length > 110 ? '…' : ''}</div></td>
-                  <td>${escapeHtml(shopLabel(item.shop_type))}</td>
-                  <td>${escapeHtml(item.item_type || item.category || '')}</td>
-                  <td>${escapeHtml(item.source || '')}</td>
-                  <td>${cpToDisplay(item.base_price_cp)}</td>
-                  <td>${item.default_stock ?? 1}</td>
-                  <td>
-                    <div class="row">
-                      <button class="small secondary" data-action="toggle-library-details" data-id="${item.id}">Details</button>
-                      <button class="small danger" data-action="delete-library-item" data-id="${item.id}">Delete</button>
-                    </div>
-                    <div id="lib-extra-${item.id}" class="hidden" style="margin-top:10px">
-                      <div class="compact-grid">
-                        <div><label>Name</label><input id="lib-name-${item.id}" value="${escapeHtml(item.name)}"></div>
-                        <div><label>Category</label><input id="lib-category-${item.id}" value="${escapeHtml(item.category || '')}"></div>
-                        <div><label>Type</label><input id="lib-type-${item.id}" value="${escapeHtml(item.item_type || '')}"></div>
-                        <div><label>Source</label><input id="lib-source-${item.id}" value="${escapeHtml(item.source || '')}"></div>
-                        <div><label>Shop type</label><select id="lib-shoptype-${item.id}">${shopTypeCatalog.map(t => `<option value="${t.slug}" ${t.slug === item.shop_type ? 'selected' : ''}>${escapeHtml(t.name)}</option>`).join('')}</select></div>
-                        <div><label>Shop tags</label><input id="lib-shoptypes-${item.id}" value="${escapeHtml(item.shop_type_slugs || item.shop_type || '')}"></div>
-                        <div><label>Base CP</label><input type="number" id="lib-price-${item.id}" value="${item.base_price_cp ?? 0}"></div>
-                        <div><label>Stock</label><input type="number" id="lib-stock-${item.id}" value="${item.default_stock ?? 1}"></div>
-                      </div>
-                      <div style="margin-top:10px"><label>Description</label><textarea id="lib-desc-${item.id}">${escapeHtml(item.description || '')}</textarea></div>
-                      <div class="row" style="margin-top:10px"><button class="small secondary" data-action="save-library-item" data-id="${item.id}">Save</button></div>
-                    </div>
-                  </td>
-                </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>`;
-    } else {
-      $('libraryWrap').className = 'cards';
-      $('libraryWrap').innerHTML = rows.map(item => `
-        <div class="card">
-          <div class="title">📦 ${escapeHtml(item.name)}</div>
-          <div><span class="pill">${escapeHtml(shopLabel(item.shop_type))}</span><span class="pill">${escapeHtml(item.item_type || item.category || '')}</span></div>
-          <div class="small-meta" style="margin-top:8px">${item.source ? escapeHtml(item.source) + ' • ' : ''}${cpToDisplay(item.base_price_cp)} • Stock ${item.default_stock ?? 1}</div>
-          <div class="compact-grid" style="margin-top:10px">
-            <div><label>Name</label><input id="lib-name-${item.id}" value="${escapeHtml(item.name)}"></div>
-            <div><label>Category</label><input id="lib-category-${item.id}" value="${escapeHtml(item.category || '')}"></div>
-            <div><label>Type</label><input id="lib-type-${item.id}" value="${escapeHtml(item.item_type || '')}"></div>
-            <div><label>Source</label><input id="lib-source-${item.id}" value="${escapeHtml(item.source || '')}"></div>
-            <div><label>Shop type</label><select id="lib-shoptype-${item.id}">${shopTypeCatalog.map(t => `<option value="${t.slug}" ${t.slug === item.shop_type ? 'selected' : ''}>${escapeHtml(t.name)}</option>`).join('')}</select></div>
-            <div><label>Shop tags</label><input id="lib-shoptypes-${item.id}" value="${escapeHtml(item.shop_type_slugs || item.shop_type || '')}"></div>
-            <div><label>Base CP</label><input type="number" id="lib-price-${item.id}" value="${item.base_price_cp ?? 0}"></div>
-            <div><label>Stock</label><input type="number" id="lib-stock-${item.id}" value="${item.default_stock ?? 1}"></div>
-          </div>
-          <div style="margin-top:10px"><label>Description</label><textarea id="lib-desc-${item.id}">${escapeHtml(item.description || '')}</textarea></div>
-          <div class="row" style="margin-top:14px">
-            <button class="small secondary" data-action="save-library-item" data-id="${item.id}">Save</button>
-            <button class="small danger" data-action="delete-library-item" data-id="${item.id}">Delete</button>
-          </div>
-        </div>`).join('');
-    }
-    syncViewButtons();
-  }
-
-  async function generateInventoryForShop() {
-    const shopId = $('manageShopSelect').value;
-    if (!shopId) return setStatus('Select a shop first.');
-    const { data: shop, error: sErr } = await client.from('campaign_shops').select('id, name, shop_type, region_type').eq('id', shopId).single();
-    if (sErr) throw sErr;
-
-    const { data: items, error: iErr } = await client.from('srd_items')
-      .select('id, name, base_price_cp, default_stock, description, shop_type, shop_type_slugs')
-      .order('name');
-    if (iErr) throw iErr;
-
-    const matching = (items || []).filter(item => item.shop_type === shop.shop_type || String(item.shop_type_slugs || '').split('|').includes(shop.shop_type));
-    if (!matching.length) return setStatus(`No library items found for ${shopLabel(shop.shop_type)}.`);
-
-    const multiplier = shop.region_type === 'village' ? 1.15 : shop.region_type === 'town' ? 1.05 : 1.0;
-    const rows = matching.map(item => ({
-      shop_id: shopId,
-      srd_item_id: item.id,
-      item_name: item.name,
-      base_price_cp: item.base_price_cp == null ? null : Math.round(item.base_price_cp * multiplier),
-      stock_on_hand: item.default_stock || 1,
-      description: item.description || null
-    })).filter(r => r.base_price_cp != null);
-
-    const { error } = await client.from('shop_inventory').insert(rows);
-    if (error) throw error;
-    setStatus(`Generated ${rows.length} items for ${shop.name}.`);
-    await refreshShopBuilder();
-  }
-
-  async function addLibraryItemToShop(itemId) {
-    const shopId = $('manageShopSelect').value;
-    if (!shopId) return setStatus('Select a shop first.');
-    const { data: shop, error: sErr } = await client.from('campaign_shops').select('id, name, region_type').eq('id', shopId).single();
-    if (sErr) throw sErr;
-    const { data: item, error: iErr } = await client.from('srd_items').select('id, name, base_price_cp, default_stock, description').eq('id', itemId).single();
-    if (iErr) throw iErr;
-    if (item.base_price_cp == null) return setStatus('That item has no parsed price and cannot be added.');
-
-    const multiplier = shop.region_type === 'village' ? 1.15 : shop.region_type === 'town' ? 1.05 : 1.0;
-    const payload = {
-      shop_id: shopId,
-      srd_item_id: item.id,
-      item_name: item.name,
-      base_price_cp: Math.round(item.base_price_cp * multiplier),
-      stock_on_hand: item.default_stock || 1,
-      description: item.description || null
-    };
-    const { data: existingSame, error: exErr } = await client.from('shop_inventory').select('id, stock_on_hand').eq('shop_id', shopId).eq('item_name', item.name).limit(1);
-    if (exErr) throw exErr;
-    if (existingSame.length) {
-      const { error } = await client.from('shop_inventory').update({ stock_on_hand: Number(existingSame[0].stock_on_hand || 0) + Number(payload.stock_on_hand || 0) }).eq('id', existingSame[0].id);
-      if (error) throw error;
-      setStatus(`Increased stock for ${item.name}.`);
-      await refreshShopBuilder();
-      return;
-    }
-    const { error } = await client.from('shop_inventory').insert(payload);
-    if (error) throw error;
-    setStatus(`Added ${item.name} to shop.`);
-    await refreshShopBuilder();
-  }
-
-  async function addTemporaryItemToShop() {
-    const shopId = $('manageShopSelect').value;
-    if (!shopId) return setStatus('Select a shop first.');
-    const name = $('tempItemName').value.trim();
-    const price = Number($('tempItemPrice').value || 0);
-    const stock = Number($('tempItemStock').value || 0);
-    const desc = $('tempItemDesc').value.trim() || null;
-    if (!name) return setStatus('Enter a temporary item name.');
-    if (!price && price !== 0) return setStatus('Enter a temporary item price.');
-    const payload = {
-      shop_id: shopId,
-      srd_item_id: null,
-      item_name: name,
-      base_price_cp: price,
-      stock_on_hand: stock,
-      description: desc
-    };
-    const { error } = await client.from('shop_inventory').insert(payload);
-    if (error) throw error;
-    ['tempItemName','tempItemPrice','tempItemStock','tempItemDesc'].forEach(id => $(id).value = '');
-    setStatus('Temporary item added to shop.');
-    await refreshShopBuilder();
-  }
-
-  async function clearInventoryForShop() {
-    const shopId = $('manageShopSelect').value;
-    if (!shopId) return setStatus('Select a shop first.');
-    if (!confirm('Delete all inventory rows for this shop?')) return;
-    const { error } = await client.from('shop_inventory').delete().eq('shop_id', shopId);
-    if (error) throw error;
-    setStatus('Shop inventory cleared.');
-    await refreshShopBuilder();
-  }
-
-  async function refreshShopBuilder() {
-    const shopId = $('manageShopSelect').value;
-    if (!shopId) {
-      $('shopSummary').innerHTML = 'Select a shop to start.';
-      $('inventoryWrap').innerHTML = '';
-      $('shopLibraryResults').innerHTML = `<div class="empty">Select a shop to browse compatible items.</div>`;
-      return;
-    }
-    const { data: shop, error: sErr } = await client.from('campaign_shops').select('id, name, shop_type, region_type').eq('id', shopId).single();
-    if (sErr) throw sErr;
-    $('shopSummary').innerHTML = `<strong>${escapeHtml(shop.name)}</strong><div class="small-meta" style="margin-top:6px">${escapeHtml(shopLabel(shop.shop_type))} • ${escapeHtml(shop.region_type)}</div>`;
-
-    const { data: rows, error } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp, stock_on_hand, description').eq('shop_id', shopId).order('item_name');
-    if (error) throw error;
-
-    if (!rows.length) {
-      $('inventoryWrap').innerHTML = `<div class="empty">No inventory yet. Generate from the library or add items below.</div>`;
-      await renderShopLibrarySearch();
-      syncViewButtons();
-      return;
-    }
-
-    if (shopInventoryViewMode === 'table') {
-      $('inventoryWrap').innerHTML = `
-        <div class="table-wrap"><table class="ms-table">
-          <thead><tr><th>Item</th><th>Current</th><th>Base</th><th>Stock</th><th>Override</th><th>Description</th><th>Actions</th></tr></thead>
-          <tbody>
-            ${rows.map(r => `<tr>
-              <td><div class="item-name"><span class="item-icon">${itemIconFor(r.item_name + ' ' + (r.description||''))}</span><strong>${escapeHtml(r.item_name)}</strong></div></td>
-              <td>${cpToCostIcons(effectivePriceCp(r))}</td>
-              <td>${cpToCostIcons(r.base_price_cp)}</td>
-              <td><input type="number" id="stock-${r.id}" value="${r.stock_on_hand}"></td>
-              <td><input type="number" id="price-${r.id}" value="${r.override_price_cp ?? ''}" placeholder="Blank = base"></td>
-              <td>
-                <div id="inv-desc-${r.id}" class="item-desc desc-collapsed">${escapeHtml(r.description || 'No description.')}</div>
-                <button class="linkish" data-action="toggle-desc" data-id="inv-desc-${r.id}">More</button>
-                <div id="inventory-extra-${r.id}" class="hidden" style="margin-top:10px"><label>Edit Description</label><textarea id="desc-${r.id}">${escapeHtml(r.description || '')}</textarea></div>
-              </td>
-              <td><div class="sticky-actions">
-                <button class="small secondary" data-action="toggle-inventory-details" data-id="${r.id}">Edit</button>
-                <button class="small secondary" data-action="shuffle-item-price" data-id="${r.id}">🎲</button>
-                <button class="small secondary" data-action="reset-item-price" data-id="${r.id}">↺</button>
-                <button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button>
-                <button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button>
-              </div></td>
-            </tr>`).join('')}
-          </tbody></table></div>`;
-    } else {
-      $('inventoryWrap').innerHTML = rows.map(r => `
-        <div class="inventory-row">
-          <div class="item-name"><span class="item-icon">${itemIconFor(r.item_name + ' ' + (r.description||''))}</span><strong>${escapeHtml(r.item_name)}</strong></div>
-          <div style="margin-top:6px">${cpToCostIcons(effectivePriceCp(r))}</div>
-          <div class="small-meta">Base: ${cpToDisplay(r.base_price_cp)}</div>
-          <div class="compact-grid" style="margin-top:10px">
-            <div><label>Override CP</label><input type="number" id="price-${r.id}" value="${r.override_price_cp ?? ''}" placeholder="Blank = base"></div>
-            <div><label>Stock</label><input type="number" id="stock-${r.id}" value="${r.stock_on_hand}"></div>
-          </div>
-          <div id="inv-card-desc-${r.id}" class="item-desc desc-collapsed" style="margin-top:10px">${escapeHtml(r.description || 'No description.')}</div>
-          <button class="linkish" data-action="toggle-desc" data-id="inv-card-desc-${r.id}">More</button>
-          <div style="margin-top:10px"><label>Description</label><textarea id="desc-${r.id}">${escapeHtml(r.description || '')}</textarea></div>
-          <div class="sticky-actions" style="margin-top:12px">
-            <button class="small secondary" data-action="shuffle-item-price" data-id="${r.id}">🎲 Shuffle</button>
-            <button class="small secondary" data-action="reset-item-price" data-id="${r.id}">↺ Default</button>
-            <button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button>
-            <button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button>
-          </div>
-        </div>`).join('');
-    }
-    await renderShopLibrarySearch();
-    syncViewButtons();
-  }
-
-  async function shuffleItemPrice(id) {
-    const min = Number($('shopRangeMin').value || 0);
-    const max = Number($('shopRangeMax').value || 0);
-    const low = Math.min(min, max), high = Math.max(min, max);
-    const { data, error } = await client.from('shop_inventory').select('base_price_cp').eq('id', id).single();
-    if (error) throw error;
-    const pct = low + Math.random() * (high - low);
-    $('price-' + id).value = Math.max(0, Math.round(Number(data.base_price_cp || 0) * (1 + pct / 100)));
-  }
-
-  async function resetItemPrice(id) { $('price-' + id).value = ''; }
-
-  async function applyShopShuffle() {
-    const shopId = $('manageShopSelect').value;
-    if (!shopId) return setStatus('Select a shop first.');
-    const min = Number($('shopRangeMin').value || 0);
-    const max = Number($('shopRangeMax').value || 0);
-    const low = Math.min(min, max), high = Math.max(min, max);
-    const { data: rows, error } = await client.from('shop_inventory').select('id, base_price_cp').eq('shop_id', shopId);
-    if (error) throw error;
-    for (const r of rows || []) {
-      const pct = low + Math.random() * (high - low);
-      const override_price_cp = Math.max(0, Math.round(Number(r.base_price_cp || 0) * (1 + pct / 100)));
-      const { error: uErr } = await client.from('shop_inventory').update({ override_price_cp }).eq('id', r.id);
-      if (uErr) throw uErr;
-    }
-    setStatus('Shop prices shuffled and saved.');
-    await refreshShopBuilder();
-  }
-
-  async function resetShopPrices() {
-    const shopId = $('manageShopSelect').value;
-    if (!shopId) return setStatus('Select a shop first.');
-    const { error } = await client.from('shop_inventory').update({ override_price_cp: null }).eq('shop_id', shopId);
-    if (error) throw error;
-    setStatus('Shop prices reset to defaults.');
-    await refreshShopBuilder();
-  }
-
-  async function refreshInvoices() {
-    const campaignId = $('selectedCampaign').value;
-    if (!campaignId) { $('invoiceWrap').innerHTML = `<div class="empty">Select a campaign.</div>`; return; }
-    const { data: invoices, error } = await client.from('checkout_invoices')
-      .select('id, player_id, shop_id, player_name_snapshot, shop_name_snapshot, total_cp, created_at')
-      .eq('campaign_id', campaignId).order('created_at', { ascending:false }).limit(50);
-    if (error) throw error;
-    if (!invoices.length) { $('invoiceWrap').innerHTML = `<div class="empty">No submitted invoices yet.</div>`; return; }
-
-    const invoiceIds = invoices.map(i => i.id);
-    const { data: lines } = await client.from('checkout_invoice_items')
-      .select('invoice_id, srd_item_id, item_name_snapshot, quantity, unit_price_cp, line_total_cp')
-      .in('invoice_id', invoiceIds);
-
-    const grouped = {};
-    (lines || []).forEach(l => {
-      if (!grouped[l.invoice_id]) grouped[l.invoice_id] = [];
-      grouped[l.invoice_id].push(l);
-    });
-
-    $('invoiceWrap').innerHTML = invoices.map(inv => `
-      <div class="invoice-card">
-        <div class="row space">
-          <div>
-            <strong>${escapeHtml(inv.player_name_snapshot || 'Unknown Player')}</strong>
-            <div class="small-meta">${escapeHtml(inv.shop_name_snapshot || 'Unknown Shop')} • ${new Date(inv.created_at).toLocaleString()}</div>
-          </div>
-          <div class="money">${cpToDisplay(inv.total_cp)}</div>
-        </div>
-        <div style="margin-top:10px">
-          ${(grouped[inv.id] || []).map(line => `
-            <div class="row space" style="padding:6px 0;border-top:1px solid var(--border)">
-              <div>
-                <strong>${escapeHtml(line.item_name_snapshot)}</strong>
-                <div class="small-meta">Qty ${line.quantity} • Unit ${cpToDisplay(line.unit_price_cp)}</div>
-              </div>
-              <div class="row">
-                <span>${cpToDisplay(line.line_total_cp)}</span>
-                ${line.srd_item_id ? `<button class="small secondary" data-action="lookup-invoice-item" data-id="${line.srd_item_id}">Look up</button>` : ''}
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>`).join('');
-  }
-
-  async function lookupInvoiceItem(id) {
-    const { data, error } = await client.from('srd_items').select('name, item_type, source, description').eq('id', id).single();
-    if (error) throw error;
-    alert(`${data.name}\n${data.item_type || ''}${data.source ? ' • ' + data.source : ''}\n\n${data.description || 'No description.'}`);
-  }
-
-  async function joinCampaignFromPortal() {
-    const code = $('portalCampaignCode').value.trim().toUpperCase();
-    const name = $('portalPlayerName').value.trim();
-    if (!code || !name) return alert('Enter a campaign code and display name.');
-    const { data: campaign, error: cErr } = await client.from('campaigns').select('id, name, join_code').eq('join_code', code).single();
-    if (cErr) throw cErr;
-
-    const { data: player, error: pErr } = await client.from('campaign_players').insert({
-      campaign_id: campaign.id,
-      display_name: name,
-      last_seen_at: new Date().toISOString()
-    }).select().single();
-    if (pErr) throw pErr;
-
-    const balanceCp = moneyToCp($('portalGp').value, $('portalSp').value, $('portalCp').value);
-    const { error: wErr } = await client.from('player_wallets').insert({ player_id: player.id, balance_cp: balanceCp });
-    if (wErr) throw wErr;
-
-    portalState.playerId = player.id;
-    portalState.campaignId = campaign.id;
-    localStorage.setItem('ms_portal_player_id', player.id);
-    localStorage.setItem('ms_portal_campaign_id', campaign.id);
-    await loadPortalWorkspace();
-  }
-
-  async function updateLastSeen() {
-    if (!portalState.playerId) return;
-    await client.from('campaign_players').update({ last_seen_at: new Date().toISOString() }).eq('id', portalState.playerId);
-  }
-
-  async function resumePlayer() {
-    if (!portalState.playerId || !portalState.campaignId) return alert('No saved player found in this browser.');
-    await loadPortalWorkspace();
-  }
-
-  function forgetPlayer() {
-    localStorage.removeItem('ms_portal_player_id');
-    localStorage.removeItem('ms_portal_campaign_id');
-    portalState = { playerId:'', campaignId:'', shopId:'', walletCp:0, cartId:'' };
-    $('playerJoinPanel').classList.remove('hidden');
-    $('playerWorkspace').classList.add('hidden');
-  }
-
-  async function loadPortalWorkspace() {
-    if (!portalState.playerId || !portalState.campaignId) return;
-    await updateLastSeen();
-    const { data: campaign, error: cErr } = await client.from('campaigns').select('id, name, join_code').eq('id', portalState.campaignId).single();
-    if (cErr) throw cErr;
-    const { data: player, error: pErr } = await client.from('campaign_players').select('id, display_name').eq('id', portalState.playerId).single();
-    if (pErr) throw pErr;
-    const { data: wallet, error: wErr } = await client.from('player_wallets').select('balance_cp').eq('player_id', player.id).single();
-    if (wErr) throw wErr;
-
-    portalState.walletCp = Number(wallet.balance_cp || 0);
-    $('playerJoinPanel').classList.add('hidden');
-    $('playerWorkspace').classList.remove('hidden');
-    $('portalCampaignTitle').textContent = campaign.name;
-    $('portalPlayerMeta').textContent = `Joined with campaign code ${campaign.join_code}`;
-    $('portalWalletDisplay').textContent = cpToDisplay(portalState.walletCp);
-    $('portalRemainingDisplay').textContent = cpToDisplay(portalState.walletCp);
-    $('portalEditName').value = player.display_name || '';
-    const parts = cpToParts(portalState.walletCp);
-    $('portalEditGp').value = parts.gp;
-    $('portalEditSp').value = parts.sp;
-    $('portalEditCp').value = parts.cp;
-    await loadPortalShops();
-    if (portalState.shopId) await loadPortalShop();
-    setupPortalRealtime();
-  }
-
-  async function loadPortalShops() {
-    if (!portalState.campaignId) return;
-    const { data, error } = await client.from('campaign_shops').select('id, name, shop_type').eq('campaign_id', portalState.campaignId).order('name');
-    if (error) throw error;
-    $('portalShopSelect').innerHTML = `<option value="">Select shop</option>` + (data || []).map(s => `<option value="${s.id}" ${s.id === portalState.shopId ? 'selected' : ''}>${escapeHtml(s.name)} - ${escapeHtml(shopLabel(s.shop_type))}</option>`).join('');
-  }
-
-  async function savePortalProfile() {
-    const name = $('portalEditName').value.trim();
-    if (!name) return alert('Enter a display name.');
-    const balanceCp = moneyToCp($('portalEditGp').value, $('portalEditSp').value, $('portalEditCp').value);
-    const { error: pErr } = await client.from('campaign_players').update({ display_name: name, last_seen_at: new Date().toISOString() }).eq('id', portalState.playerId);
-    if (pErr) throw pErr;
-    const { error: wErr } = await client.from('player_wallets').update({ balance_cp: balanceCp }).eq('player_id', portalState.playerId);
-    if (wErr) throw wErr;
-    await loadPortalWorkspace();
-  }
-
-  async function openPortalShop() {
-    const shopId = $('portalShopSelect').value;
-    if (!shopId) return;
-    portalState.shopId = shopId;
-    await loadPortalShop();
-  }
-
-  async function ensurePortalCart() {
-    const { data: existing, error } = await client.from('carts').select('id').eq('player_id', portalState.playerId).eq('shop_id', portalState.shopId).eq('status', 'open').limit(1);
-    if (error) throw error;
-    if (existing.length) { portalState.cartId = existing[0].id; return; }
-    const { data, error: cErr } = await client.from('carts').insert({ player_id: portalState.playerId, shop_id: portalState.shopId, status: 'open' }).select().single();
-    if (cErr) throw cErr;
-    portalState.cartId = data.id;
-  }
-
-  async function loadPortalShop() {
-    if (!portalState.shopId) return;
-    await ensurePortalCart();
-    const { data: shop, error: sErr } = await client.from('campaign_shops').select('id, name, shop_type').eq('id', portalState.shopId).single();
-    if (sErr) throw sErr;
-    $('portalShopArea').classList.remove('hidden');
-    $('portalShopTitle').textContent = shop.name;
-    $('portalShopMeta').textContent = shopLabel(shop.shop_type);
-
-    const { data: inventory, error } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp, stock_on_hand, description').eq('shop_id', portalState.shopId).order('item_name');
-    if (error) throw error;
-
-    const search = ($('portalItemSearch')?.value || '').trim().toLowerCase();
-    const typeFilter = ($('portalTypeFilter')?.value || '').trim().toLowerCase();
-    const sourceFilter = ($('portalSourceFilter')?.value || '').trim().toLowerCase();
-
-    const filtered = (inventory || []).filter(i => {
-      const hay = `${i.item_name || ''} ${i.description || ''}`.toLowerCase();
-      const desc = (i.description || '').toLowerCase();
-      const matchSearch = !search || hay.includes(search);
-      const matchType = !typeFilter || desc.includes(typeFilter);
-      const matchSource = !sourceFilter || desc.includes(sourceFilter);
-      return matchSearch && matchType && matchSource;
-    });
-
-    const allText = (inventory || []).map(i => i.description || '').join(' ');
-    const guessedTypes = [...new Set((allText.match(/weapon|armor|shield|potion|scroll|tool|gear|wand|ring|vehicle|mount|instrument/gi) || []).map(x => x.toLowerCase()))].sort();
-    const guessedSources = [...new Set((allText.match(/phb'?24|dmg'?24|xge|tce|aag|tdcsr|scc/gi) || []).map(x => x.toUpperCase()))].sort();
-    if ($('portalTypeFilter')) $('portalTypeFilter').innerHTML = `<option value="">All item types</option>` + guessedTypes.map(t => `<option value="${t}" ${t===typeFilter?'selected':''}>${t}</option>`).join('');
-    if ($('portalSourceFilter')) $('portalSourceFilter').innerHTML = `<option value="">All sources</option>` + guessedSources.map(s => `<option value="${s.toLowerCase()}" ${s.toLowerCase()===sourceFilter?'selected':''}>${s}</option>`).join('');
-
-    if (portalInventoryViewMode === 'table') {
-      $('portalInventoryWrap').className = '';
-      $('portalInventoryWrap').innerHTML = filtered.length ? `
-        <div class="table-wrap">
-          <table class="ms-table">
-            <thead>
-              <tr><th>Item</th><th>Price</th><th>Stock</th><th>Description</th><th>Action</th></tr>
-            </thead>
-            <tbody>
-              ${filtered.map(i => `
-                <tr>
-                  <td><strong>${escapeHtml(i.item_name)}</strong></td>
-                  <td class="money">${cpToDisplay(effectivePriceCp(i))}</td>
-                  <td>${i.stock_on_hand}</td>
-                  <td>${escapeHtml((i.description || '').slice(0, 160))}${(i.description || '').length > 160 ? '…' : ''}</td>
-                  <td><button class="small secondary" data-action="portal-add-to-cart" data-id="${i.id}" ${i.stock_on_hand <= 0 ? 'disabled' : ''}>${i.stock_on_hand <= 0 ? 'Out' : 'Add'}</button></td>
-                </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>` : `<div class="empty">No items match your current filters.</div>`;
-    } else {
-      $('portalInventoryWrap').className = 'cards';
-      $('portalInventoryWrap').innerHTML = filtered.length ? filtered.map(i => `
-        <div class="card">
-          <div class="title">${escapeHtml(i.item_name)}</div>
-          <div class="money" style="margin-top:8px">${cpToDisplay(effectivePriceCp(i))}</div>
-          <div class="small-meta">Stock: ${i.stock_on_hand}</div>
-          <div class="item-desc">${escapeHtml(i.description || 'No description.')}</div>
-          <button style="margin-top:14px" data-action="portal-add-to-cart" data-id="${i.id}" ${i.stock_on_hand <= 0 ? 'disabled' : ''}>${i.stock_on_hand <= 0 ? 'Out of Stock' : 'Add to Cart'}</button>
-        </div>`).join('') : `<div class="empty">No items match your current filters.</div>`;
-    }
-
-    syncViewButtons();
-    await renderPortalCart();
-  }
-
-  async function portalAddToCart(inventoryId) {
-    const { data: inv, error: invErr } = await client.from('shop_inventory').select('id, stock_on_hand').eq('id', inventoryId).single();
-    if (invErr) throw invErr;
-    if (inv.stock_on_hand <= 0) throw new Error('Item is out of stock.');
-    const { data: existing, error: eErr } = await client.from('cart_items').select('id, quantity').eq('cart_id', portalState.cartId).eq('inventory_id', inventoryId).limit(1);
-    if (eErr) throw eErr;
-    if (existing.length) {
-      const newQty = existing[0].quantity + 1;
-      if (newQty > inv.stock_on_hand) throw new Error('Not enough stock.');
-      const { error } = await client.from('cart_items').update({ quantity: newQty }).eq('id', existing[0].id);
-      if (error) throw error;
-    } else {
-      const { error } = await client.from('cart_items').insert({ cart_id: portalState.cartId, inventory_id: inventoryId, quantity: 1 });
-      if (error) throw error;
-    }
-    await renderPortalCart();
-  }
-
-  async function portalChangeCart(cartItemId, qty) {
-    if (qty <= 0) return portalRemoveCartItem(cartItemId);
-    const { data: item, error: cErr } = await client.from('cart_items').select('inventory_id').eq('id', cartItemId).single();
-    if (cErr) throw cErr;
-    const { data: inv, error: iErr } = await client.from('shop_inventory').select('stock_on_hand').eq('id', item.inventory_id).single();
-    if (iErr) throw iErr;
-    if (qty > inv.stock_on_hand) throw new Error('Not enough stock.');
-    const { error } = await client.from('cart_items').update({ quantity: qty }).eq('id', cartItemId);
-    if (error) throw error;
-    await renderPortalCart();
-  }
-
-  async function portalRemoveCartItem(cartItemId) {
-    const { error } = await client.from('cart_items').delete().eq('id', cartItemId);
-    if (error) throw error;
-    await renderPortalCart();
-  }
-
-  async function renderPortalCart() {
-    if (!portalState.cartId) return;
-    const { data: rows, error } = await client.from('cart_items').select('id, inventory_id, quantity').eq('cart_id', portalState.cartId);
-    if (error) throw error;
-    if (!rows.length) {
-      $('portalCartWrap').innerHTML = `<div class="empty">Cart is empty.</div>`;
-      $('portalCartTotalDisplay').textContent = cpToDisplay(0);
-      $('portalRemainingDisplay').textContent = cpToDisplay(portalState.walletCp);
-      return;
-    }
-    const invIds = rows.map(r => r.inventory_id);
-    const { data: invRows, error: iErr } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp, stock_on_hand').in('id', invIds);
-    if (iErr) throw iErr;
-    const invMap = Object.fromEntries(invRows.map(i => [i.id, i]));
-
-    let totalCp = 0;
-    $('portalCartWrap').innerHTML = rows.map(r => {
-      const inv = invMap[r.inventory_id];
-      const line = effectivePriceCp(inv) * r.quantity;
-      totalCp += line;
-      return `<div class="cart-item">
-        <div class="row space">
-          <div><strong>${escapeHtml(inv.item_name)}</strong><div class="small-meta">Qty ${r.quantity}</div><div class="money">${cpToDisplay(line)}</div></div>
-          <div class="row">
-            <button class="small secondary" data-action="portal-cart-minus" data-id="${r.id}" data-qty="${r.quantity - 1}">-</button>
-            <button class="small secondary" data-action="portal-cart-plus" data-id="${r.id}" data-qty="${r.quantity + 1}">+</button>
-            <button class="small danger" data-action="portal-cart-remove" data-id="${r.id}">Remove</button>
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-    $('portalCartTotalDisplay').textContent = cpToDisplay(totalCp);
-    $('portalRemainingDisplay').textContent = cpToDisplay(Math.max(portalState.walletCp - totalCp, 0));
-  }
-
-  async function portalCheckout() {
-    const { data: cartItems, error: cErr } = await client.from('cart_items').select('id, inventory_id, quantity').eq('cart_id', portalState.cartId);
-    if (cErr) throw cErr;
-    if (!cartItems.length) throw new Error('Cart is empty.');
-
-    const { data: player, error: pErr } = await client.from('campaign_players').select('id, display_name, campaign_id').eq('id', portalState.playerId).single();
-    if (pErr) throw pErr;
-    const { data: shop, error: sErr } = await client.from('campaign_shops').select('id, name').eq('id', portalState.shopId).single();
-    if (sErr) throw sErr;
-
-    const invIds = cartItems.map(c => c.inventory_id);
-    const { data: invRows, error: iErr } = await client.from('shop_inventory').select('id, srd_item_id, item_name, base_price_cp, override_price_cp, stock_on_hand').in('id', invIds);
-    if (iErr) throw iErr;
-    const invMap = Object.fromEntries(invRows.map(i => [i.id, i]));
-
-    let totalCp = 0;
-    for (const ci of cartItems) {
-      const inv = invMap[ci.inventory_id];
-      if (ci.quantity > inv.stock_on_hand) throw new Error(`Not enough stock for ${inv.item_name}.`);
-      totalCp += effectivePriceCp(inv) * ci.quantity;
-    }
-    if (portalState.walletCp < totalCp) throw new Error('Not enough money in wallet.');
-
-    const { data: invoice, error: invErr } = await client.from('checkout_invoices').insert({
-      campaign_id: player.campaign_id,
-      player_id: player.id,
-      shop_id: shop.id,
-      player_name_snapshot: player.display_name,
-      shop_name_snapshot: shop.name,
-      total_cp: totalCp
-    }).select().single();
-    if (invErr) throw invErr;
-
-    const invoiceLines = cartItems.map(ci => {
-      const inv = invMap[ci.inventory_id];
-      const unitPrice = effectivePriceCp(inv);
-      return {
-        invoice_id: invoice.id,
-        srd_item_id: inv.srd_item_id,
-        item_name_snapshot: inv.item_name,
-        quantity: ci.quantity,
-        unit_price_cp: unitPrice,
-        line_total_cp: unitPrice * ci.quantity
-      };
-    });
-    const { error: lineErr } = await client.from('checkout_invoice_items').insert(invoiceLines);
-    if (lineErr) throw lineErr;
-
-    const { error: wErr } = await client.from('player_wallets').update({ balance_cp: portalState.walletCp - totalCp }).eq('player_id', portalState.playerId);
-    if (wErr) throw wErr;
-
-    for (const ci of cartItems) {
-      const inv = invMap[ci.inventory_id];
-      const { error } = await client.from('shop_inventory').update({ stock_on_hand: inv.stock_on_hand - ci.quantity }).eq('id', ci.inventory_id);
-      if (error) throw error;
-    }
-
-    const { error: cUpdErr } = await client.from('carts').update({ status: 'submitted', updated_at: new Date().toISOString() }).eq('id', portalState.cartId);
-    if (cUpdErr) throw cUpdErr;
-
-    // new open cart for the same shop
-    portalState.walletCp = portalState.walletCp - totalCp;
-    portalState.cartId = '';
-    await loadPortalWorkspace();
-    await loadPortalShop();
-    alert('Checkout submitted.');
-  }
-
-  async function refreshAll() {
-    ensureClient();
-    await loadShopTypeCatalog();
-    populateShopTypeSelects();
-    await refreshCampaigns();
-    await refreshPlayers();
-    await refreshShops();
-    await refreshLibrary();
-    await refreshInvoices();
-  }
-
-  document.body.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    try {
-      const noDbNeeded = ['navCampaign','navShops','navLibrary','navInvoices'];
-      if (!noDbNeeded.includes(btn.id)) ensureClient();
-      setBusy(btn, true);
-      if (btn.id === 'saveBtn') await saveConfig();
-      else if (btn.id === 'testBtn') await testConnection();
-      else if (btn.id === 'createCampaignBtn') await createCampaign();
-      else if (btn.id === 'deleteCampaignBtn') await deleteCampaign();
-      else if (btn.id === 'refreshBtn') await refreshAll();
-      else if (btn.id === 'createShopBtn') await createShop();
-      else if (btn.id === 'createLibraryItemBtn') await createLibraryItem();
-      else if (btn.id === 'refreshLibraryBtn') await refreshLibrary();
-      else if (btn.id === 'generateInventoryBtn') await generateInventoryForShop();
-      else if (btn.id === 'clearInventoryBtn') await clearInventoryForShop();
-      else if (btn.id === 'addTempItemBtn') await addTemporaryItemToShop();
-      else if (btn.id === 'playerCardViewBtn') { playerViewMode = 'cards'; await refreshPlayers(); }
-      else if (btn.id === 'playerTableViewBtn') { playerViewMode = 'table'; await refreshPlayers(); }
-      else if (btn.id === 'portalInventoryCardViewBtn') { portalInventoryViewMode = 'cards'; if (portalState.shopId) await loadPortalShop(); }
-      else if (btn.id === 'portalInventoryTableViewBtn') { portalInventoryViewMode = 'table'; if (portalState.shopId) await loadPortalShop(); }
-      else if (btn.id === 'navCampaign') setScreen('campaign');
-      else if (btn.id === 'navShops') setScreen('shops');
-      else if (btn.id === 'navLibrary') setScreen('library');
-      else if (btn.id === 'navInvoices') setScreen('invoices');
-      else if (btn.id === 'libraryCardViewBtn') { libraryViewMode = 'cards'; await refreshLibrary(); }
-      else if (btn.id === 'libraryTableViewBtn') { libraryViewMode = 'table'; await refreshLibrary(); }
-      else if (btn.id === 'shopInventoryCardViewBtn') { shopInventoryViewMode = 'cards'; await refreshShopBuilder(); }
-      else if (btn.id === 'shopInventoryTableViewBtn') { shopInventoryViewMode = 'table'; await refreshShopBuilder(); }
-      else if (btn.id === 'joinCampaignBtn') await joinCampaignFromPortal();
-      else if (btn.id === 'resumePlayerBtn') await resumePlayer();
-      else if (btn.id === 'forgetPlayerBtn') forgetPlayer();
-      else if (btn.id === 'leaveCampaignBtn') forgetPlayer();
-      else if (btn.id === 'savePortalProfileBtn') await savePortalProfile();
-      else if (btn.id === 'openPortalShopBtn') await openPortalShop();
-      else if (btn.id === 'reloadPortalShopBtn') await loadPortalShop();
-      else if (btn.id === 'portalCheckoutBtn') await portalCheckout();
-      else if (btn.dataset.action === 'save-gm-player') await saveGMPlayerWallet(btn.dataset.id);
-      else if (btn.dataset.action === 'delete-player') await deletePlayer(btn.dataset.id);
-      else if (btn.dataset.action === 'manage-shop') { currentManageShopId = btn.dataset.id; $('manageShopSelect').value = currentManageShopId; setScreen('shops'); await refreshShopBuilder(); }
-      else if (btn.dataset.action === 'delete-shop') await deleteShop(btn.dataset.id);
-      else if (btn.dataset.action === 'save-library-item') await saveLibraryItem(btn.dataset.id);
-      else if (btn.dataset.action === 'delete-library-item') await deleteLibraryItem(btn.dataset.id);
-      else if (btn.dataset.action === 'add-library-item-to-shop') await addLibraryItemToShop(btn.dataset.id);
-      else if (btn.dataset.action === 'save-inventory') await saveInventoryRow(btn.dataset.id);
-      else if (btn.dataset.action === 'delete-inventory') await deleteInventoryRow(btn.dataset.id);
-      else if (btn.dataset.action === 'toggle-inventory-details') $('inventory-extra-' + btn.dataset.id).classList.toggle('hidden');
-      else if (btn.dataset.action === 'toggle-library-details') $('lib-extra-' + btn.dataset.id).classList.toggle('hidden');
-      else if (btn.dataset.action === 'toggle-desc') { const el = document.getElementById(btn.dataset.id); if (el) { el.classList.toggle('desc-collapsed'); btn.textContent = el.classList.contains('desc-collapsed') ? 'More' : 'Less'; } }
-      else if (btn.dataset.action === 'shuffle-item-price') await shuffleItemPrice(btn.dataset.id);
-      else if (btn.dataset.action === 'reset-item-price') await resetItemPrice(btn.dataset.id);
-      else if (btn.dataset.action === 'lookup-invoice-item') await lookupInvoiceItem(btn.dataset.id);
-      else if (btn.dataset.action === 'portal-add-to-cart') await portalAddToCart(btn.dataset.id);
-      else if (btn.dataset.action === 'portal-cart-minus') await portalChangeCart(btn.dataset.id, Number(btn.dataset.qty));
-      else if (btn.dataset.action === 'portal-cart-plus') await portalChangeCart(btn.dataset.id, Number(btn.dataset.qty));
-      else if (btn.dataset.action === 'portal-cart-remove') await portalRemoveCartItem(btn.dataset.id);
-      flashButton(btn, true);
-    } catch (err) {
+  syncViewButtons();
+  await renderPortalCart();
+}
+async function portalAddToCart(inventoryId){ const client=ensureClient(); const {data:inv,error:invErr}=await client.from('shop_inventory').select('id,stock_on_hand').eq('id',inventoryId).single(); if(invErr) throw invErr; if(inv.stock_on_hand<=0) throw new Error('Item is out of stock.'); const {data:existing,error:eErr}=await client.from('cart_items').select('id,quantity').eq('cart_id',appState.portal.cartId).eq('inventory_id',inventoryId).limit(1); if(eErr) throw eErr; if(existing.length){ const newQty=existing[0].quantity+1; if(newQty>inv.stock_on_hand) throw new Error('Not enough stock.'); const {error}=await client.from('cart_items').update({quantity:newQty}).eq('id',existing[0].id); if(error) throw error; } else { const {error}=await client.from('cart_items').insert({cart_id:appState.portal.cartId,inventory_id:inventoryId,quantity:1}); if(error) throw error; } await renderPortalCart(); }
+async function portalChangeCart(cartItemId, qty){ const client=ensureClient(); if(qty<=0) return portalRemoveCartItem(cartItemId); const {data:item,error:cErr}=await client.from('cart_items').select('inventory_id').eq('id',cartItemId).single(); if(cErr) throw cErr; const {data:inv,error:iErr}=await client.from('shop_inventory').select('stock_on_hand').eq('id',item.inventory_id).single(); if(iErr) throw iErr; if(qty>inv.stock_on_hand) throw new Error('Not enough stock.'); const {error}=await client.from('cart_items').update({quantity:qty}).eq('id',cartItemId); if(error) throw error; await renderPortalCart(); }
+async function portalRemoveCartItem(cartItemId){ const client=ensureClient(); const {error}=await client.from('cart_items').delete().eq('id',cartItemId); if(error) throw error; await renderPortalCart(); }
+async function renderPortalCart(){ const client=ensureClient(); if(!appState.portal.cartId) return; const {data:rows,error}=await client.from('cart_items').select('id,inventory_id,quantity').eq('cart_id',appState.portal.cartId); if(error) throw error; if(!rows.length){ $('portalCartWrap').innerHTML=`<div class="empty">Cart is empty.</div>`; $('portalCartTotalDisplay').textContent=cpToDisplay(0); $('portalRemainingDisplay').textContent=cpToDisplay(appState.portal.walletCp); return; } const invIds=rows.map(r=>r.inventory_id); const {data:invRows,error:iErr}=await client.from('shop_inventory').select('id,item_name,base_price_cp,override_price_cp,stock_on_hand').in('id',invIds); if(iErr) throw iErr; const invMap=Object.fromEntries(invRows.map(i=>[i.id,i])); let totalCp=0; $('portalCartWrap').innerHTML=rows.map(r=>{ const inv=invMap[r.inventory_id]; const line=effectivePriceCp(inv)*r.quantity; totalCp+=line; return `<div class="card"><div class="row space"><div><strong>${escapeHtml(inv.item_name)}</strong><div class="small-meta">Qty ${r.quantity}</div><div style="margin-top:6px">${cpToCostIcons(line)}</div></div><div class="row"><button class="small secondary" data-action="portal-cart-minus" data-id="${r.id}" data-qty="${r.quantity-1}">-</button><button class="small secondary" data-action="portal-cart-plus" data-id="${r.id}" data-qty="${r.quantity+1}">+</button><button class="small danger" data-action="portal-cart-remove" data-id="${r.id}">Remove</button></div></div></div>`; }).join(''); $('portalCartTotalDisplay').textContent=cpToDisplay(totalCp); $('portalRemainingDisplay').textContent=cpToDisplay(Math.max(appState.portal.walletCp-totalCp,0)); }
+async function portalCheckout(){ const client=ensureClient(); const {data:cartItems,error:cErr}=await client.from('cart_items').select('id,inventory_id,quantity').eq('cart_id',appState.portal.cartId); if(cErr) throw cErr; if(!cartItems.length) throw new Error('Cart is empty.'); const {data:player,error:pErr}=await client.from('campaign_players').select('id,display_name,campaign_id').eq('id',appState.portal.playerId).single(); if(pErr) throw pErr; const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,name').eq('id',appState.portal.shopId).single(); if(sErr) throw sErr; const invIds=cartItems.map(c=>c.inventory_id); const {data:invRows,error:iErr}=await client.from('shop_inventory').select('id,srd_item_id,item_name,base_price_cp,override_price_cp,stock_on_hand').in('id',invIds); if(iErr) throw iErr; const invMap=Object.fromEntries(invRows.map(i=>[i.id,i])); let totalCp=0; for(const ci of cartItems){ const inv=invMap[ci.inventory_id]; if(ci.quantity>inv.stock_on_hand) throw new Error(`Not enough stock for ${inv.item_name}.`); totalCp += effectivePriceCp(inv)*ci.quantity; } if(appState.portal.walletCp<totalCp) throw new Error('Not enough money in wallet.'); const {data:invoice,error:invErr}=await client.from('checkout_invoices').insert({ campaign_id:player.campaign_id, player_id:player.id, shop_id:shop.id, player_name_snapshot:player.display_name, shop_name_snapshot:shop.name, total_cp:totalCp }).select().single(); if(invErr) throw invErr; const invoiceLines=cartItems.map(ci=>{ const inv=invMap[ci.inventory_id]; const unitPrice=effectivePriceCp(inv); return { invoice_id:invoice.id, srd_item_id:inv.srd_item_id, item_name_snapshot:inv.item_name, quantity:ci.quantity, unit_price_cp:unitPrice, line_total_cp:unitPrice*ci.quantity }; }); const {error:lineErr}=await client.from('checkout_invoice_items').insert(invoiceLines); if(lineErr) throw lineErr; const {error:wErr}=await client.from('player_wallets').update({balance_cp:appState.portal.walletCp-totalCp}).eq('player_id',appState.portal.playerId); if(wErr) throw wErr; for(const ci of cartItems){ const inv=invMap[ci.inventory_id]; const {error}=await client.from('shop_inventory').update({stock_on_hand:inv.stock_on_hand-ci.quantity}).eq('id',ci.inventory_id); if(error) throw error; } const {error:cUpdErr}=await client.from('carts').update({status:'submitted',updated_at:new Date().toISOString()}).eq('id',appState.portal.cartId); if(cUpdErr) throw cUpdErr; appState.portal.walletCp-=totalCp; appState.portal.cartId=''; await loadPortalWorkspace(); await loadPortalShop(); alert('Checkout submitted.'); }
+
+async function refreshAll(){ ensureClient(); await loadShopTypeCatalog(); populateShopTypeSelects(); await refreshCampaigns(); await refreshPlayers(); await refreshShops(); await refreshLibrary(); await refreshInvoices(); }
+
+function bindListeners(){
+  $('selectedCampaign')?.addEventListener('change', async()=>{ appState.currentCampaignId=$('selectedCampaign').value||null; try{ ensureClient(); await refreshAll(); }catch(err){ setStatus(err.message); } });
+  $('manageShopSelect')?.addEventListener('change', async()=>{ appState.currentManageShopId=$('manageShopSelect').value||null; try{ ensureClient(); await refreshShopBuilder(); }catch(err){ setStatus(err.message); } });
+  $('librarySearch')?.addEventListener('input', async()=>{ try{ ensureClient(); await refreshLibrary(); }catch(err){ setStatus(err.message); } });
+  $('libraryShopTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await refreshLibrary(); }catch(err){ setStatus(err.message); } });
+  $('librarySourceFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await refreshLibrary(); }catch(err){ setStatus(err.message); } });
+  $('shopItemSearch')?.addEventListener('input', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
+  $('shopItemTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
+  $('shopItemSourceFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
+  $('portalShopSelect')?.addEventListener('change', ()=>{ appState.portal.shopId=$('portalShopSelect').value||''; });
+  $('portalItemSearch')?.addEventListener('input', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
+  $('portalTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
+  $('portalSourceFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
+
+  document.body.addEventListener('click', async(e)=>{
+    const btn=e.target.closest('button');
+    if(!btn) return;
+    const noDb=['navCampaign','navShops','navLibrary','navInvoices'];
+    try{
+      if(!noDb.includes(btn.id)) ensureClient();
+      setBusy(btn,true);
+
+      if(btn.id==='saveBtn') await saveConfig();
+      else if(btn.id==='testBtn') await testConnection();
+      else if(btn.id==='createCampaignBtn') await createCampaign();
+      else if(btn.id==='deleteCampaignBtn') await deleteCampaign();
+      else if(btn.id==='refreshBtn') await refreshAll();
+      else if(btn.id==='createShopBtn') await createShop();
+      else if(btn.id==='createLibraryItemBtn') await createLibraryItem();
+      else if(btn.id==='refreshLibraryBtn') await refreshLibrary();
+      else if(btn.id==='generateInventoryBtn') await generateInventoryForShop();
+      else if(btn.id==='clearInventoryBtn') await clearInventoryForShop();
+      else if(btn.id==='addTempItemBtn') await addTemporaryItemToShop();
+      else if(btn.id==='applyShopShuffleBtn') await applyShopShuffle();
+      else if(btn.id==='resetShopPricesBtn') await resetShopPrices();
+      else if(btn.id==='navCampaign') setScreen('campaign');
+      else if(btn.id==='navShops') setScreen('shops');
+      else if(btn.id==='navLibrary') setScreen('library');
+      else if(btn.id==='navInvoices') setScreen('invoices');
+
+      else if(btn.id==='playerCardViewBtn'){ appState.views.players='cards'; await refreshPlayers(); }
+      else if(btn.id==='playerTableViewBtn'){ appState.views.players='table'; await refreshPlayers(); }
+      else if(btn.id==='libraryCardViewBtn'){ appState.views.library='cards'; await refreshLibrary(); }
+      else if(btn.id==='libraryTableViewBtn'){ appState.views.library='table'; await refreshLibrary(); }
+      else if(btn.id==='shopInventoryCardViewBtn'){ appState.views.shopInventory='cards'; await refreshShopBuilder(); }
+      else if(btn.id==='shopInventoryTableViewBtn'){ appState.views.shopInventory='table'; await refreshShopBuilder(); }
+      else if(btn.id==='shopLibraryCardViewBtn'){ appState.views.shopLibrary='cards'; await renderShopLibrarySearch(); }
+      else if(btn.id==='shopLibraryTableViewBtn'){ appState.views.shopLibrary='table'; await renderShopLibrarySearch(); }
+      else if(btn.id==='portalInventoryCardViewBtn'){ appState.views.portalInventory='cards'; if(appState.portal.shopId) await loadPortalShop(); }
+      else if(btn.id==='portalInventoryTableViewBtn'){ appState.views.portalInventory='table'; if(appState.portal.shopId) await loadPortalShop(); }
+
+      else if(btn.id==='joinCampaignBtn') await joinCampaignFromPortal();
+      else if(btn.id==='resumePlayerBtn') await resumePlayer();
+      else if(btn.id==='forgetPlayerBtn') forgetPlayer();
+      else if(btn.id==='leaveCampaignBtn') forgetPlayer();
+      else if(btn.id==='savePortalProfileBtn') await savePortalProfile();
+      else if(btn.id==='openPortalShopBtn') await openPortalShop();
+      else if(btn.id==='reloadPortalShopBtn') await loadPortalShop();
+      else if(btn.id==='portalCheckoutBtn') await portalCheckout();
+
+      else if(btn.dataset.action==='save-gm-player') await saveGMPlayerWallet(btn.dataset.id);
+      else if(btn.dataset.action==='delete-player') await deletePlayer(btn.dataset.id);
+      else if(btn.dataset.action==='manage-shop'){ appState.currentManageShopId=btn.dataset.id; $('manageShopSelect').value=appState.currentManageShopId; setScreen('shops'); await refreshShopBuilder(); }
+      else if(btn.dataset.action==='delete-shop') await deleteShop(btn.dataset.id);
+
+      else if(btn.dataset.action==='save-library-item') await saveLibraryItem(btn.dataset.id);
+      else if(btn.dataset.action==='delete-library-item') await deleteLibraryItem(btn.dataset.id);
+      else if(btn.dataset.action==='toggle-library-details') $('lib-extra-'+btn.dataset.id).classList.toggle('hidden');
+
+      else if(btn.dataset.action==='add-library-item-to-shop') await addLibraryItemToShop(btn.dataset.id);
+      else if(btn.dataset.action==='save-inventory') await saveInventoryRow(btn.dataset.id);
+      else if(btn.dataset.action==='delete-inventory') await deleteInventoryRow(btn.dataset.id);
+      else if(btn.dataset.action==='toggle-inventory-details') $('inventory-extra-'+btn.dataset.id).classList.toggle('hidden');
+      else if(btn.dataset.action==='shuffle-item-price') await shuffleItemPrice(btn.dataset.id);
+      else if(btn.dataset.action==='reset-item-price') await resetItemPrice(btn.dataset.id);
+      else if(btn.dataset.action==='toggle-desc') toggleDescById(btn.dataset.id, btn);
+      else if(btn.dataset.action==='lookup-invoice-item') await lookupInvoiceItem(btn.dataset.id);
+
+      else if(btn.dataset.action==='portal-add-to-cart') await portalAddToCart(btn.dataset.id);
+      else if(btn.dataset.action==='portal-cart-minus') await portalChangeCart(btn.dataset.id, Number(btn.dataset.qty));
+      else if(btn.dataset.action==='portal-cart-plus') await portalChangeCart(btn.dataset.id, Number(btn.dataset.qty));
+      else if(btn.dataset.action==='portal-cart-remove') await portalRemoveCartItem(btn.dataset.id);
+
+    } catch(err){
       console.error(err);
       alert(err.message || String(err));
       setStatus(err.message || String(err));
-      flashButton(btn, false);
     } finally {
-      setBusy(btn, false);
+      setBusy(btn,false);
     }
   });
-
-  $('selectedCampaign')?.addEventListener('change', async () => {
-    currentCampaignId = $('selectedCampaign').value || null;
-    try { ensureClient(); await refreshAll(); } catch (err) { setStatus(err.message); }
-  });
-  $('manageShopSelect')?.addEventListener('change', async () => {
-    currentManageShopId = $('manageShopSelect').value || null;
-    try { ensureClient(); await refreshShopBuilder(); } catch (err) { setStatus(err.message); }
-  });
-  $('librarySearch')?.addEventListener('input', async () => { try { ensureClient(); await refreshLibrary(); } catch (err) { setStatus(err.message); } });
-  $('libraryShopTypeFilter')?.addEventListener('change', async () => { try { ensureClient(); await refreshLibrary(); } catch (err) { setStatus(err.message); } });
-  $('librarySourceFilter')?.addEventListener('change', async () => { try { ensureClient(); await refreshLibrary(); } catch (err) { setStatus(err.message); } });
-  $('shopItemSearch')?.addEventListener('input', async () => { try { ensureClient(); await renderShopLibrarySearch(); } catch (err) { setStatus(err.message); } });
-  $('shopItemTypeFilter')?.addEventListener('change', async () => { try { ensureClient(); await renderShopLibrarySearch(); } catch (err) { setStatus(err.message); } });
-  $('shopItemSourceFilter')?.addEventListener('change', async () => { try { ensureClient(); await renderShopLibrarySearch(); } catch (err) { setStatus(err.message); } });
-  $('portalShopSelect')?.addEventListener('change', async () => { portalState.shopId = $('portalShopSelect').value || ''; });
-  $('portalItemSearch')?.addEventListener('input', async () => { try { ensureClient(); if (portalState.shopId) await loadPortalShop(); } catch (err) { setStatus(err.message); } });
-  $('portalTypeFilter')?.addEventListener('change', async () => { try { ensureClient(); if (portalState.shopId) await loadPortalShop(); } catch (err) { setStatus(err.message); } });
-  $('portalSourceFilter')?.addEventListener('change', async () => { try { ensureClient(); if (portalState.shopId) await loadPortalShop(); } catch (err) { setStatus(err.message); } });
-
-  (async function bootstrap() {
-    try {
-      loadSavedConfig();
-      ensureClient();
-      await loadShopTypeCatalog();
-      populateShopTypeSelects();
-      setupRealtime();
-      if (isPortalMode) {
-        $('gmApp').classList.add('hidden');
-        $('playerPortal').classList.remove('hidden');
-        if (portalState.playerId && portalState.campaignId) await loadPortalWorkspace();
-      } else {
-        $('gmApp').classList.remove('hidden');
-        $('playerPortal').classList.add('hidden');
-        setScreen('campaign');
-        await refreshAll();
-      }
-    } catch (err) {
-      console.error(err);
-      setStatus(`Startup failed: ${err.message}`);
-      alert(err.message || String(err));
-    }
-  })();
-});
-window.addEventListener('error', (e) => {
-  const msg = e?.message || 'Unknown JavaScript error';
-  setStatus(msg.includes("reading 'from'") ? 'Database client is not initialised. Save your Supabase config or add APP_CONFIG values at the top of the file.' : msg);
-});
-
-  async function renderShopLibrarySearch() {
-  const shopId = $('manageShopSelect').value;
-  if (!shopId) return;
-
-  const { data: shop } = await client
-    .from('campaign_shops')
-    .select('shop_type')
-    .eq('id', shopId)
-    .single();
-
-  const search = $('shopItemSearch').value.trim().toLowerCase();
-  const typeFilter = $('shopItemTypeFilter').value || shop.shop_type;
-  const sourceFilter = $('shopItemSourceFilter').value;
-
-  const { data: items, error } = await client
-    .from('srd_items')
-    .select('*')
-    .order('name');
-
-  if (error) {
-    $('shopLibraryResults').innerHTML = `<div class="empty">${error.message}</div>`;
-    return;
-  }
-
-  let rows = (items || []).filter(i =>
-    i.shop_type === typeFilter ||
-    String(i.shop_type_slugs || '').split('|').includes(typeFilter)
-  );
-
-  rows = rows.filter(i => {
-    const hay = `${i.name} ${i.description || ''}`.toLowerCase();
-    return (!search || hay.includes(search)) &&
-           (!sourceFilter || i.source === sourceFilter);
-  });
-
-  if (!rows.length) {
-    $('shopLibraryResults').innerHTML = `<div class="empty">No items found.</div>`;
-    return;
-  }
-
-  $('shopLibraryResults').innerHTML = rows.map(i => `
-    <div class="card">
-      <div class="item-name">
-        <span class="item-icon">${itemIconFor(i.item_type || i.name)}</span>
-        <div class="title">${i.name}</div>
-      </div>
-
-      <div>${cpToCostIcons(i.base_price_cp || 0)}</div>
-
-      <div class="item-desc desc-collapsed" id="lib-desc-${i.id}">
-        ${i.description || 'No description'}
-      </div>
-
-      <button class="linkish" data-action="toggle-desc" data-id="lib-desc-${i.id}">More</button>
-
-      <button class="secondary" data-action="add-library-item-to-shop" data-id="${i.id}">
-        Add to Shop
-      </button>
-    </div>
-  `).join('');
 }
+
+function loadSavedConfig(){
+  if($('url')) $('url').value = APP_CONFIG.SUPABASE_URL || localStorage.getItem('url') || '';
+  if($('key')) $('key').value = APP_CONFIG.SUPABASE_ANON_KEY || localStorage.getItem('key') || '';
+  if ((APP_CONFIG.SUPABASE_URL && APP_CONFIG.SUPABASE_ANON_KEY) || (($('url')?.value||'') && ($('key')?.value||''))) {
+    initClient();
+    setStatus('Loaded app config.');
+  }
+}
+window.addEventListener('error', e=>setStatus(e?.message || 'Unknown JavaScript error'));
+
+(async function bootstrap(){
+  try{
+    bindListeners();
+    loadSavedConfig();
+    ensureClient();
+    await loadShopTypeCatalog();
+    populateShopTypeSelects();
+    setupRealtime();
+    const qp=new URLSearchParams(window.location.search);
+    const isPortalMode=qp.get('portal')==='1';
+    if(isPortalMode){
+      $('gmApp').classList.add('hidden');
+      $('playerPortal').classList.remove('hidden');
+      if(appState.portal.playerId && appState.portal.campaignId) await loadPortalWorkspace();
+    } else {
+      $('gmApp').classList.remove('hidden');
+      $('playerPortal').classList.add('hidden');
+      setScreen('campaign');
+      await refreshAll();
+    }
+  } catch(err){
+    console.error(err);
+    setStatus(`Startup failed: ${err.message}`);
+    alert(err.message || String(err));
+  }
+})();
 </script>
 </body>
-</html>  async function renderShopLibrarySearch() {
-    const shopId = $('manageShopSelect').value;
-    if (!shopId) return;
-    const { data: shop, error: sErr } = await client.from('campaign_shops').select('id, shop_type').eq('id', shopId).single();
-    if (sErr) return;
-
-    const search = $('shopItemSearch').value.trim().toLowerCase();
-    const typeFilter = $('shopItemTypeFilter').value || shop.shop_type;
-    const sourceFilter = $('shopItemSourceFilter').value;
-
-    const { data: items, error } = await client.from('srd_items')
-      .select('id, name, description, base_price_cp, default_stock, shop_type, shop_type_slugs, source, item_type, category')
-      .order('name');
-    if (error) { $('shopLibraryResults').innerHTML = `<div class="empty">${escapeHtml(error.message)}</div>`; return; }
-
-    let rows = (items || []).filter(item => item.shop_type === typeFilter || String(item.shop_type_slugs || '').split('|').includes(typeFilter));
-    rows = rows.filter(item => {
-      const hay = `${item.name || ''} ${item.description || ''}`.toLowerCase();
-      return (!search || hay.includes(search)) && (!sourceFilter || item.source === sourceFilter);
-    });
-
-    if (!rows.length) {
-      $('shopLibraryResults').className = '';
-      $('shopLibraryResults').innerHTML = `<div class="empty">No compatible items match your current filters.</div>`;
-      syncViewButtons();
-      return;
-    }
-
-    if (shopLibraryViewMode === 'table') {
-      $('shopLibraryResults').className = '';
-      $('shopLibraryResults').innerHTML = `
-        <div class="table-wrap"><table class="ms-table">
-          <thead><tr><th>Item</th><th>Type</th><th>Source</th><th>Cost</th><th>Stock</th><th>Description</th><th>Action</th></tr></thead>
-          <tbody>
-            ${rows.map(item => `<tr>
-              <td><div class="item-name"><span class="item-icon">${itemIconFor(item.item_type || item.category || item.name)}</span><strong>${escapeHtml(item.name)}</strong></div></td>
-              <td>${escapeHtml(item.item_type || item.category || '')}</td>
-              <td>${escapeHtml(item.source || '')}</td>
-              <td>${item.base_price_cp == null ? '—' : cpToCostIcons(item.base_price_cp)}</td>
-              <td>${item.default_stock ?? 1}</td>
-              <td><div id="shoplib-desc-${item.id}" class="item-desc desc-collapsed">${escapeHtml(item.description || 'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="shoplib-desc-${item.id}">More</button></td>
-              <td><button class="small secondary" data-action="add-library-item-to-shop" data-id="${item.id}">Add</button></td>
-            </tr>`).join('')}
-          </tbody></table></div>`;
-    } else {
-      $('shopLibraryResults').className = 'cards';
-      $('shopLibraryResults').innerHTML = rows.map(item => `
-        <div class="card">
-          <div class="item-name"><span class="item-icon">${itemIconFor(item.item_type || item.category || item.name)}</span><div class="title">${escapeHtml(item.name)}</div></div>
-          <div><span class="pill">${escapeHtml(shopLabel(item.shop_type))}</span><span class="pill">${escapeHtml(item.item_type || item.category || '')}</span></div>
-          <div style="margin-top:8px">${item.base_price_cp == null ? 'No parsed price' : cpToCostIcons(item.base_price_cp)}</div>
-          <div class="small-meta">${item.source ? escapeHtml(item.source) + ' • ' : ''}Default stock: ${item.default_stock ?? 1}</div>
-          <div id="shoplib-card-desc-${item.id}" class="item-desc desc-collapsed">${escapeHtml(item.description || 'No description.')}</div>
-          <button class="linkish" data-action="toggle-desc" data-id="shoplib-card-desc-${item.id}">More</button>
-          <button style="margin-top:14px" class="secondary" data-action="add-library-item-to-shop" data-id="${item.id}">Add to Shop</button>
-        </div>`).join('');
-    }
-    syncViewButtons();
-  }
-
-
+</html>
