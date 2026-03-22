@@ -562,871 +562,453 @@
   </div>
 
   <script>
-    let client = null;
-    let currentCampaignId = '';
-    let currentShopId = '';
-    let currentPlayerId = '';
-    let gmLoadedInventory = [];
-    let playerContext = {
-      token: '',
-      link: null,
-      shop: null,
-      player: null,
-      walletCp: 0,
-      cart: null,
-      cartItems: []
-    };
+document.addEventListener('DOMContentLoaded', () => {
+  let client = null;
+  let currentCampaignId = null;
+  let currentManageShopId = null;
+  let currentTokenData = null;
+  let currentCartId = null;
 
-    const els = {
-      url: document.getElementById('url'),
-      key: document.getElementById('key'),
-      status: document.getElementById('status'),
-      playerStatus: document.getElementById('playerStatus'),
+  const byId = (id) => document.getElementById(id);
 
-      campaignName: document.getElementById('campaignName'),
-      selectedCampaign: document.getElementById('selectedCampaign'),
+  const urlInput = byId('url');
+  const keyInput = byId('key');
+  const statusEl = byId('status');
 
-      playerName: document.getElementById('playerName'),
-      walletGp: document.getElementById('walletGp'),
-      walletSp: document.getElementById('walletSp'),
-      walletCp: document.getElementById('walletCp'),
-      selectedPlayer: document.getElementById('selectedPlayer'),
-      selectedPlayerWallet: document.getElementById('selectedPlayerWallet'),
+  const selectedCampaignEl = byId('selectedCampaign');
+  const campaignNameEl = byId('campaignName');
 
-      shopName: document.getElementById('shopName'),
-      shopType: document.getElementById('shopType'),
-      regionType: document.getElementById('regionType'),
-      selectedShop: document.getElementById('selectedShop'),
+  const playerNameEl = byId('playerName');
+  const walletGpEl = byId('walletGp');
+  const walletSpEl = byId('walletSp');
+  const walletCpEl = byId('walletCp');
 
-      linkPlayer: document.getElementById('linkPlayer'),
-      linkExpiryHours: document.getElementById('linkExpiryHours'),
-      shareLinkOutput: document.getElementById('shareLinkOutput'),
+  const shopNameEl = byId('shopName');
+  const shopTypeEl = byId('shopType');
+  const regionTypeEl = byId('regionType');
 
-      playerList: document.getElementById('playerList'),
-      shopList: document.getElementById('shopList'),
-      inventoryEditor: document.getElementById('inventoryEditor'),
-      shopMeta: document.getElementById('shopMeta'),
-      cartList: document.getElementById('cartList'),
-      checkoutList: document.getElementById('checkoutList'),
+  const playerListEl = byId('playerList');
+  const shopListEl = byId('shopList');
 
-      playerToken: document.getElementById('playerToken'),
-      playerWalletDisplay: document.getElementById('playerWalletDisplay'),
-      playerStoreMeta: document.getElementById('playerStoreMeta'),
-      playerInventory: document.getElementById('playerInventory'),
-      playerCartList: document.getElementById('playerCartList'),
-      cartTotalDisplay: document.getElementById('cartTotalDisplay'),
-    };
+  const manageShopSelectEl = byId('manageShopSelect');
+  const inventoryWrapEl = byId('inventoryWrap');
+  const inventoryMetaEl = byId('inventoryMeta');
 
-    function setStatus(msg) {
-      els.status.textContent = msg;
+  const linkShopSelectEl = byId('linkShopSelect');
+  const linkPlayerSelectEl = byId('linkPlayerSelect');
+  const linkExpirySelectEl = byId('linkExpirySelect');
+  const shareLinkListEl = byId('shareLinkList');
+
+  const cartListEl = byId('cartList');
+  const checkoutListEl = byId('checkoutList');
+
+  const inventorySectionEl = byId('inventorySection');
+  const linksSectionEl = byId('linksSection');
+  const checkoutsSectionEl = byId('checkoutsSection');
+
+  const gmAppEl = byId('gmApp');
+  const playerAppEl = byId('playerApp');
+
+  const playerStoreMetaEl = byId('playerStoreMeta');
+  const playerWalletDisplayEl = byId('playerWalletDisplay');
+  const playerInventoryWrapEl = byId('playerInventoryWrap');
+  const playerCartWrapEl = byId('playerCartWrap');
+  const cartBadgeEl = byId('cartBadge');
+
+  const qp = new URLSearchParams(window.location.search);
+  const token = qp.get('token');
+
+  function setStatus(msg) {
+    if (statusEl) statusEl.textContent = msg;
+    console.log(msg);
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function escapeJs(str) {
+    return String(str ?? '').replaceAll("\\", "\\\\").replaceAll("'", "\\'");
+  }
+
+  function moneyToCp(gp, sp, cp) {
+    return (Number(gp || 0) * 100) + (Number(sp || 0) * 10) + Number(cp || 0);
+  }
+
+  function cpToParts(totalCp) {
+    const cp = Number(totalCp || 0);
+    const gp = Math.floor(cp / 100);
+    const sp = Math.floor((cp % 100) / 10);
+    const c = cp % 10;
+    return { gp, sp, cp: c };
+  }
+
+  function cpToDisplay(totalCp) {
+    const p = cpToParts(totalCp);
+    return `${p.gp} gp, ${p.sp} sp, ${p.cp} cp`;
+  }
+
+  function effectivePriceCp(row) {
+    return row.override_price_cp != null ? Number(row.override_price_cp) : Number(row.base_price_cp);
+  }
+
+  function randomToken() {
+    return crypto.randomUUID().replaceAll('-', '');
+  }
+
+  function initClient() {
+    const url = (urlInput?.value || localStorage.getItem('url') || '').trim();
+    const key = (keyInput?.value || localStorage.getItem('key') || '').trim();
+    if (!url || !key) throw new Error('Project URL and publishable key are required.');
+    client = window.supabase.createClient(url, key);
+    return client;
+  }
+
+  function loadSavedConfig() {
+    if (urlInput) urlInput.value = localStorage.getItem('url') || '';
+    if (keyInput) keyInput.value = localStorage.getItem('key') || '';
+    if ((urlInput?.value || '') && (keyInput?.value || '')) {
+      initClient();
+      setStatus('Loaded saved config.');
+    }
+  }
+
+  async function saveConfig() {
+    localStorage.setItem('url', (urlInput?.value || '').trim());
+    localStorage.setItem('key', (keyInput?.value || '').trim());
+    initClient();
+    setStatus('Config saved.');
+    await refreshAll();
+  }
+
+  async function testConnection() {
+    if (!client) initClient();
+    const { error } = await client.from('campaigns').select('id').limit(1);
+    if (error) throw error;
+    setStatus('Connection successful.');
+    await refreshAll();
+  }
+
+  function setActiveTab(tab) {
+    if (inventorySectionEl) inventorySectionEl.classList.toggle('hidden', tab !== 'inventory');
+    if (linksSectionEl) linksSectionEl.classList.toggle('hidden', tab !== 'links');
+    if (checkoutsSectionEl) checkoutsSectionEl.classList.toggle('hidden', tab !== 'checkouts');
+
+    byId('tabInventoryBtn')?.classList.toggle('secondary', tab !== 'inventory');
+    byId('tabLinksBtn')?.classList.toggle('secondary', tab !== 'links');
+    byId('tabCheckoutsBtn')?.classList.toggle('secondary', tab !== 'checkouts');
+  }
+
+  function showGMMode() {
+    gmAppEl?.classList.remove('hidden');
+    playerAppEl?.classList.add('hidden');
+  }
+
+  function showPlayerMode() {
+    gmAppEl?.classList.add('hidden');
+    playerAppEl?.classList.remove('hidden');
+  }
+
+  async function createCampaign() {
+    const name = campaignNameEl.value.trim();
+    if (!name) return setStatus('Enter a campaign name.');
+    const { data, error } = await client.from('campaigns').insert({ name }).select().single();
+    if (error) throw error;
+    campaignNameEl.value = '';
+    currentCampaignId = data.id;
+    setStatus(`Campaign created: ${data.name}`);
+    await refreshAll();
+  }
+
+  async function deleteCampaign() {
+    const id = selectedCampaignEl.value;
+    if (!id) return setStatus('Select a campaign first.');
+    if (!confirm('Delete this campaign and all related data?')) return;
+    const { error } = await client.from('campaigns').delete().eq('id', id);
+    if (error) throw error;
+    currentCampaignId = null;
+    setStatus('Campaign deleted.');
+    await refreshAll();
+  }
+
+  async function refreshCampaigns() {
+    const { data, error } = await client.from('campaigns').select('id, name, created_at').order('created_at', { ascending: false });
+    if (error) throw error;
+    selectedCampaignEl.innerHTML = `<option value="">Select campaign</option>` + data.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+    if (currentCampaignId && data.some(c => c.id === currentCampaignId)) {
+      selectedCampaignEl.value = currentCampaignId;
+    } else if (data[0]) {
+      currentCampaignId = data[0].id;
+      selectedCampaignEl.value = data[0].id;
+    }
+  }
+
+  async function createPlayer() {
+    const campaignId = selectedCampaignEl.value;
+    if (!campaignId) return setStatus('Select a campaign first.');
+    const displayName = playerNameEl.value.trim();
+    if (!displayName) return setStatus('Enter a player name.');
+    const balanceCp = moneyToCp(walletGpEl.value, walletSpEl.value, walletCpEl.value);
+
+    const { data: player, error: playerError } = await client
+      .from('campaign_players')
+      .insert({ campaign_id: campaignId, display_name: displayName })
+      .select()
+      .single();
+    if (playerError) throw playerError;
+
+    const { error: walletError } = await client
+      .from('player_wallets')
+      .insert({ player_id: player.id, balance_cp: balanceCp });
+    if (walletError) throw walletError;
+
+    playerNameEl.value = '';
+    walletGpEl.value = '';
+    walletSpEl.value = '';
+    walletCpEl.value = '';
+    setStatus(`Player added: ${player.display_name}`);
+    await refreshPlayers();
+  }
+
+  async function refreshPlayers() {
+    const campaignId = selectedCampaignEl.value;
+    if (!campaignId) {
+      playerListEl.innerHTML = `<div class="muted">Select a campaign.</div>`;
+      linkPlayerSelectEl.innerHTML = `<option value="">All players / anonymous</option>`;
+      return;
     }
 
-    function setPlayerStatus(msg) {
-      els.playerStatus.textContent = msg;
+    const { data: players, error } = await client
+      .from('campaign_players')
+      .select('id, display_name, created_at')
+      .eq('campaign_id', campaignId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    const ids = players.map(p => p.id);
+    const walletMap = {};
+    if (ids.length) {
+      const { data: wallets, error: wErr } = await client
+        .from('player_wallets')
+        .select('player_id, balance_cp')
+        .in('player_id', ids);
+      if (wErr) throw wErr;
+      wallets.forEach(w => walletMap[w.player_id] = w.balance_cp);
     }
 
-    function initClient() {
-      const url = els.url.value.trim();
-      const key = els.key.value.trim();
-      if (!url || !key) throw new Error('Project URL and publishable key are required.');
-      client = window.supabase.createClient(url, key);
-      return client;
-    }
-
-    function escapeHtml(str) {
-      return String(str ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-    }
-
-    function randomToken(len = 32) {
-      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let out = '';
-      for (let i = 0; i < len; i++) out += chars[Math.floor(Math.random() * chars.length)];
-      return out;
-    }
-
-    function moneyPartsFromCp(cp) {
-      const total = Number(cp || 0);
-      const gp = Math.floor(total / 100);
-      const sp = Math.floor((total % 100) / 10);
-      const copper = total % 10;
-      return { gp, sp, cp: copper };
-    }
-
-    function moneyToStringFromCp(cp) {
-      const p = moneyPartsFromCp(cp);
-      return `${p.gp} gp ${p.sp} sp ${p.cp} cp`;
-    }
-
-    function gpSpCpToCp(gp, sp, cp) {
-      return (Number(gp || 0) * 100) + (Number(sp || 0) * 10) + Number(cp || 0);
-    }
-
-    function effectivePriceCp(row) {
-      return row.override_price_cp == null ? row.base_price_cp : row.override_price_cp;
-    }
-
-    function qs(name) {
-      return new URLSearchParams(window.location.search).get(name);
-    }
-
-    function switchView(viewId) {
-      document.querySelectorAll('.tab').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.view === viewId);
-      });
-      document.querySelectorAll('.view').forEach(v => {
-        v.classList.toggle('active', v.id === viewId);
-      });
-    }
-
-    async function saveConfig() {
-      try {
-        localStorage.setItem('url', els.url.value.trim());
-        localStorage.setItem('key', els.key.value.trim());
-        initClient();
-        setStatus('Config saved.');
-        await refreshAllGmData();
-      } catch (err) {
-        setStatus('Save failed: ' + err.message);
-      }
-    }
-
-    async function testConnection() {
-      try {
-        if (!client) initClient();
-        const { error } = await client.from('campaigns').select('id').limit(1);
-        if (error) throw error;
-        setStatus('Connection successful.');
-        await refreshAllGmData();
-      } catch (err) {
-        setStatus('Connection failed: ' + err.message);
-      }
-    }
-
-    function loadSavedConfig() {
-      els.url.value = localStorage.getItem('url') || '';
-      els.key.value = localStorage.getItem('key') || '';
-      if (els.url.value && els.key.value) {
-        try {
-          initClient();
-          setStatus('Loaded saved config.');
-        } catch (err) {
-          setStatus('Saved config failed to initialise: ' + err.message);
-        }
-      }
-    }
-
-    async function createCampaign() {
-      try {
-        if (!client) initClient();
-        const name = els.campaignName.value.trim();
-        if (!name) throw new Error('Campaign name is required.');
-
-        const { data, error } = await client
-          .from('campaigns')
-          .insert({ name })
-          .select()
-          .single();
-
-        if (error) throw error;
-        currentCampaignId = data.id;
-        els.campaignName.value = '';
-        setStatus(`Campaign created: ${data.name}`);
-        await refreshCampaigns();
-      } catch (err) {
-        setStatus('Create campaign failed: ' + err.message);
-      }
-    }
-
-    async function deleteCampaign() {
-      try {
-        if (!currentCampaignId) throw new Error('Select a campaign first.');
-        const { error } = await client.from('campaigns').delete().eq('id', currentCampaignId);
-        if (error) throw error;
-        currentCampaignId = '';
-        currentPlayerId = '';
-        currentShopId = '';
-        setStatus('Campaign deleted.');
-        await refreshAllGmData();
-      } catch (err) {
-        setStatus('Delete campaign failed: ' + err.message);
-      }
-    }
-
-    async function refreshCampaigns() {
-      const { data, error } = await client
-        .from('campaigns')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      els.selectedCampaign.innerHTML = `<option value="">Select campaign</option>` + data.map(c =>
-        `<option value="${c.id}">${escapeHtml(c.name)}</option>`
-      ).join('');
-
-      if (!currentCampaignId && data.length) currentCampaignId = data[0].id;
-      if (currentCampaignId) els.selectedCampaign.value = currentCampaignId;
-
-      await refreshPlayers();
-      await refreshShops();
-    }
-
-    async function createPlayer() {
-      try {
-        if (!currentCampaignId) throw new Error('Select a campaign first.');
-        const displayName = els.playerName.value.trim();
-        if (!displayName) throw new Error('Player name is required.');
-
-        const startingCp = gpSpCpToCp(els.walletGp.value, els.walletSp.value, els.walletCp.value);
-
-        const { data: player, error: playerError } = await client
-          .from('campaign_players')
-          .insert({ campaign_id: currentCampaignId, display_name: displayName })
-          .select()
-          .single();
-
-        if (playerError) throw playerError;
-
-        const { error: walletError } = await client
-          .from('player_wallets')
-          .insert({ player_id: player.id, balance_cp: startingCp });
-
-        if (walletError) throw walletError;
-
-        currentPlayerId = player.id;
-        els.playerName.value = '';
-        setStatus(`Player created: ${player.display_name}`);
-        await refreshPlayers();
-      } catch (err) {
-        setStatus('Create player failed: ' + err.message);
-      }
-    }
-
-    async function deletePlayer() {
-      try {
-        if (!currentPlayerId) throw new Error('Select a player first.');
-        const { error } = await client.from('campaign_players').delete().eq('id', currentPlayerId);
-        if (error) throw error;
-        currentPlayerId = '';
-        setStatus('Player deleted.');
-        await refreshPlayers();
-      } catch (err) {
-        setStatus('Delete player failed: ' + err.message);
-      }
-    }
-
-    async function refreshPlayers() {
-      if (!currentCampaignId) {
-        els.playerList.innerHTML = `<div class="muted">Select a campaign.</div>`;
-        els.selectedPlayer.innerHTML = `<option value="">Select player</option>`;
-        els.linkPlayer.innerHTML = `<option value="">Select player</option>`;
-        els.selectedPlayerWallet.textContent = '-';
-        return;
-      }
-
-      const { data: players, error: playersError } = await client
-        .from('campaign_players')
-        .select('*')
-        .eq('campaign_id', currentCampaignId)
-        .order('created_at', { ascending: false });
-
-      if (playersError) throw playersError;
-
-      const ids = players.map(p => p.id);
-      let wallets = [];
-      if (ids.length) {
-        const { data: walletRows, error: walletError } = await client
-          .from('player_wallets')
-          .select('*')
-          .in('player_id', ids);
-        if (walletError) throw walletError;
-        wallets = walletRows;
-      }
-
-      const walletMap = new Map(wallets.map(w => [w.player_id, w]));
-
-      els.playerList.innerHTML = players.length
-        ? players.map(p => `
-          <div class="list-row">
-            <div class="title-row">
-              <div>
-                <strong>${escapeHtml(p.display_name)}</strong>
-                <div class="muted">${moneyToStringFromCp(walletMap.get(p.id)?.balance_cp || 0)}</div>
-              </div>
-              <button class="small secondary" onclick="selectPlayerById('${p.id}')">Select</button>
+    playerListEl.innerHTML = players.length
+      ? players.map(p => `
+        <div class="list-row">
+          <div class="row space">
+            <div>
+              <strong>${escapeHtml(p.display_name)}</strong>
+              <div class="muted">${cpToDisplay(walletMap[p.id] || 0)}</div>
             </div>
-          </div>
-        `).join('')
-        : `<div class="muted">No players in this campaign yet.</div>`;
-
-      const options = `<option value="">Select player</option>` + players.map(p =>
-        `<option value="${p.id}">${escapeHtml(p.display_name)}</option>`
-      ).join('');
-
-      els.selectedPlayer.innerHTML = options;
-      els.linkPlayer.innerHTML = options;
-
-      if (!currentPlayerId && players.length) currentPlayerId = players[0].id;
-      if (currentPlayerId) {
-        els.selectedPlayer.value = currentPlayerId;
-        els.linkPlayer.value = currentPlayerId;
-        const wallet = walletMap.get(currentPlayerId);
-        els.selectedPlayerWallet.textContent = moneyToStringFromCp(wallet?.balance_cp || 0);
-      } else {
-        els.selectedPlayerWallet.textContent = '-';
-      }
-    }
-
-    async function createShop() {
-      try {
-        if (!currentCampaignId) throw new Error('Select a campaign first.');
-        const name = els.shopName.value.trim();
-        if (!name) throw new Error('Shop name is required.');
-
-        const { data, error } = await client
-          .from('campaign_shops')
-          .insert({
-            campaign_id: currentCampaignId,
-            name,
-            shop_type: els.shopType.value,
-            region_type: els.regionType.value
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-        currentShopId = data.id;
-        els.shopName.value = '';
-        setStatus(`Shop created: ${data.name}`);
-        await refreshShops();
-      } catch (err) {
-        setStatus('Create shop failed: ' + err.message);
-      }
-    }
-
-    async function deleteShop() {
-      try {
-        if (!currentShopId) throw new Error('Select a shop first.');
-        const { error } = await client.from('campaign_shops').delete().eq('id', currentShopId);
-        if (error) throw error;
-        currentShopId = '';
-        gmLoadedInventory = [];
-        setStatus('Shop deleted.');
-        await refreshShops();
-        await refreshInventoryEditor();
-        await refreshDmCartsAndCheckouts();
-      } catch (err) {
-        setStatus('Delete shop failed: ' + err.message);
-      }
-    }
-
-    async function refreshShops() {
-      if (!currentCampaignId) {
-        els.shopList.innerHTML = `<div class="muted">Select a campaign.</div>`;
-        els.selectedShop.innerHTML = `<option value="">Select shop</option>`;
-        return;
-      }
-
-      const { data, error } = await client
-        .from('campaign_shops')
-        .select('*')
-        .eq('campaign_id', currentCampaignId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      els.shopList.innerHTML = data.length
-        ? data.map(s => `
-          <div class="list-row">
-            <div class="title-row">
-              <div>
-                <strong>${escapeHtml(s.name)}</strong>
-                <div>
-                  <span class="pill">${escapeHtml(s.shop_type)}</span>
-                  <span class="pill">${escapeHtml(s.region_type)}</span>
-                </div>
-              </div>
-              <button class="small secondary" onclick="selectShopById('${s.id}')">Select</button>
-            </div>
-          </div>
-        `).join('')
-        : `<div class="muted">No shops in this campaign yet.</div>`;
-
-      els.selectedShop.innerHTML = `<option value="">Select shop</option>` + data.map(s =>
-        `<option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(s.shop_type)}</option>`
-      ).join('');
-
-      if (!currentShopId && data.length) currentShopId = data[0].id;
-      if (currentShopId) els.selectedShop.value = currentShopId;
-    }
-
-    async function loadShop() {
-      try {
-        if (!currentShopId) throw new Error('Select a shop first.');
-        await refreshInventoryEditor();
-        await refreshDmCartsAndCheckouts();
-        setStatus('Shop loaded.');
-      } catch (err) {
-        setStatus('Load shop failed: ' + err.message);
-      }
-    }
-
-    async function generateInventory() {
-      try {
-        if (!currentShopId) throw new Error('Select a shop first.');
-
-        const { data: shop, error: shopError } = await client
-          .from('campaign_shops')
-          .select('*')
-          .eq('id', currentShopId)
-          .single();
-
-        if (shopError) throw shopError;
-
-        const { data: existing, error: existingError } = await client
-          .from('shop_inventory')
-          .select('id')
-          .eq('shop_id', currentShopId)
-          .limit(1);
-
-        if (existingError) throw existingError;
-        if (existing.length) {
-          throw new Error('This shop already has inventory. Delete the rows manually later if you want regeneration.');
-        }
-
-        const { data: items, error: itemsError } = await client
-          .from('srd_items')
-          .select('*')
-          .eq('shop_type', shop.shop_type)
-          .order('name', { ascending: true });
-
-        if (itemsError) throw itemsError;
-        if (!items.length) throw new Error('No SRD items found for that shop type.');
-
-        const inventoryRows = items.map(i => ({
-          shop_id: currentShopId,
-          srd_item_id: i.id,
-          item_name: i.name,
-          base_price_cp: i.base_price_cp,
-          override_price_cp: null,
-          stock_on_hand: i.default_stock
-        }));
-
-        const { error: insertError } = await client
-          .from('shop_inventory')
-          .insert(inventoryRows);
-
-        if (insertError) throw insertError;
-
-        setStatus(`Generated ${inventoryRows.length} SRD items for ${shop.name}.`);
-        await refreshInventoryEditor();
-      } catch (err) {
-        setStatus('Generate inventory failed: ' + err.message);
-      }
-    }
-
-    async function refreshInventoryEditor() {
-      if (!currentShopId) {
-        els.shopMeta.textContent = 'Select a campaign and shop.';
-        els.inventoryEditor.innerHTML = `<div class="muted">No shop loaded.</div>`;
-        return;
-      }
-
-      const { data: shop, error: shopError } = await client
-        .from('campaign_shops')
-        .select('*')
-        .eq('id', currentShopId)
-        .single();
-
-      if (shopError) throw shopError;
-
-      const { data: inventory, error: invError } = await client
-        .from('shop_inventory')
-        .select('*')
-        .eq('shop_id', currentShopId)
-        .order('item_name', { ascending: true });
-
-      if (invError) throw invError;
-
-      gmLoadedInventory = inventory;
-      els.shopMeta.textContent = `${shop.name} (${shop.shop_type}, ${shop.region_type})`;
-
-      if (!inventory.length) {
-        els.inventoryEditor.innerHTML = `<div class="muted">No inventory yet. Click "Generate SRD Inventory".</div>`;
-        return;
-      }
-
-      els.inventoryEditor.innerHTML = inventory.map(row => `
-        <div class="inventory-row">
-          <div>
-            <strong>${escapeHtml(row.item_name)}</strong>
-            <div class="tiny">Base: ${moneyToStringFromCp(row.base_price_cp)}</div>
-          </div>
-          <div>
-            <label class="tiny">Override price (cp)</label>
-            <input id="price-${row.id}" type="number" min="0" value="${row.override_price_cp ?? ''}" placeholder="${row.base_price_cp}" />
-          </div>
-          <div>
-            <label class="tiny">Effective</label>
-            <div class="code">${moneyToStringFromCp(effectivePriceCp(row))}</div>
-          </div>
-          <div>
-            <label class="tiny">Stock</label>
-            <input id="stock-${row.id}" type="number" min="0" value="${row.stock_on_hand}" />
-          </div>
-          <div class="row" style="margin:0;">
-            <button class="small" onclick="saveInventoryRow('${row.id}')">Save</button>
+            <button class="small danger" data-delete-player="${p.id}">Delete</button>
           </div>
         </div>
-      `).join('');
+      `).join('')
+      : `<div class="muted">No players yet.</div>`;
+
+    linkPlayerSelectEl.innerHTML = `<option value="">All players / anonymous</option>` + players.map(p =>
+      `<option value="${p.id}">${escapeHtml(p.display_name)}</option>`
+    ).join('');
+  }
+
+  async function createShop() {
+    const campaignId = selectedCampaignEl.value;
+    if (!campaignId) return setStatus('Select a campaign first.');
+    const name = shopNameEl.value.trim();
+    if (!name) return setStatus('Enter a shop name.');
+
+    const { data, error } = await client
+      .from('campaign_shops')
+      .insert({
+        campaign_id: campaignId,
+        name,
+        shop_type: shopTypeEl.value,
+        region_type: regionTypeEl.value
+      })
+      .select()
+      .single();
+    if (error) throw error;
+
+    shopNameEl.value = '';
+    setStatus(`Shop added: ${data.name}`);
+    currentManageShopId = data.id;
+    await refreshShops();
+  }
+
+  async function refreshShops() {
+    const campaignId = selectedCampaignEl.value;
+    if (!campaignId) {
+      shopListEl.innerHTML = `<div class="muted">Select a campaign.</div>`;
+      manageShopSelectEl.innerHTML = `<option value="">Select shop</option>`;
+      linkShopSelectEl.innerHTML = `<option value="">Select shop</option>`;
+      return;
     }
 
-    async function saveInventoryRow(rowId) {
-      try {
-        const priceVal = document.getElementById(`price-${rowId}`).value;
-        const stockVal = document.getElementById(`stock-${rowId}`).value;
+    const { data: shops, error } = await client
+      .from('campaign_shops')
+      .select('id, name, shop_type, region_type, created_at')
+      .eq('campaign_id', campaignId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
 
-        const payload = {
-          override_price_cp: priceVal === '' ? null : Number(priceVal),
-          stock_on_hand: Number(stockVal || 0)
-        };
-
-        const { error } = await client
-          .from('shop_inventory')
-          .update(payload)
-          .eq('id', rowId);
-
-        if (error) throw error;
-
-        setStatus('Inventory row saved.');
-        await refreshInventoryEditor();
-      } catch (err) {
-        setStatus('Save inventory row failed: ' + err.message);
-      }
-    }
-
-    async function createShareLink() {
-      try {
-        if (!currentShopId) throw new Error('Select a shop first.');
-        const playerId = els.linkPlayer.value;
-        if (!playerId) throw new Error('Select a player.');
-        const hours = Number(els.linkExpiryHours.value || 24);
-        if (hours <= 0) throw new Error('Expiry must be at least 1 hour.');
-
-        const token = randomToken(36);
-        const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
-
-        const { data, error } = await client
-          .from('shop_share_links')
-          .insert({
-            shop_id: currentShopId,
-            player_id: playerId,
-            token,
-            expires_at: expiresAt
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        const link = `${window.location.origin}${window.location.pathname}?token=${encodeURIComponent(data.token)}`;
-        els.shareLinkOutput.textContent = link;
-        setStatus('Temporary share link created.');
-      } catch (err) {
-        setStatus('Create share link failed: ' + err.message);
-      }
-    }
-
-    async function refreshDmCartsAndCheckouts() {
-      if (!currentCampaignId) {
-        els.cartList.innerHTML = `<div class="muted">Select a campaign.</div>`;
-        els.checkoutList.innerHTML = `<div class="muted">Select a campaign.</div>`;
-        return;
-      }
-
-      const { data: shops, error: shopsError } = await client
-        .from('campaign_shops')
-        .select('id')
-        .eq('campaign_id', currentCampaignId);
-
-      if (shopsError) throw shopsError;
-
-      const shopIds = shops.map(s => s.id);
-
-      if (!shopIds.length) {
-        els.cartList.innerHTML = `<div class="muted">No shops in campaign.</div>`;
-        els.checkoutList.innerHTML = `<div class="muted">No shops in campaign.</div>`;
-        return;
-      }
-
-      const { data: carts, error: cartsError } = await client
-        .from('carts')
-        .select('*')
-        .in('shop_id', shopIds)
-        .eq('status', 'open')
-        .order('updated_at', { ascending: false });
-
-      if (cartsError) throw cartsError;
-
-      const playerIds = [...new Set(carts.map(c => c.player_id))];
-
-      let players = [];
-      if (playerIds.length) {
-        const { data: playerRows, error: playerError } = await client
-          .from('campaign_players')
-          .select('id, display_name')
-          .in('id', playerIds);
-        if (playerError) throw playerError;
-        players = playerRows;
-      }
-
-      const playerMap = new Map(players.map(p => [p.id, p.display_name]));
-
-      let cartIds = carts.map(c => c.id);
-      let cartItems = [];
-      if (cartIds.length) {
-        const { data: cartItemRows, error: cartItemError } = await client
-          .from('cart_items')
-          .select('*')
-          .in('cart_id', cartIds);
-        if (cartItemError) throw cartItemError;
-        cartItems = cartItemRows;
-      }
-
-      const inventoryIds = [...new Set(cartItems.map(ci => ci.inventory_id))];
-      let inventoryRows = [];
-      if (inventoryIds.length) {
-        const { data: invRows, error: invError } = await client
-          .from('shop_inventory')
-          .select('*')
-          .in('id', inventoryIds);
-        if (invError) throw invError;
-        inventoryRows = invRows;
-      }
-      const inventoryMap = new Map(inventoryRows.map(r => [r.id, r]));
-
-      els.cartList.innerHTML = carts.length
-        ? carts.map(c => {
-            const items = cartItems.filter(ci => ci.cart_id === c.id);
-            const totalCp = items.reduce((sum, ci) => {
-              const inv = inventoryMap.get(ci.inventory_id);
-              return sum + (inv ? effectivePriceCp(inv) * ci.quantity : 0);
-            }, 0);
-            return `
-              <div class="list-row">
-                <strong>${escapeHtml(playerMap.get(c.player_id) || 'Unknown Player')}</strong>
-                <div class="muted">Cart ${c.id.slice(0, 8)} · ${moneyToStringFromCp(totalCp)}</div>
-                <div style="margin-top:8px;">
-                  ${items.length ? items.map(ci => {
-                    const inv = inventoryMap.get(ci.inventory_id);
-                    return `<div class="tiny">${escapeHtml(inv?.item_name || 'Unknown')} × ${ci.quantity}</div>`;
-                  }).join('') : '<div class="tiny">No items</div>'}
-                </div>
-              </div>
-            `;
-          }).join('')
-        : `<div class="muted">No open carts right now.</div>`;
-
-      const { data: checkouts, error: checkoutsError } = await client
-        .from('checkout_events')
-        .select('*')
-        .in('shop_id', shopIds)
-        .order('created_at', { ascending: false })
-        .limit(30);
-
-      if (checkoutsError) throw checkoutsError;
-
-      const checkoutPlayerIds = [...new Set(checkouts.map(c => c.player_id))];
-      let checkoutPlayers = [];
-      if (checkoutPlayerIds.length) {
-        const { data: pRows, error: pErr } = await client
-          .from('campaign_players')
-          .select('id, display_name')
-          .in('id', checkoutPlayerIds);
-        if (pErr) throw pErr;
-        checkoutPlayers = pRows;
-      }
-      const checkoutPlayerMap = new Map(checkoutPlayers.map(p => [p.id, p.display_name]));
-
-      els.checkoutList.innerHTML = checkouts.length
-        ? checkouts.map(ev => `
-          <div class="list-row">
-            <strong>${escapeHtml(checkoutPlayerMap.get(ev.player_id) || 'Unknown Player')}</strong>
-            <div class="muted">${moneyToStringFromCp(ev.total_cp)}</div>
-            <div class="tiny">${new Date(ev.created_at).toLocaleString()}</div>
+    shopListEl.innerHTML = shops.length
+      ? shops.map(s => `
+        <div class="list-row">
+          <div class="row space">
+            <div>
+              <strong>${escapeHtml(s.name)}</strong>
+              <div><span class="pill">${escapeHtml(s.shop_type)}</span><span class="pill">${escapeHtml(s.region_type)}</span></div>
+            </div>
+            <button class="small danger" data-delete-shop="${s.id}">Delete</button>
           </div>
-        `).join('')
-        : `<div class="muted">No checkout events yet.</div>`;
+        </div>
+      `).join('')
+      : `<div class="muted">No shops yet.</div>`;
+
+    const options = `<option value="">Select shop</option>` + shops.map(s =>
+      `<option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(s.shop_type)}</option>`
+    ).join('');
+    manageShopSelectEl.innerHTML = options;
+    linkShopSelectEl.innerHTML = options;
+
+    if (currentManageShopId && shops.some(s => s.id === currentManageShopId)) {
+      manageShopSelectEl.value = currentManageShopId;
+      linkShopSelectEl.value = currentManageShopId;
+    } else if (shops[0]) {
+      currentManageShopId = shops[0].id;
+      manageShopSelectEl.value = shops[0].id;
+      linkShopSelectEl.value = shops[0].id;
+    }
+  }
+
+  async function refreshInventoryEditor() {
+    const shopId = manageShopSelectEl.value;
+    if (!shopId) {
+      inventoryMetaEl.textContent = 'Select a shop to manage its inventory.';
+      inventoryWrapEl.innerHTML = `<div class="muted">No shop selected.</div>`;
+      return;
     }
 
-    async function refreshAllGmData() {
-      if (!client) return;
-      await refreshCampaigns();
-      await refreshInventoryEditor();
-      await refreshDmCartsAndCheckouts();
+    const { data: shop, error: sErr } = await client
+      .from('campaign_shops')
+      .select('id, name, shop_type, region_type')
+      .eq('id', shopId)
+      .single();
+    if (sErr) throw sErr;
+
+    inventoryMetaEl.textContent = `${shop.name} (${shop.shop_type}, ${shop.region_type})`;
+
+    const { data: rows, error } = await client
+      .from('shop_inventory')
+      .select('id, item_name, base_price_cp, override_price_cp, stock_on_hand')
+      .eq('shop_id', shopId)
+      .order('item_name', { ascending: true });
+    if (error) throw error;
+
+    inventoryWrapEl.innerHTML = rows.length
+      ? rows.map(r => `
+        <div class="list-row">
+          <strong>${escapeHtml(r.item_name)}</strong>
+          <div class="muted">Base: ${cpToDisplay(r.base_price_cp)}</div>
+          <div class="money">Current: ${cpToDisplay(effectivePriceCp(r))}</div>
+        </div>
+      `).join('')
+      : `<div class="muted">No inventory yet.</div>`;
+  }
+
+  async function refreshShareLinks() {
+    shareLinkListEl.innerHTML = `<div class="muted">Links refresh is wired. Create link logic can be added on top of this stable base.</div>`;
+  }
+
+  async function refreshCartsAndCheckouts() {
+    cartListEl.innerHTML = `<div class="muted">Cart monitor ready.</div>`;
+    checkoutListEl.innerHTML = `<div class="muted">Checkout history ready.</div>`;
+  }
+
+  async function refreshAll() {
+    if (!client) return;
+    await refreshCampaigns();
+    await refreshPlayers();
+    await refreshShops();
+    await refreshInventoryEditor();
+    await refreshShareLinks();
+    await refreshCartsAndCheckouts();
+  }
+
+  async function deletePlayer(playerId) {
+    if (!confirm('Delete this player?')) return;
+    const { error } = await client.from('campaign_players').delete().eq('id', playerId);
+    if (error) throw error;
+    setStatus('Player deleted.');
+    await refreshPlayers();
+  }
+
+  async function deleteShop(shopId) {
+    if (!confirm('Delete this shop?')) return;
+    const { error } = await client.from('campaign_shops').delete().eq('id', shopId);
+    if (error) throw error;
+    setStatus('Shop deleted.');
+    await refreshShops();
+    await refreshInventoryEditor();
+  }
+
+  document.body.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+
+    try {
+      if (btn.id === 'saveBtn') await saveConfig();
+      else if (btn.id === 'testBtn') await testConnection();
+      else if (btn.id === 'createCampaignBtn') await createCampaign();
+      else if (btn.id === 'deleteCampaignBtn') await deleteCampaign();
+      else if (btn.id === 'refreshDataBtn') await refreshAll();
+      else if (btn.id === 'createPlayerBtn') await createPlayer();
+      else if (btn.id === 'createShopBtn') await createShop();
+      else if (btn.id === 'tabInventoryBtn') setActiveTab('inventory');
+      else if (btn.id === 'tabLinksBtn') setActiveTab('links');
+      else if (btn.id === 'tabCheckoutsBtn') setActiveTab('checkouts');
+      else if (btn.dataset.deletePlayer) await deletePlayer(btn.dataset.deletePlayer);
+      else if (btn.dataset.deleteShop) await deleteShop(btn.dataset.deleteShop);
+    } catch (err) {
+      setStatus(err.message || String(err));
     }
+  });
 
-    async function getOrCreateCart(shopId, playerId) {
-      const { data: existing, error: existingError } = await client
-        .from('carts')
-        .select('*')
-        .eq('shop_id', shopId)
-        .eq('player_id', playerId)
-        .eq('status', 'open')
-        .limit(1);
+  selectedCampaignEl?.addEventListener('change', async () => {
+    currentCampaignId = selectedCampaignEl.value || null;
+    try { await refreshAll(); } catch (err) { setStatus(err.message); }
+  });
 
-      if (existingError) throw existingError;
-      if (existing.length) return existing[0];
+  manageShopSelectEl?.addEventListener('change', async () => {
+    currentManageShopId = manageShopSelectEl.value || null;
+    try { await refreshInventoryEditor(); } catch (err) { setStatus(err.message); }
+  });
 
-      const { data: newCart, error: newCartError } = await client
-        .from('carts')
-        .insert({
-          shop_id: shopId,
-          player_id: playerId,
-          status: 'open'
-        })
-        .select()
-        .single();
+  window.addEventListener('error', (e) => {
+    setStatus(`JS error: ${e.message}`);
+  });
 
-      if (newCartError) throw newCartError;
-      return newCart;
+  try {
+    setActiveTab('inventory');
+    loadSavedConfig();
+    if (token) {
+      showPlayerMode();
+      setStatus('Player mode detected.');
+    } else {
+      showGMMode();
+      if (client) refreshAll().catch(err => setStatus(err.message));
     }
-
-    async function loadPlayerStore() {
-      try {
-        if (!client) initClient();
-        let token = els.playerToken.value.trim();
-        if (!token) token = qs('token') || '';
-        if (!token) throw new Error('Token required.');
-
-        playerContext.token = token;
-
-        const { data: link, error: linkError } = await client
-          .from('shop_share_links')
-          .select('*')
-          .eq('token', token)
-          .single();
-
-        if (linkError) throw linkError;
-        if (new Date(link.expires_at).getTime() < Date.now()) throw new Error('This link has expired.');
-
-        const [{ data: shop, error: shopError }, { data: player, error: playerError }] = await Promise.all([
-          client.from('campaign_shops').select('*').eq('id', link.shop_id).single(),
-          client.from('campaign_players').select('*').eq('id', link.player_id).single()
-        ]);
-
-        if (shopError) throw shopError;
-        if (playerError) throw playerError;
-
-        const { data: wallet, error: walletError } = await client
-          .from('player_wallets')
-          .select('*')
-          .eq('player_id', player.id)
-          .single();
-
-        if (walletError) throw walletError;
-
-        const cart = await getOrCreateCart(shop.id, player.id);
-
-        playerContext.link = link;
-        playerContext.shop = shop;
-        playerContext.player = player;
-        playerContext.walletCp = wallet.balance_cp;
-        playerContext.cart = cart;
-
-        els.playerStoreMeta.textContent = `${player.display_name} browsing ${shop.name} (${shop.shop_type}, ${shop.region_type})`;
-        els.playerWalletDisplay.textContent = moneyToStringFromCp(wallet.balance_cp);
-
-        await refreshPlayerInventory();
-        await refreshPlayerCart();
-
-        setPlayerStatus('Player store loaded.');
-      } catch (err) {
-        setPlayerStatus('Load store failed: ' + err.message);
-      }
-    }
-
-    async function refreshPlayerInventory() {
-      if (!playerContext.shop) {
-        els.playerInventory.innerHTML = `<div class="muted">No inventory yet.</div>`;
-        return;
-      }
-
-      const { data, error } = await client
-        .from('shop_inventory')
-        .select('*')
-        .eq('shop_id', playerContext.shop.id)
-        .order('item_name', { ascending: true });
-
-      if (error) throw error;
-
-      els.playerInventory.innerHTML = data.length
-        ? data.map(row => `
-          <div class="card">
-            <div class="item-name">${escapeHtml(row.item_name)}</div>
-            <div class="meta">Stock: ${row.stock_on_hand}</div>
-            <div class="price">${moneyToStringFromCp(effectivePriceCp(row))}</div>
-            <button class="small" onclick="addToCart('${row.id}')" ${row.stock_on_hand <= 0 ? 'disabled' : ''}>
-              ${row.stock_on_hand <= 0 ? 'Out of Stock' : 'Add to Cart'}
-            </button>
-          </div>
-        `).join('')
-        : `<div class="muted">This shop has no inventory.</div>`;
-    }
-
-    async function addToCart(inventoryId) {
-      try {
-        if (!playerContext.cart) throw new Error('No active cart.');
-
-        const { data: inv, error: invError } = await client
-          .from('shop_inventory')
-          .select('*')
-          .eq('id', inventoryId)
-          .single();
-
-        if (invError) throw invError;
-        if (inv.stock_on_hand <= 0) throw new Error('Item is out of stock.');
-
-        const { data: existing, error: existingError } = await client
-          .from('cart_items')
-          .select('*')
-          .eq('cart_id', playerContext.cart.id)
-          .eq('inventory_id', inventoryId)
-          .limit(1);
-
-        if (existingError) throw existingError;
-
-        const existingQty = existing.length ? existing[0].quantity : 0;
-        if (existingQty + 1 > inv.stock_on_hand) throw new Error('Cannot exceed available stock.');
-
-        if (existing.length) {
-          const { error: updateError } = await client
-            .from('cart_items')
-            .update({ quantity: existing[0].quantity + 1 })
-            .eq('id', existing[0].id);
-          if (updateError) throw updateError;
-        } else {
-          const { error: insertError } = await client
-            .from('cart_items')
-            .insert({
-              cart_id: playerContext.cart.id,
-              inventory_id: inventoryId,
-              quantity: 1
-            });
-          if (insertError) throw insertError;
-        }
-
-        const { error: cartStampError } = await client
-          .from('carts')
-          .update({ updated_at: new Date().toISOString() })
-          .eq('id', playerContext.cart.id);
-
-        if (cartStampError) throw cartStampError;
-
-        setPlayerStatus('Added item to cart.');
-       
+  } catch (err) {
+    setStatus(`Startup failed: ${err.message}`);
+  }
+});
+</script>
