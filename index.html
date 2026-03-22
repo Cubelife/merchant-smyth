@@ -27,7 +27,13 @@
     button,input,select,textarea{width:100%;border-radius:12px;border:1px solid var(--border);padding:12px 14px;font-size:15px}
     input,select,textarea{background:#0d1627;color:var(--text)}
     textarea{min-height:88px;resize:vertical}
-    button{background:var(--gold);color:#1a1307;font-weight:700;cursor:pointer;border:none}
+    button{background:var(--gold);color:#1a1307;font-weight:700;cursor:pointer;border:none;transition:transform .08s ease, filter .15s ease, opacity .15s ease}
+    button:hover{filter:brightness(1.06)}
+    button:active{transform:translateY(1px) scale(.99)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .busy{opacity:.75;pointer-events:none}
+    .success-flash{outline:2px solid rgba(52,120,90,.85)}
+    .error-flash{outline:2px solid rgba(185,87,87,.85)}
     button.secondary{background:var(--blue);color:var(--text)}
     button.success{background:var(--green);color:#fff}
     button.danger{background:var(--red);color:#fff}
@@ -143,8 +149,16 @@
 
         <div class="grid2" style="margin-top:16px">
           <div class="panel" style="background:#0d1627">
-            <h3>Connected Players</h3>
-            <p class="small-meta" style="margin-top:4px">Players can update their own display name and money in the portal. The GM can still edit them here.</p>
+            <div class="hero" style="margin-bottom:12px">
+              <div>
+                <h3>Connected Players</h3>
+                <p class="small-meta" style="margin-top:4px">Players can update their own display name and money in the portal. The GM can still edit them here.</p>
+              </div>
+              <div class="seg">
+                <button id="playerCardViewBtn" class="active">Cards</button>
+                <button id="playerTableViewBtn">Table</button>
+              </div>
+            </div>
             <div id="playerCards" class="cards" style="margin-top:16px"></div>
           </div>
 
@@ -203,6 +217,17 @@
               <select id="shopItemSourceFilter"></select>
             </div>
             <div id="shopLibraryResults" class="cards"></div>
+            <div class="notice" style="margin-top:16px">
+              <strong>Quick Add Temporary Item</strong>
+              <div class="small-meta" style="margin-top:4px">Adds directly to the current shop without writing to the item library database.</div>
+              <div class="compact-grid" style="margin-top:10px">
+                <div><label>Name</label><input id="tempItemName" placeholder="Festival Pie"></div>
+                <div><label>Base price (CP)</label><input id="tempItemPrice" type="number" min="0" placeholder="35"></div>
+                <div><label>Stock</label><input id="tempItemStock" type="number" min="0" placeholder="6"></div>
+                <div><label>Description</label><input id="tempItemDesc" placeholder="Freshly baked and still warm."></div>
+              </div>
+              <button id="addTempItemBtn" style="margin-top:10px">Add Temporary Item to Shop</button>
+            </div>
           </div>
         </div>
       </section>
@@ -351,6 +376,11 @@
               <p id="portalShopMeta" class="sub"></p>
             </div>
           </div>
+          <div class="toolbar">
+            <input id="portalItemSearch" placeholder="Search shop items">
+            <select id="portalSourceFilter"><option value="">All sources</option></select>
+            <select id="portalTypeFilter"><option value="">All item types</option></select>
+          </div>
           <div class="grid2">
             <div class="panel" style="background:#0d1627">
               <h3>Inventory</h3>
@@ -373,8 +403,8 @@
 
 <script>
 const APP_CONFIG = {
-  SUPABASE_URL: "https://eelwiyjufnlnclofyjdi.supabase.co",
-  SUPABASE_ANON_KEY: "sb_publishable_y4Fgcc_vXfusEylpu4zpuA_Izg-tefy"
+  SUPABASE_URL: "",
+  SUPABASE_ANON_KEY: ""
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -384,6 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let shopTypeCatalog = [];
   let libraryViewMode = 'cards';
   let shopInventoryViewMode = 'cards';
+  let playerViewMode = 'cards';
   let appChannel = null;
   let portalChannel = null;
   let portalState = {
@@ -438,6 +469,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if ($('libraryTableViewBtn')) $('libraryTableViewBtn').classList.toggle('active', libraryViewMode === 'table');
     if ($('shopInventoryCardViewBtn')) $('shopInventoryCardViewBtn').classList.toggle('active', shopInventoryViewMode === 'cards');
     if ($('shopInventoryTableViewBtn')) $('shopInventoryTableViewBtn').classList.toggle('active', shopInventoryViewMode === 'table');
+    if ($('playerCardViewBtn')) $('playerCardViewBtn').classList.toggle('active', playerViewMode === 'cards');
+    if ($('playerTableViewBtn')) $('playerTableViewBtn').classList.toggle('active', playerViewMode === 'table');
+  }
+  function setBusy(btn, busy=true) {
+    if (!btn) return;
+    btn.classList.toggle('busy', busy);
+    btn.disabled = busy;
+  }
+  function flashButton(btn, ok=true) {
+    if (!btn) return;
+    btn.classList.remove('success-flash','error-flash');
+    btn.classList.add(ok ? 'success-flash' : 'error-flash');
+    setTimeout(() => btn.classList.remove('success-flash','error-flash'), 700);
   }
 
   function initClient() {
@@ -447,6 +491,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if ($('url')) $('url').value = url;
     if ($('key')) $('key').value = key;
     client = window.supabase.createClient(url, key);
+    return client;
+  }
+  function ensureClient() {
+    if (!client) initClient();
     return client;
   }
 
@@ -604,23 +652,54 @@ document.addEventListener('DOMContentLoaded', () => {
       wallets.forEach(w => walletMap[w.player_id] = w.balance_cp);
     }
 
-    $('playerCards').innerHTML = players.length ? players.map(p => {
-      const parts = cpToParts(walletMap[p.id] || 0);
-      return `
-        <div class="card">
-          <div class="title">🧝 ${escapeHtml(p.display_name || 'Unnamed Player')}</div>
-          <div class="small-meta">Last seen: ${p.last_seen_at ? new Date(p.last_seen_at).toLocaleString() : 'Never'}</div>
-          <div class="grid3" style="margin-top:10px">
-            <input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}">
-            <input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}">
-            <input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}">
-          </div>
-          <div class="row" style="margin-top:12px">
-            <button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button>
-            <button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button>
-          </div>
+    if (!players.length) {
+      $('playerCards').innerHTML = `<div class="empty">No connected players yet.</div>`;
+      syncViewButtons();
+      return;
+    }
+
+    if (playerViewMode === 'table') {
+      $('playerCards').className = '';
+      $('playerCards').innerHTML = `
+        <div class="table-wrap">
+          <table class="ms-table">
+            <thead><tr><th>Name</th><th>Last Seen</th><th>GP</th><th>SP</th><th>CP</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${players.map(p => {
+                const parts = cpToParts(walletMap[p.id] || 0);
+                return `<tr>
+                  <td><strong>${escapeHtml(p.display_name || 'Unnamed Player')}</strong></td>
+                  <td>${p.last_seen_at ? new Date(p.last_seen_at).toLocaleString() : 'Never'}</td>
+                  <td><input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}"></td>
+                  <td><input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}"></td>
+                  <td><input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}"></td>
+                  <td><div class="row"><button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button><button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button></div></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
         </div>`;
-    }).join('') : `<div class="empty">No connected players yet.</div>`;
+    } else {
+      $('playerCards').className = 'cards';
+      $('playerCards').innerHTML = players.map(p => {
+        const parts = cpToParts(walletMap[p.id] || 0);
+        return `
+          <div class="card">
+            <div class="title">🧝 ${escapeHtml(p.display_name || 'Unnamed Player')}</div>
+            <div class="small-meta">Last seen: ${p.last_seen_at ? new Date(p.last_seen_at).toLocaleString() : 'Never'}</div>
+            <div class="grid3" style="margin-top:10px">
+              <input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}">
+              <input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}">
+              <input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}">
+            </div>
+            <div class="row" style="margin-top:12px">
+              <button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button>
+              <button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+    syncViewButtons();
   }
 
   async function saveGMPlayerWallet(id) {
@@ -894,9 +973,42 @@ document.addEventListener('DOMContentLoaded', () => {
       stock_on_hand: item.default_stock || 1,
       description: item.description || null
     };
+    const { data: existingSame, error: exErr } = await client.from('shop_inventory').select('id, stock_on_hand').eq('shop_id', shopId).eq('item_name', item.name).limit(1);
+    if (exErr) throw exErr;
+    if (existingSame.length) {
+      const { error } = await client.from('shop_inventory').update({ stock_on_hand: Number(existingSame[0].stock_on_hand || 0) + Number(payload.stock_on_hand || 0) }).eq('id', existingSame[0].id);
+      if (error) throw error;
+      setStatus(`Increased stock for ${item.name}.`);
+      await refreshShopBuilder();
+      return;
+    }
     const { error } = await client.from('shop_inventory').insert(payload);
     if (error) throw error;
     setStatus(`Added ${item.name} to shop.`);
+    await refreshShopBuilder();
+  }
+
+  async function addTemporaryItemToShop() {
+    const shopId = $('manageShopSelect').value;
+    if (!shopId) return setStatus('Select a shop first.');
+    const name = $('tempItemName').value.trim();
+    const price = Number($('tempItemPrice').value || 0);
+    const stock = Number($('tempItemStock').value || 0);
+    const desc = $('tempItemDesc').value.trim() || null;
+    if (!name) return setStatus('Enter a temporary item name.');
+    if (!price && price !== 0) return setStatus('Enter a temporary item price.');
+    const payload = {
+      shop_id: shopId,
+      srd_item_id: null,
+      item_name: name,
+      base_price_cp: price,
+      stock_on_hand: stock,
+      description: desc
+    };
+    const { error } = await client.from('shop_inventory').insert(payload);
+    if (error) throw error;
+    ['tempItemName','tempItemPrice','tempItemStock','tempItemDesc'].forEach(id => $(id).value = '');
+    setStatus('Temporary item added to shop.');
     await refreshShopBuilder();
   }
 
@@ -1199,14 +1311,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const { data: inventory, error } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp, stock_on_hand, description').eq('shop_id', portalState.shopId).order('item_name');
     if (error) throw error;
-    $('portalInventoryWrap').innerHTML = inventory.length ? inventory.map(i => `
+
+    const search = ($('portalItemSearch')?.value || '').trim().toLowerCase();
+    const typeFilter = ($('portalTypeFilter')?.value || '').trim().toLowerCase();
+    const sourceFilter = ($('portalSourceFilter')?.value || '').trim().toLowerCase();
+
+    const filtered = (inventory || []).filter(i => {
+      const hay = `${i.item_name || ''} ${i.description || ''}`.toLowerCase();
+      const desc = (i.description || '').toLowerCase();
+      const matchSearch = !search || hay.includes(search);
+      const matchType = !typeFilter || desc.includes(typeFilter);
+      const matchSource = !sourceFilter || desc.includes(sourceFilter);
+      return matchSearch && matchType && matchSource;
+    });
+
+    const allText = (inventory || []).map(i => i.description || '').join(' ');
+    const guessedTypes = [...new Set((allText.match(/weapon|armor|shield|potion|scroll|tool|gear|wand|ring|vehicle|mount|instrument/gi) || []).map(x => x.toLowerCase()))].sort();
+    const guessedSources = [...new Set((allText.match(/phb'?24|dmg'?24|xge|tce|aag|tdcsr|scc/gi) || []).map(x => x.toUpperCase()))].sort();
+    if ($('portalTypeFilter')) $('portalTypeFilter').innerHTML = `<option value="">All item types</option>` + guessedTypes.map(t => `<option value="${t}" ${t===typeFilter?'selected':''}>${t}</option>`).join('');
+    if ($('portalSourceFilter')) $('portalSourceFilter').innerHTML = `<option value="">All sources</option>` + guessedSources.map(s => `<option value="${s.toLowerCase()}" ${s.toLowerCase()===sourceFilter?'selected':''}>${s}</option>`).join('');
+
+    $('portalInventoryWrap').innerHTML = filtered.length ? filtered.map(i => `
       <div class="card">
         <div class="title">${escapeHtml(i.item_name)}</div>
         <div class="money" style="margin-top:8px">${cpToDisplay(effectivePriceCp(i))}</div>
         <div class="small-meta">Stock: ${i.stock_on_hand}</div>
         <div class="item-desc">${escapeHtml(i.description || 'No description.')}</div>
         <button style="margin-top:14px" data-action="portal-add-to-cart" data-id="${i.id}" ${i.stock_on_hand <= 0 ? 'disabled' : ''}>${i.stock_on_hand <= 0 ? 'Out of Stock' : 'Add to Cart'}</button>
-      </div>`).join('') : `<div class="empty">This shop has no inventory.</div>`;
+      </div>`).join('') : `<div class="empty">No items match your current filters.</div>`;
     await renderPortalCart();
   }
 
@@ -1350,7 +1482,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function refreshAll() {
-    if (!client) return;
+    ensureClient();
     await loadShopTypeCatalog();
     populateShopTypeSelects();
     await refreshCampaigns();
@@ -1364,6 +1496,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = e.target.closest('button');
     if (!btn) return;
     try {
+      const noDbNeeded = ['navCampaign','navShops','navLibrary','navInvoices'];
+      if (!noDbNeeded.includes(btn.id)) ensureClient();
+      setBusy(btn, true);
       if (btn.id === 'saveBtn') await saveConfig();
       else if (btn.id === 'testBtn') await testConnection();
       else if (btn.id === 'createCampaignBtn') await createCampaign();
@@ -1374,6 +1509,9 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (btn.id === 'refreshLibraryBtn') await refreshLibrary();
       else if (btn.id === 'generateInventoryBtn') await generateInventoryForShop();
       else if (btn.id === 'clearInventoryBtn') await clearInventoryForShop();
+      else if (btn.id === 'addTempItemBtn') await addTemporaryItemToShop();
+      else if (btn.id === 'playerCardViewBtn') { playerViewMode = 'cards'; await refreshPlayers(); }
+      else if (btn.id === 'playerTableViewBtn') { playerViewMode = 'table'; await refreshPlayers(); }
       else if (btn.id === 'navCampaign') setScreen('campaign');
       else if (btn.id === 'navShops') setScreen('shops');
       else if (btn.id === 'navLibrary') setScreen('library');
@@ -1406,33 +1544,40 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (btn.dataset.action === 'portal-cart-minus') await portalChangeCart(btn.dataset.id, Number(btn.dataset.qty));
       else if (btn.dataset.action === 'portal-cart-plus') await portalChangeCart(btn.dataset.id, Number(btn.dataset.qty));
       else if (btn.dataset.action === 'portal-cart-remove') await portalRemoveCartItem(btn.dataset.id);
+      flashButton(btn, true);
     } catch (err) {
       console.error(err);
       alert(err.message || String(err));
       setStatus(err.message || String(err));
+      flashButton(btn, false);
+    } finally {
+      setBusy(btn, false);
     }
   });
 
   $('selectedCampaign')?.addEventListener('change', async () => {
     currentCampaignId = $('selectedCampaign').value || null;
-    try { await refreshAll(); } catch (err) { setStatus(err.message); }
+    try { ensureClient(); await refreshAll(); } catch (err) { setStatus(err.message); }
   });
   $('manageShopSelect')?.addEventListener('change', async () => {
     currentManageShopId = $('manageShopSelect').value || null;
-    try { await refreshShopBuilder(); } catch (err) { setStatus(err.message); }
+    try { ensureClient(); await refreshShopBuilder(); } catch (err) { setStatus(err.message); }
   });
-  $('librarySearch')?.addEventListener('input', async () => { if (client) await refreshLibrary(); });
-  $('libraryShopTypeFilter')?.addEventListener('change', async () => { if (client) await refreshLibrary(); });
-  $('librarySourceFilter')?.addEventListener('change', async () => { if (client) await refreshLibrary(); });
-  $('shopItemSearch')?.addEventListener('input', async () => { if (client) await renderShopLibrarySearch(); });
-  $('shopItemTypeFilter')?.addEventListener('change', async () => { if (client) await renderShopLibrarySearch(); });
-  $('shopItemSourceFilter')?.addEventListener('change', async () => { if (client) await renderShopLibrarySearch(); });
+  $('librarySearch')?.addEventListener('input', async () => { try { ensureClient(); await refreshLibrary(); } catch (err) { setStatus(err.message); } });
+  $('libraryShopTypeFilter')?.addEventListener('change', async () => { try { ensureClient(); await refreshLibrary(); } catch (err) { setStatus(err.message); } });
+  $('librarySourceFilter')?.addEventListener('change', async () => { try { ensureClient(); await refreshLibrary(); } catch (err) { setStatus(err.message); } });
+  $('shopItemSearch')?.addEventListener('input', async () => { try { ensureClient(); await renderShopLibrarySearch(); } catch (err) { setStatus(err.message); } });
+  $('shopItemTypeFilter')?.addEventListener('change', async () => { try { ensureClient(); await renderShopLibrarySearch(); } catch (err) { setStatus(err.message); } });
+  $('shopItemSourceFilter')?.addEventListener('change', async () => { try { ensureClient(); await renderShopLibrarySearch(); } catch (err) { setStatus(err.message); } });
   $('portalShopSelect')?.addEventListener('change', async () => { portalState.shopId = $('portalShopSelect').value || ''; });
+  $('portalItemSearch')?.addEventListener('input', async () => { try { ensureClient(); if (portalState.shopId) await loadPortalShop(); } catch (err) { setStatus(err.message); } });
+  $('portalTypeFilter')?.addEventListener('change', async () => { try { ensureClient(); if (portalState.shopId) await loadPortalShop(); } catch (err) { setStatus(err.message); } });
+  $('portalSourceFilter')?.addEventListener('change', async () => { try { ensureClient(); if (portalState.shopId) await loadPortalShop(); } catch (err) { setStatus(err.message); } });
 
   (async function bootstrap() {
     try {
       loadSavedConfig();
-      if (!client) initClient();
+      ensureClient();
       await loadShopTypeCatalog();
       populateShopTypeSelects();
       setupRealtime();
@@ -1452,6 +1597,10 @@ document.addEventListener('DOMContentLoaded', () => {
       alert(err.message || String(err));
     }
   })();
+});
+window.addEventListener('error', (e) => {
+  const msg = e?.message || 'Unknown JavaScript error';
+  setStatus(msg.includes("reading 'from'") ? 'Database client is not initialised. Save your Supabase config or add APP_CONFIG values at the top of the file.' : msg);
 });
 </script>
 </body>
