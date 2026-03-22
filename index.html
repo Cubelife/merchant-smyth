@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Merchant Smith V3</title>
+  <title>Merchant Smith V3 Realtime</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root{
@@ -63,7 +63,7 @@
   <div class="hero">
     <div>
       <h1>Merchant Smith</h1>
-      <p class="sub">A cleaner GM-first merchant manager with live player shopping sessions.</p>
+      <p class="sub">GM-first merchant manager with live player shopping sessions and realtime updates.</p>
     </div>
   </div>
 
@@ -275,6 +275,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentManageShopId = null;
   let playerWalletCp = 0;
   let currentSession = null;
+  let appChannel = null;
+  let playerChannel = null;
 
   const $ = (id) => document.getElementById(id);
   const qp = new URLSearchParams(window.location.search);
@@ -325,10 +327,80 @@ document.addEventListener('DOMContentLoaded', () => {
     $('navLibrary').className = name === 'library' ? 'active' : 'secondary';
   }
 
+  function teardownRealtime() {
+    if (!client) return;
+    if (appChannel) { client.removeChannel(appChannel); appChannel = null; }
+    if (playerChannel) { client.removeChannel(playerChannel); playerChannel = null; }
+  }
+
+  function setupRealtime() {
+    if (!client) return;
+    if (appChannel) client.removeChannel(appChannel);
+
+    appChannel = client
+      .channel('merchant-smith-app')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'campaign_players' }, async () => {
+        await refreshPlayers(); await refreshLiveSelectors(); await refreshLiveSessions();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_wallets' }, async () => {
+        await refreshPlayers(); await refreshLiveSessions();
+        if (currentSession) await loadPlayerSession();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'campaign_shops' }, async () => {
+        await refreshShops(); await refreshLiveSelectors(); await refreshLiveSessions();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shop_inventory' }, async () => {
+        await refreshShopBuilder(); await refreshLiveSessions();
+        if (currentSession) { await renderPlayerInventory(); await renderPlayerCart(); }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'carts' }, async () => {
+        await refreshLiveSessions();
+        if (currentSession) await renderPlayerCart();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cart_items' }, async () => {
+        await refreshLiveSessions();
+        if (currentSession) await renderPlayerCart();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'checkout_events' }, async () => {
+        await refreshLiveSessions();
+        if (currentSession) await loadPlayerSession();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'active_shop_sessions' }, async () => {
+        await refreshLiveSessions();
+        if (currentSession && sessionIdFromUrl) await loadPlayerSession();
+      })
+      .subscribe((status) => console.log('App realtime status:', status));
+  }
+
+  function setupPlayerRealtime() {
+    if (!client || !currentSession) return;
+    if (playerChannel) client.removeChannel(playerChannel);
+
+    playerChannel = client
+      .channel(`player-session-${currentSession.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shop_inventory' }, async () => {
+        await renderPlayerInventory(); await renderPlayerCart();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cart_items' }, async () => {
+        await renderPlayerCart();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'player_wallets' }, async () => {
+        await loadPlayerSession();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'checkout_events' }, async () => {
+        await loadPlayerSession();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'active_shop_sessions' }, async () => {
+        await loadPlayerSession();
+      })
+      .subscribe((status) => console.log('Player realtime status:', status));
+  }
+
   async function saveConfig() {
     localStorage.setItem('url', $('url').value.trim());
     localStorage.setItem('key', $('key').value.trim());
     initClient();
+    setupRealtime();
     setStatus('Config saved.');
     await refreshAll();
   }
@@ -337,6 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!client) initClient();
     const { error } = await client.from('campaigns').select('id').limit(1);
     if (error) throw error;
+    setupRealtime();
     setStatus('Connection successful.');
     await refreshAll();
   }
@@ -724,6 +797,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentSession.cartId = cart.id;
     }
 
+    setupPlayerRealtime();
     await renderPlayerInventory();
     await renderPlayerCart();
   }
@@ -933,6 +1007,7 @@ document.addEventListener('DOMContentLoaded', () => {
   (async function bootstrap() {
     try {
       loadSavedConfig();
+      if (client) setupRealtime();
       if (sessionIdFromUrl) {
         $('gmApp').classList.add('hidden');
         $('playerApp').classList.remove('hidden');
@@ -953,3 +1028,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
