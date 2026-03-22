@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Merchant Smith</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; background:#0b0f1a; color:white; padding:20px;}
+    input, button { padding:10px; margin:5px; width:100%; }
+    button { background:#c89b3c; border:none; cursor:pointer; }
+    pre { background:#111; padding:10px; }
+  </style>
+</head>
+<body>
+
+<h2>Merchant Smith</h2>
+
+<h3>Setup</h3>
+<input id="url" placeholder="Project URL"/>
+<input id="key" placeholder="Anon Key"/>
+<button onclick="save()">Save Config</button>
+<button onclick="test()">Test Connection</button>
+
+<h3>GM</h3>
+<button onclick="createPlayer()">Create Player</button>
+<button onclick="createShop()">Create Shop</button>
+
+<h3>Output</h3>
+<pre id="out"></pre>
+
+<script>
+let supabase;
+
+function save() {
+  localStorage.setItem('url', url.value);
+  localStorage.setItem('key', key.value);
+  supabase = window.supabase.createClient(url.value, key.value);
+  out.innerText = "Saved";
+}
+
+function test() {
+  supabase.from('shops').select('*')
+  .then(r => out.innerText = JSON.stringify(r, null, 2));
+}
+
+async function createPlayer() {
+  let res = await supabase.from('app_players').insert({ display_name:"Player" }).select();
+  let id = res.data[0].id;
+  await supabase.from('player_wallets').insert({ player_id:id, balance_cp:10000 });
+  out.innerText = "Player created";
+}
+
+async function createShop() {
+  let res = await supabase.from('shops').insert({
+    name:"Test Shop",
+    shop_type:"General",
+    region_type:"city"
+  }).select();
+
+  let shop = res.data[0].id;
+
+  await supabase.from('shop_inventory').insert([
+    { shop_id:shop, item_name:"Sword", list_price_gp:10, stock_on_hand:5 },
+    { shop_id:shop, item_name:"Rope", list_price_gp:1, stock_on_hand:10 }
+  ]);
+
+  out.innerText = "Shop created";
+}
+</script>
+
+</body>
+</html>
