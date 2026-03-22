@@ -1690,6 +1690,68 @@ window.addEventListener('error', (e) => {
   const msg = e?.message || 'Unknown JavaScript error';
   setStatus(msg.includes("reading 'from'") ? 'Database client is not initialised. Save your Supabase config or add APP_CONFIG values at the top of the file.' : msg);
 });
+
+  async function renderShopLibrarySearch() {
+  const shopId = $('manageShopSelect').value;
+  if (!shopId) return;
+
+  const { data: shop } = await client
+    .from('campaign_shops')
+    .select('shop_type')
+    .eq('id', shopId)
+    .single();
+
+  const search = $('shopItemSearch').value.trim().toLowerCase();
+  const typeFilter = $('shopItemTypeFilter').value || shop.shop_type;
+  const sourceFilter = $('shopItemSourceFilter').value;
+
+  const { data: items, error } = await client
+    .from('srd_items')
+    .select('*')
+    .order('name');
+
+  if (error) {
+    $('shopLibraryResults').innerHTML = `<div class="empty">${error.message}</div>`;
+    return;
+  }
+
+  let rows = (items || []).filter(i =>
+    i.shop_type === typeFilter ||
+    String(i.shop_type_slugs || '').split('|').includes(typeFilter)
+  );
+
+  rows = rows.filter(i => {
+    const hay = `${i.name} ${i.description || ''}`.toLowerCase();
+    return (!search || hay.includes(search)) &&
+           (!sourceFilter || i.source === sourceFilter);
+  });
+
+  if (!rows.length) {
+    $('shopLibraryResults').innerHTML = `<div class="empty">No items found.</div>`;
+    return;
+  }
+
+  $('shopLibraryResults').innerHTML = rows.map(i => `
+    <div class="card">
+      <div class="item-name">
+        <span class="item-icon">${itemIconFor(i.item_type || i.name)}</span>
+        <div class="title">${i.name}</div>
+      </div>
+
+      <div>${cpToCostIcons(i.base_price_cp || 0)}</div>
+
+      <div class="item-desc desc-collapsed" id="lib-desc-${i.id}">
+        ${i.description || 'No description'}
+      </div>
+
+      <button class="linkish" data-action="toggle-desc" data-id="lib-desc-${i.id}">More</button>
+
+      <button class="secondary" data-action="add-library-item-to-shop" data-id="${i.id}">
+        Add to Shop
+      </button>
+    </div>
+  `).join('');
+}
 </script>
 </body>
 </html>  async function renderShopLibrarySearch() {
