@@ -16,26 +16,30 @@
       --gold: #d0a23c;
       --danger: #c85c5c;
       --blue: #334a79;
+      --green: #2f7f59;
     }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Inter, system-ui, Arial, sans-serif; background: linear-gradient(180deg, var(--bg), #07101d); color: var(--text); }
-    .wrap { max-width: 1380px; margin: 0 auto; padding: 24px; }
+    .wrap { max-width: 1460px; margin: 0 auto; padding: 24px; }
     .hero { margin-bottom: 20px; }
     .sub, .muted { color: var(--muted); }
-    .grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+    .grid { display: grid; grid-template-columns: 390px 1fr; gap: 20px; }
     .panel { background: rgba(15, 26, 46, 0.96); border: 1px solid var(--border); border-radius: 18px; padding: 18px; box-shadow: 0 12px 28px rgba(0,0,0,0.25); }
     .stack > * + * { margin-top: 14px; }
     label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 14px; }
-    input, select, button { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 15px; }
-    input, select { background: #0d1627; color: var(--text); }
+    input, select, button, textarea { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 15px; }
+    input, select, textarea { background: #0d1627; color: var(--text); }
+    textarea { min-height: 88px; resize: vertical; }
     button { background: var(--gold); color: #161208; border: none; cursor: pointer; font-weight: 700; }
     button.secondary { background: var(--blue); color: var(--text); }
     button.danger { background: var(--danger); color: white; }
+    button.success { background: var(--green); color: white; }
     button.small { width: auto; padding: 8px 12px; font-size: 14px; }
+    button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
     .status { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: #0d1627; color: var(--muted); white-space: pre-wrap; }
     .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
     .toolbar > * { flex: 1; min-width: 170px; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
     .card { background: var(--panel-2); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
     .row { display: flex; gap: 10px; align-items: center; }
     .space { justify-content: space-between; }
@@ -46,20 +50,26 @@
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
     .hidden { display: none !important; }
-    .inventory-grid { display: grid; gap: 12px; }
-    .inventory-row { background: #0d1627; border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: minmax(180px, 1fr) 140px 140px 100px auto; gap: 10px; align-items: center; }
+    .inventory-grid, .library-grid { display: grid; gap: 12px; }
+    .inventory-row { background: #0d1627; border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: minmax(220px, 1.2fr) 130px 130px 100px auto; gap: 10px; align-items: center; }
     .tabbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
     .tabbar button { width: auto; min-width: 120px; }
     .notice { padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: #0d1627; color: var(--muted); margin-bottom: 14px; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; font-size: 13px; }
-    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } .inventory-row { grid-template-columns: 1fr; } }
+    .player-summary { display: grid; gap: 10px; margin: 16px 0; }
+    .summary-box { background: #0d1627; border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .desc { color: var(--muted); font-size: 14px; line-height: 1.4; margin-top: 8px; white-space: pre-wrap; }
+    @media (max-width: 1100px) {
+      .grid { grid-template-columns: 1fr; }
+      .inventory-row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="hero">
       <h1>Merchant Smith</h1>
-      <p class="sub">Campaign merchants, wallets, SRD shops, player links, carts, and DM checkout visibility.</p>
+      <p class="sub">Campaign merchants, wallets, item library, player links, carts, and DM checkout visibility.</p>
     </div>
 
     <div id="gmApp">
@@ -83,7 +93,7 @@
             <label for="campaignName">Campaign name</label>
             <input id="campaignName" placeholder="Goldcrest Main Campaign" />
             <button id="createCampaignBtn" style="margin-top:10px;">Create Campaign</button>
-            <div style="height: 12px;"></div>
+            <div style="height:12px;"></div>
             <label for="selectedCampaign">Selected campaign</label>
             <select id="selectedCampaign"></select>
             <div class="two-col" style="margin-top:10px;">
@@ -130,6 +140,7 @@
         <main class="panel">
           <div class="tabbar">
             <button id="tabInventoryBtn">Shop Inventory</button>
+            <button id="tabLibraryBtn" class="secondary">Item Library</button>
             <button id="tabLinksBtn" class="secondary">Player Links</button>
             <button id="tabCheckoutsBtn" class="secondary">Carts & Checkouts</button>
           </div>
@@ -139,11 +150,54 @@
             <div class="muted" id="inventoryMeta" style="margin-bottom:10px;">Select a shop to manage its inventory.</div>
             <div class="toolbar">
               <select id="manageShopSelect"></select>
-              <button id="generateInventoryBtn" class="secondary">Generate from SRD</button>
+              <button id="generateInventoryBtn" class="secondary">Generate from Library</button>
               <button id="clearInventoryBtn" class="danger">Clear Inventory</button>
             </div>
-            <div class="notice">Prices are stored in copper internally. Override price is shop-specific.</div>
+            <div class="notice">Prices are stored in copper internally. Override price is shop-specific. Descriptions copy from the item library and can be edited per shop item.</div>
             <div id="inventoryWrap"><div class="muted">No shop selected.</div></div>
+          </section>
+
+          <section id="librarySection" class="hidden">
+            <h2>Item Library</h2>
+            <div class="notice">Use this to add new items from the GM interface. Generated shops pull from this library by shop type.</div>
+            <div class="two-col">
+              <div>
+                <label for="itemName">Item name</label>
+                <input id="itemName" placeholder="Healing Herb Bundle" />
+              </div>
+              <div>
+                <label for="itemCategory">Category</label>
+                <input id="itemCategory" placeholder="Consumable" />
+              </div>
+            </div>
+            <div class="three-col" style="margin-top:10px;">
+              <div>
+                <label for="itemShopType">Shop type</label>
+                <select id="itemShopType">
+                  <option value="General">General</option>
+                  <option value="Blacksmith">Blacksmith</option>
+                  <option value="Outfitter">Outfitter</option>
+                  <option value="Arcane">Arcane</option>
+                </select>
+              </div>
+              <div>
+                <label for="itemBaseCp">Base price (CP)</label>
+                <input id="itemBaseCp" type="number" min="0" step="1" placeholder="250" />
+              </div>
+              <div>
+                <label for="itemStock">Default stock</label>
+                <input id="itemStock" type="number" min="0" step="1" placeholder="4" />
+              </div>
+            </div>
+            <div style="margin-top:10px;">
+              <label for="itemDescription">Description</label>
+              <textarea id="itemDescription" placeholder="Short item description shown to players."></textarea>
+            </div>
+            <div class="row" style="margin-top:10px;">
+              <button id="createLibraryItemBtn">Add Item to Library</button>
+              <button id="refreshLibraryBtn" class="secondary">Refresh Library</button>
+            </div>
+            <div class="library-grid" id="libraryWrap" style="margin-top:14px;"></div>
           </section>
 
           <section id="linksSection" class="hidden">
@@ -178,7 +232,22 @@
       <div class="panel">
         <h2>Player Storefront</h2>
         <div class="muted" id="playerStoreMeta">Loading link...</div>
-        <div style="margin:16px 0;" class="money" id="playerWalletDisplay">-</div>
+
+        <div class="player-summary">
+          <div class="summary-box">
+            <div class="muted">Wallet balance</div>
+            <div class="money" id="playerWalletDisplay">-</div>
+          </div>
+          <div class="summary-box">
+            <div class="muted">Cart total</div>
+            <div class="money" id="playerCartTotalDisplay">0 gp, 0 sp, 0 cp</div>
+          </div>
+          <div class="summary-box">
+            <div class="muted">After checkout</div>
+            <div class="money" id="playerRemainingDisplay">-</div>
+          </div>
+        </div>
+
         <div id="playerInventoryWrap"><div class="muted">Loading inventory...</div></div>
         <div style="height:20px;"></div>
         <h3>Cart</h3>
@@ -198,6 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentManageShopId = null;
   let currentTokenData = null;
   let currentCartId = null;
+  let playerWalletCp = 0;
 
   const $ = (id) => document.getElementById(id);
   const qp = new URLSearchParams(window.location.search);
@@ -227,14 +297,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const cartListEl = $('cartList');
   const checkoutListEl = $('checkoutList');
   const inventorySectionEl = $('inventorySection');
+  const librarySectionEl = $('librarySection');
   const linksSectionEl = $('linksSection');
   const checkoutsSectionEl = $('checkoutsSection');
   const gmAppEl = $('gmApp');
   const playerAppEl = $('playerApp');
   const playerStoreMetaEl = $('playerStoreMeta');
   const playerWalletDisplayEl = $('playerWalletDisplay');
+  const playerCartTotalDisplayEl = $('playerCartTotalDisplay');
+  const playerRemainingDisplayEl = $('playerRemainingDisplay');
   const playerInventoryWrapEl = $('playerInventoryWrap');
   const playerCartWrapEl = $('playerCartWrap');
+  const libraryWrapEl = $('libraryWrap');
 
   function setStatus(msg) {
     if (statusEl) statusEl.textContent = msg;
@@ -302,21 +376,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setActiveTab(tab) {
     inventorySectionEl.classList.toggle('hidden', tab !== 'inventory');
+    librarySectionEl.classList.toggle('hidden', tab !== 'library');
     linksSectionEl.classList.toggle('hidden', tab !== 'links');
     checkoutsSectionEl.classList.toggle('hidden', tab !== 'checkouts');
     $('tabInventoryBtn').classList.toggle('secondary', tab !== 'inventory');
+    $('tabLibraryBtn').classList.toggle('secondary', tab !== 'library');
     $('tabLinksBtn').classList.toggle('secondary', tab !== 'links');
     $('tabCheckoutsBtn').classList.toggle('secondary', tab !== 'checkouts');
   }
 
-  function showGMMode() {
-    gmAppEl.classList.remove('hidden');
-    playerAppEl.classList.add('hidden');
-  }
-  function showPlayerMode() {
-    gmAppEl.classList.add('hidden');
-    playerAppEl.classList.remove('hidden');
-  }
+  function showGMMode() { gmAppEl.classList.remove('hidden'); playerAppEl.classList.add('hidden'); }
+  function showPlayerMode() { gmAppEl.classList.add('hidden'); playerAppEl.classList.remove('hidden'); }
 
   async function createCampaign() {
     const name = campaignNameEl.value.trim();
@@ -482,6 +552,60 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function createLibraryItem() {
+    const name = $('itemName').value.trim();
+    const category = $('itemCategory').value.trim() || 'Misc';
+    const shopType = $('itemShopType').value;
+    const baseCp = Number($('itemBaseCp').value || 0);
+    const defaultStock = Number($('itemStock').value || 0);
+    const description = $('itemDescription').value.trim();
+
+    if (!name) return setStatus('Enter an item name.');
+    const { error } = await client.from('srd_items').insert({
+      name,
+      category,
+      shop_type: shopType,
+      base_price_cp: baseCp,
+      default_stock: defaultStock,
+      description
+    });
+    if (error) throw error;
+
+    $('itemName').value = '';
+    $('itemCategory').value = '';
+    $('itemBaseCp').value = '';
+    $('itemStock').value = '';
+    $('itemDescription').value = '';
+    setStatus('Library item created.');
+    await refreshLibrary();
+  }
+
+  async function refreshLibrary() {
+    const { data, error } = await client.from('srd_items').select('id, name, category, shop_type, base_price_cp, default_stock, description').order('name', { ascending: true });
+    if (error) throw error;
+
+    libraryWrapEl.innerHTML = data.length ? data.map(item => `
+      <div class="list-row">
+        <div class="row space">
+          <div>
+            <strong>${escapeHtml(item.name)}</strong>
+            <div><span class="pill">${escapeHtml(item.shop_type)}</span><span class="pill">${escapeHtml(item.category)}</span></div>
+            <div class="muted">Base: ${cpToDisplay(item.base_price_cp)} | Stock: ${item.default_stock}</div>
+            <div class="desc">${escapeHtml(item.description || 'No description.')}</div>
+          </div>
+          <button class="small danger" data-action="delete-library-item" data-id="${item.id}">Delete</button>
+        </div>
+      </div>`).join('') : `<div class="muted">No library items yet.</div>`;
+  }
+
+  async function deleteLibraryItem(id) {
+    if (!confirm('Delete this library item?')) return;
+    const { error } = await client.from('srd_items').delete().eq('id', id);
+    if (error) throw error;
+    setStatus('Library item deleted.');
+    await refreshLibrary();
+  }
+
   async function generateInventoryForShop() {
     const shopId = manageShopSelectEl.value;
     if (!shopId) return setStatus('Select a shop first.');
@@ -489,9 +613,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const { data: shop, error: shopError } = await client.from('campaign_shops').select('id, name, shop_type, region_type').eq('id', shopId).single();
     if (shopError) throw shopError;
 
-    const { data: items, error: itemsError } = await client.from('srd_items').select('id, name, base_price_cp, default_stock').eq('shop_type', shop.shop_type).order('name', { ascending: true });
+    const { data: items, error: itemsError } = await client.from('srd_items').select('id, name, base_price_cp, default_stock, description').eq('shop_type', shop.shop_type).order('name', { ascending: true });
     if (itemsError) throw itemsError;
-    if (!items.length) return setStatus(`No SRD items found for ${shop.shop_type}.`);
+    if (!items.length) return setStatus(`No library items found for ${shop.shop_type}.`);
 
     const priceMultiplier = shop.region_type === 'village' ? 1.15 : shop.region_type === 'town' ? 1.05 : 1.0;
     const rows = items.map(item => ({
@@ -499,12 +623,12 @@ document.addEventListener('DOMContentLoaded', () => {
       srd_item_id: item.id,
       item_name: item.name,
       base_price_cp: Math.round(item.base_price_cp * priceMultiplier),
-      stock_on_hand: item.default_stock
+      stock_on_hand: item.default_stock,
+      description: item.description || null
     }));
 
     const { error: insertError } = await client.from('shop_inventory').insert(rows);
     if (insertError) throw insertError;
-
     setStatus(`Generated ${rows.length} items for ${shop.name}.`);
     await refreshInventoryEditor();
   }
@@ -530,33 +654,44 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sErr) throw sErr;
 
     inventoryMetaEl.textContent = `${shop.name} (${shop.shop_type}, ${shop.region_type})`;
-    const { data: rows, error } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp, stock_on_hand').eq('shop_id', shopId).order('item_name', { ascending: true });
+    const { data: rows, error } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp, stock_on_hand, description').eq('shop_id', shopId).order('item_name', { ascending: true });
     if (error) throw error;
 
     inventoryWrapEl.innerHTML = rows.length ? `
       <div class="inventory-grid">
         ${rows.map(r => `
-          <div class="inventory-row">
-            <div>
-              <strong>${escapeHtml(r.item_name)}</strong>
-              <div class="muted">Base: ${cpToDisplay(r.base_price_cp)}</div>
+          <div class="list-row">
+            <div class="inventory-row">
+              <div>
+                <strong>${escapeHtml(r.item_name)}</strong>
+                <div class="muted">Base: ${cpToDisplay(r.base_price_cp)}</div>
+              </div>
+              <div class="money">${cpToDisplay(effectivePriceCp(r))}</div>
+              <div><input type="number" id="price-${r.id}" placeholder="Override CP" value="${r.override_price_cp ?? ''}"></div>
+              <div><input type="number" id="stock-${r.id}" value="${r.stock_on_hand}"></div>
+              <div class="row">
+                <button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button>
+                <button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button>
+              </div>
             </div>
-            <div class="money">${cpToDisplay(effectivePriceCp(r))}</div>
-            <div><input type="number" id="price-${r.id}" placeholder="Override CP" value="${r.override_price_cp ?? ''}"></div>
-            <div><input type="number" id="stock-${r.id}" value="${r.stock_on_hand}"></div>
-            <div class="row">
-              <button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button>
-              <button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button>
+            <div style="margin-top:10px;">
+              <label for="desc-${r.id}">Description</label>
+              <textarea id="desc-${r.id}">${escapeHtml(r.description || '')}</textarea>
             </div>
           </div>`).join('')}
       </div>`
-      : `<div class="muted">No inventory yet. Generate from SRD.</div>`;
+      : `<div class="muted">No inventory yet. Generate from library.</div>`;
   }
 
   async function saveInventoryRow(id) {
     const priceRaw = document.getElementById(`price-${id}`).value;
     const stockRaw = document.getElementById(`stock-${id}`).value;
-    const payload = { stock_on_hand: Number(stockRaw || 0), override_price_cp: priceRaw === '' ? null : Number(priceRaw) };
+    const descRaw = document.getElementById(`desc-${id}`).value;
+    const payload = {
+      stock_on_hand: Number(stockRaw || 0),
+      override_price_cp: priceRaw === '' ? null : Number(priceRaw),
+      description: descRaw.trim() || null
+    };
     const { error } = await client.from('shop_inventory').update(payload).eq('id', id);
     if (error) throw error;
     setStatus('Inventory row saved.');
@@ -640,14 +775,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const { data: carts, error: cartErr } = await client.from('carts').select('id, shop_id, player_id, status, updated_at').in('shop_id', shopIds).order('updated_at', { ascending: false });
     if (cartErr) throw cartErr;
-    cartListEl.innerHTML = carts.length
-      ? carts.map(c => `<div class="list-row"><strong>${escapeHtml(playerMap[c.player_id] || 'Unknown Player')}</strong><div class="muted">Shop: ${escapeHtml(shopMap[c.shop_id] || 'Unknown Shop')}</div><div class="muted">Status: ${escapeHtml(c.status)}</div></div>`).join('')
-      : `<div class="muted">No carts yet.</div>`;
+
+    if (carts.length) {
+      const cartIds = carts.map(c => c.id);
+      const { data: items, error: itemErr } = await client.from('cart_items').select('cart_id, quantity').in('cart_id', cartIds);
+      if (itemErr) throw itemErr;
+      const cartQty = {};
+      items.forEach(i => cartQty[i.cart_id] = (cartQty[i.cart_id] || 0) + Number(i.quantity));
+      cartListEl.innerHTML = carts.map(c => `<div class="list-row"><strong>${escapeHtml(playerMap[c.player_id] || 'Unknown Player')}</strong><div class="muted">Shop: ${escapeHtml(shopMap[c.shop_id] || 'Unknown Shop')}</div><div class="muted">Status: ${escapeHtml(c.status)} | Items: ${cartQty[c.id] || 0}</div></div>`).join('');
+    } else {
+      cartListEl.innerHTML = `<div class="muted">No carts yet.</div>`;
+    }
 
     const { data: checkouts, error: chkErr } = await client.from('checkout_events').select('id, player_id, shop_id, total_cp, created_at').in('shop_id', shopIds).order('created_at', { ascending: false });
     if (chkErr) throw chkErr;
     checkoutListEl.innerHTML = checkouts.length
-      ? checkouts.map(ch => `<div class="list-row"><strong>${escapeHtml(playerMap[ch.player_id] || 'Unknown Player')}</strong><div class="muted">Shop: ${escapeHtml(shopMap[ch.shop_id] || 'Unknown Shop')}</div><div class="money">${cpToDisplay(ch.total_cp)}</div></div>`).join('')
+      ? checkouts.map(ch => `<div class="list-row"><strong>${escapeHtml(playerMap[ch.player_id] || 'Unknown Player')}</strong><div class="muted">Shop: ${escapeHtml(shopMap[ch.shop_id] || 'Unknown Shop')}</div><div class="money">${cpToDisplay(ch.total_cp)}</div><div class="muted">${new Date(ch.created_at).toLocaleString()}</div></div>`).join('')
       : `<div class="muted">No checkout events yet.</div>`;
   }
 
@@ -657,6 +800,7 @@ document.addEventListener('DOMContentLoaded', () => {
     await refreshPlayers();
     await refreshShops();
     await refreshInventoryEditor();
+    await refreshLibrary();
     await refreshShareLinks();
     await refreshCartsAndCheckouts();
   }
@@ -691,9 +835,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (player) {
       const { data: wallet, error: walletErr } = await client.from('player_wallets').select('balance_cp').eq('player_id', player.id).single();
       if (walletErr) throw walletErr;
-      playerWalletDisplayEl.textContent = cpToDisplay(wallet.balance_cp);
+      playerWalletCp = Number(wallet.balance_cp || 0);
+      playerWalletDisplayEl.textContent = cpToDisplay(playerWalletCp);
       currentCartId = await ensureCart(player.id, shop.id);
     } else {
+      playerWalletCp = 0;
       playerWalletDisplayEl.textContent = 'Guest';
       currentCartId = null;
     }
@@ -702,7 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function renderPlayerInventory() {
-    const { data: items, error } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp, stock_on_hand').eq('shop_id', currentTokenData.shop.id).order('item_name', { ascending: true });
+    const { data: items, error } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp, stock_on_hand, description').eq('shop_id', currentTokenData.shop.id).order('item_name', { ascending: true });
     if (error) throw error;
     playerInventoryWrapEl.innerHTML = items.length
       ? `<div class="cards">${items.map(i => `
@@ -710,7 +856,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="font-size:18px;font-weight:700;margin-bottom:8px;">${escapeHtml(i.item_name)}</div>
           <div class="muted">Stock: ${i.stock_on_hand}</div>
           <div class="money" style="margin:10px 0;">${cpToDisplay(effectivePriceCp(i))}</div>
-          ${currentTokenData.player ? `<button data-action="add-to-cart" data-id="${i.id}" ${i.stock_on_hand <= 0 ? 'disabled' : ''}>${i.stock_on_hand <= 0 ? 'Out of Stock' : 'Add to Cart'}</button>` : `<div class="muted">Browse only</div>`}
+          <div class="desc">${escapeHtml(i.description || 'No description.')}</div>
+          ${currentTokenData.player ? `<button style="margin-top:12px;" data-action="add-to-cart" data-id="${i.id}" ${i.stock_on_hand <= 0 ? 'disabled' : ''}>${i.stock_on_hand <= 0 ? 'Out of Stock' : 'Add to Cart'}</button>` : `<div class="muted">Browse only</div>`}
         </div>`).join('')}</div>`
       : `<div class="muted">This shop has no inventory.</div>`;
   }
@@ -737,29 +884,66 @@ document.addEventListener('DOMContentLoaded', () => {
     await refreshCartsAndCheckouts();
   }
 
+  async function changeCartQuantity(id, qty) {
+    if (qty <= 0) return removeCartItem(id);
+    const { error } = await client.from('cart_items').update({ quantity: qty }).eq('id', id);
+    if (error) throw error;
+    await renderCart();
+    await refreshCartsAndCheckouts();
+  }
+
+  async function removeCartItem(id) {
+    const { error } = await client.from('cart_items').delete().eq('id', id);
+    if (error) throw error;
+    await renderCart();
+    await refreshCartsAndCheckouts();
+  }
+
   async function renderCart() {
     if (!currentCartId) {
       playerCartWrapEl.innerHTML = `<div class="muted">No cart available.</div>`;
+      playerCartTotalDisplayEl.textContent = cpToDisplay(0);
+      playerRemainingDisplayEl.textContent = cpToDisplay(playerWalletCp);
       return;
     }
     const { data: rows, error } = await client.from('cart_items').select('id, inventory_id, quantity').eq('cart_id', currentCartId);
     if (error) throw error;
     if (!rows.length) {
       playerCartWrapEl.innerHTML = `<div class="muted">Cart is empty.</div>`;
+      playerCartTotalDisplayEl.textContent = cpToDisplay(0);
+      playerRemainingDisplayEl.textContent = cpToDisplay(playerWalletCp);
       return;
     }
     const invIds = rows.map(r => r.inventory_id);
-    const { data: invRows, error: invErr } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp').in('id', invIds);
+    const { data: invRows, error: invErr } = await client.from('shop_inventory').select('id, item_name, base_price_cp, override_price_cp, stock_on_hand').in('id', invIds);
     if (invErr) throw invErr;
     const invMap = Object.fromEntries(invRows.map(i => [i.id, i]));
     let totalCp = 0;
+
     playerCartWrapEl.innerHTML = rows.map(r => {
       const inv = invMap[r.inventory_id];
       const unit = effectivePriceCp(inv);
       const line = unit * r.quantity;
       totalCp += line;
-      return `<div class="list-row"><strong>${escapeHtml(inv.item_name)}</strong><div class="muted">Qty ${r.quantity}</div><div class="money">${cpToDisplay(line)}</div></div>`;
-    }).join('') + `<div class="list-row"><strong>Total</strong><div class="money">${cpToDisplay(totalCp)}</div></div>`;
+      return `
+        <div class="list-row">
+          <div class="row space">
+            <div>
+              <strong>${escapeHtml(inv.item_name)}</strong>
+              <div class="muted">Qty ${r.quantity}</div>
+              <div class="money">${cpToDisplay(line)}</div>
+            </div>
+            <div class="row">
+              <button class="small secondary" data-action="cart-minus" data-id="${r.id}" data-qty="${r.quantity - 1}">-</button>
+              <button class="small secondary" data-action="cart-plus" data-id="${r.id}" data-qty="${r.quantity + 1}" data-max="${inv.stock_on_hand}">+</button>
+              <button class="small danger" data-action="cart-remove" data-id="${r.id}">Remove</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    playerCartTotalDisplayEl.textContent = cpToDisplay(totalCp);
+    playerRemainingDisplayEl.textContent = cpToDisplay(Math.max(playerWalletCp - totalCp, 0));
   }
 
   async function submitCheckout() {
@@ -805,6 +989,7 @@ document.addEventListener('DOMContentLoaded', () => {
     alert('Checkout submitted.');
     currentCartId = await ensureCart(playerId, shopId);
     await loadPlayerMode();
+    await refreshCartsAndCheckouts();
   }
 
   document.body.addEventListener('click', async (e) => {
@@ -821,7 +1006,10 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (btn.id === 'generateInventoryBtn') await generateInventoryForShop();
       else if (btn.id === 'clearInventoryBtn') await clearInventoryForShop();
       else if (btn.id === 'createLinkBtn') await createShareLink();
+      else if (btn.id === 'createLibraryItemBtn') await createLibraryItem();
+      else if (btn.id === 'refreshLibraryBtn') await refreshLibrary();
       else if (btn.id === 'tabInventoryBtn') setActiveTab('inventory');
+      else if (btn.id === 'tabLibraryBtn') setActiveTab('library');
       else if (btn.id === 'tabLinksBtn') setActiveTab('links');
       else if (btn.id === 'tabCheckoutsBtn') setActiveTab('checkouts');
       else if (btn.id === 'submitCheckoutBtn') await submitCheckout();
@@ -830,10 +1018,20 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (btn.dataset.action === 'delete-shop') await deleteShop(btn.dataset.id);
       else if (btn.dataset.action === 'save-inventory') await saveInventoryRow(btn.dataset.id);
       else if (btn.dataset.action === 'delete-inventory') await deleteInventoryRow(btn.dataset.id);
+      else if (btn.dataset.action === 'delete-library-item') await deleteLibraryItem(btn.dataset.id);
       else if (btn.dataset.action === 'add-to-cart') await addToCart(btn.dataset.id);
+      else if (btn.dataset.action === 'cart-minus') await changeCartQuantity(btn.dataset.id, Number(btn.dataset.qty));
+      else if (btn.dataset.action === 'cart-plus') {
+        const desired = Number(btn.dataset.qty);
+        const max = Number(btn.dataset.max);
+        if (desired > max) throw new Error('Not enough stock.');
+        await changeCartQuantity(btn.dataset.id, desired);
+      }
+      else if (btn.dataset.action === 'cart-remove') await removeCartItem(btn.dataset.id);
     } catch (err) {
       setStatus(err.message || String(err));
       console.error(err);
+      if (playerAppEl && !playerAppEl.classList.contains('hidden')) alert(err.message || String(err));
     }
   });
 
