@@ -6,128 +6,386 @@
   <title>Merchant Smith</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    :root {
+      --bg: #0b0f1a;
+      --panel: #121a2b;
+      --panel-2: #18233a;
+      --border: #2a3553;
+      --text: #f3f4f6;
+      --muted: #b8c0d4;
+      --gold: #c89b3c;
+      --gold-dark: #9e7726;
+      --danger: #c95b5b;
+      --success: #4da66d;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: sans-serif;
-      background: #0b0f1a;
-      color: white;
-      padding: 20px;
-      max-width: 720px;
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: linear-gradient(180deg, #08101d 0%, #0b0f1a 100%);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1200px;
       margin: 0 auto;
+      padding: 24px;
     }
 
-    h2, h3 {
-      margin-bottom: 10px;
+    h1, h2, h3, h4, p {
+      margin-top: 0;
     }
 
-    input, button {
-      padding: 12px;
-      margin: 6px 0;
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      margin-bottom: 6px;
+    }
+
+    .sub {
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: rgba(18, 26, 43, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+    }
+
+    .stack > * + * {
+      margin-top: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input, select, button {
       width: 100%;
-      box-sizing: border-box;
-      border-radius: 8px;
-      border: 1px solid #2a3350;
-      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      font-size: 15px;
     }
 
-    input {
-      background: #101726;
-      color: white;
+    input, select {
+      background: #0f1728;
+      color: var(--text);
     }
 
     button {
-      background: #c89b3c;
+      background: var(--gold);
+      color: #16120a;
+      font-weight: 700;
       border: none;
       cursor: pointer;
-      font-weight: 600;
+      transition: 0.15s ease;
+    }
+
+    button:hover {
+      background: #d8ab49;
     }
 
     button.secondary {
-      background: #2d3b63;
+      background: #273554;
+      color: var(--text);
+    }
+
+    button.secondary:hover {
+      background: #32456c;
+    }
+
+    button.danger {
+      background: var(--danger);
       color: white;
     }
 
-    #status {
-      margin: 12px 0;
-      padding: 12px;
-      border-radius: 8px;
-      background: #111827;
-      border: 1px solid #2a3350;
-      white-space: pre-wrap;
+    button.small {
+      width: auto;
+      padding: 8px 12px;
+      font-size: 14px;
     }
 
-    pre {
-      background: #111;
-      padding: 12px;
-      border-radius: 8px;
-      overflow: auto;
+    .status {
+      padding: 12px 14px;
+      background: #0f1728;
+      border: 1px solid var(--border);
+      border-radius: 12px;
       white-space: pre-wrap;
-      word-break: break-word;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .toolbar > * {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .item-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .price {
+      font-size: 20px;
+      font-weight: 800;
+      color: #f3d27a;
+      margin-bottom: 10px;
+    }
+
+    .wallet {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f1728;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+
+    .wallet strong {
+      color: #f3d27a;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .list-row {
+      background: #0f1728;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .pill {
+      display: inline-block;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #21304e;
+      color: #d9e2f4;
+      margin-right: 6px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  <h2>Merchant Smith</h2>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>Merchant Smith</h1>
+        <p class="sub">Fantasy merchants, player storefronts, and purchases backed by Supabase.</p>
+      </div>
+    </div>
 
-  <h3>Setup</h3>
-  <input id="url" placeholder="Project URL" />
-  <input id="key" placeholder="Publishable / anon key" />
-  <button id="saveBtn">Save Config</button>
-  <button id="testBtn" class="secondary">Test Connection</button>
+    <div class="grid">
+      <aside class="panel stack">
+        <div>
+          <h3>Setup</h3>
+          <label for="url">Project URL</label>
+          <input id="url" placeholder="https://your-project.supabase.co" />
+          <label for="key">Publishable key</label>
+          <input id="key" placeholder="sb_publishable_..." />
+          <div class="two-col" style="margin-top:12px;">
+            <button id="saveBtn">Save Config</button>
+            <button id="testBtn" class="secondary">Test Connection</button>
+          </div>
+        </div>
 
-  <div id="status">Ready.</div>
+        <div class="status" id="status">Ready.</div>
 
-  <h3>GM</h3>
-  <button id="playerBtn">Create Player</button>
-  <button id="shopBtn">Create Shop</button>
+        <div>
+          <h3>GM Tools</h3>
+          <label for="playerName">Player name</label>
+          <input id="playerName" placeholder="Aaravus" />
+          <button id="createPlayerBtn" style="margin-top:10px;">Create Player</button>
 
-  <h3>Output</h3>
-  <pre id="out"></pre>
+          <div style="height: 14px;"></div>
+
+          <label for="shopName">Shop name</label>
+          <input id="shopName" placeholder="The Copper Lantern" />
+
+          <label for="shopType" style="margin-top:10px;">Shop type</label>
+          <select id="shopType">
+            <option value="General">General</option>
+            <option value="Blacksmith">Blacksmith</option>
+            <option value="Outfitter">Outfitter</option>
+            <option value="Arcane">Arcane</option>
+          </select>
+
+          <label for="regionType" style="margin-top:10px;">Region</label>
+          <select id="regionType">
+            <option value="city">City</option>
+            <option value="town">Town</option>
+            <option value="village">Village</option>
+          </select>
+
+          <button id="createShopBtn" style="margin-top:10px;">Create Shop</button>
+        </div>
+
+        <div>
+          <h3>Players</h3>
+          <div class="list" id="playerList"></div>
+        </div>
+
+        <div>
+          <h3>Shops</h3>
+          <div class="list" id="shopList"></div>
+        </div>
+      </aside>
+
+      <main class="panel">
+        <div class="section-title">
+          <div>
+            <h2 style="margin-bottom:4px;">Storefront</h2>
+            <div class="muted" id="storefrontMeta">Select a player and a shop.</div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <select id="selectedPlayer"></select>
+          <select id="selectedShop"></select>
+          <button id="loadStoreBtn" class="secondary">Load Store</button>
+        </div>
+
+        <div class="wallet">
+          <div>Player Wallet</div>
+          <div><strong id="walletValue">-</strong></div>
+        </div>
+
+        <div id="inventoryWrap">
+          <div class="muted">No shop loaded yet.</div>
+        </div>
+
+        <div style="margin-top:20px;">
+          <h3>Purchase History</h3>
+          <div class="list" id="purchaseList"></div>
+        </div>
+      </main>
+    </div>
+  </div>
 
   <script>
     let client = null;
+    let currentPlayer = null;
+    let currentShop = null;
 
     const urlInput = document.getElementById('url');
     const keyInput = document.getElementById('key');
     const statusEl = document.getElementById('status');
-    const outEl = document.getElementById('out');
+    const playerNameInput = document.getElementById('playerName');
+    const shopNameInput = document.getElementById('shopName');
+    const shopTypeInput = document.getElementById('shopType');
+    const regionTypeInput = document.getElementById('regionType');
+    const playerListEl = document.getElementById('playerList');
+    const shopListEl = document.getElementById('shopList');
+    const selectedPlayerEl = document.getElementById('selectedPlayer');
+    const selectedShopEl = document.getElementById('selectedShop');
+    const inventoryWrapEl = document.getElementById('inventoryWrap');
+    const walletValueEl = document.getElementById('walletValue');
+    const purchaseListEl = document.getElementById('purchaseList');
+    const storefrontMetaEl = document.getElementById('storefrontMeta');
 
     function setStatus(message) {
       statusEl.textContent = message;
     }
 
-    function setOutput(data) {
-      if (typeof data === 'string') {
-        outEl.textContent = data;
-      } else {
-        outEl.textContent = JSON.stringify(data, null, 2);
-      }
+    function gpToCp(gp) {
+      return Math.round(Number(gp || 0) * 100);
+    }
+
+    function cpToGp(cp) {
+      return (Number(cp || 0) / 100).toFixed(2) + ' gp';
     }
 
     function initClient() {
       const url = urlInput.value.trim();
       const key = keyInput.value.trim();
-
-      if (!url || !key) {
-        throw new Error('Project URL and key are both required.');
-      }
-
+      if (!url || !key) throw new Error('Project URL and publishable key are required.');
       client = window.supabase.createClient(url, key);
       return client;
     }
 
     function loadSavedConfig() {
-      const savedUrl = localStorage.getItem('url') || '';
-      const savedKey = localStorage.getItem('key') || '';
-
-      urlInput.value = savedUrl;
-      keyInput.value = savedKey;
-
-      if (savedUrl && savedKey) {
+      urlInput.value = localStorage.getItem('url') || '';
+      keyInput.value = localStorage.getItem('key') || '';
+      if (urlInput.value && keyInput.value) {
         try {
           initClient();
           setStatus('Loaded saved config.');
         } catch (err) {
-          setStatus('Saved config found, but failed to initialise client: ' + err.message);
+          setStatus('Failed to initialise saved config: ' + err.message);
         }
       }
     }
@@ -137,8 +395,8 @@
         localStorage.setItem('url', urlInput.value.trim());
         localStorage.setItem('key', keyInput.value.trim());
         initClient();
-        setStatus('Config saved successfully.');
-        setOutput('');
+        setStatus('Config saved.');
+        await refreshAll();
       } catch (err) {
         setStatus('Save failed: ' + err.message);
       }
@@ -147,32 +405,23 @@
     async function testConnection() {
       try {
         if (!client) initClient();
-
-        setStatus('Testing connection...');
-        const { data, error } = await client
-          .from('shops')
-          .select('*')
-          .limit(10);
-
+        const { error } = await client.from('shops').select('id').limit(1);
         if (error) throw error;
-
         setStatus('Connection successful.');
-        setOutput(data);
+        await refreshAll();
       } catch (err) {
         setStatus('Connection failed: ' + err.message);
-        setOutput({ error: err.message });
       }
     }
 
     async function createPlayer() {
       try {
         if (!client) initClient();
+        const name = playerNameInput.value.trim() || 'Player';
 
-        setStatus('Creating player...');
-
-        const { data: playerData, error: playerError } = await client
+        const { data: player, error: playerError } = await client
           .from('app_players')
-          .insert({ display_name: 'Player' })
+          .insert({ display_name: name })
           .select()
           .single();
 
@@ -180,30 +429,63 @@
 
         const { error: walletError } = await client
           .from('player_wallets')
-          .insert({ player_id: playerData.id, balance_cp: 10000 });
+          .insert({ player_id: player.id, balance_cp: 10000 });
 
         if (walletError) throw walletError;
 
-        setStatus('Player created.');
-        setOutput(playerData);
+        playerNameInput.value = '';
+        setStatus(`Player created: ${player.display_name}`);
+        await refreshPlayers();
       } catch (err) {
         setStatus('Create player failed: ' + err.message);
-        setOutput({ error: err.message });
       }
+    }
+
+    function getSampleInventory(shopType) {
+      const general = [
+        { item_name: 'Sword', list_price_gp: 10, stock_on_hand: 5 },
+        { item_name: 'Rope', list_price_gp: 1, stock_on_hand: 10 },
+        { item_name: 'Torch', list_price_gp: 0.01, stock_on_hand: 20 },
+        { item_name: 'Backpack', list_price_gp: 2, stock_on_hand: 6 }
+      ];
+      const blacksmith = [
+        { item_name: 'Longsword', list_price_gp: 15, stock_on_hand: 3 },
+        { item_name: 'Shield', list_price_gp: 10, stock_on_hand: 4 },
+        { item_name: 'Chain Shirt', list_price_gp: 50, stock_on_hand: 1 },
+        { item_name: 'Hammer', list_price_gp: 1, stock_on_hand: 8 }
+      ];
+      const outfitter = [
+        { item_name: 'Bedroll', list_price_gp: 1, stock_on_hand: 7 },
+        { item_name: 'Waterskin', list_price_gp: 0.2, stock_on_hand: 12 },
+        { item_name: 'Rations', list_price_gp: 0.5, stock_on_hand: 16 },
+        { item_name: 'Tent', list_price_gp: 2, stock_on_hand: 2 }
+      ];
+      const arcane = [
+        { item_name: 'Spellbook', list_price_gp: 50, stock_on_hand: 1 },
+        { item_name: 'Ink Bottle', list_price_gp: 10, stock_on_hand: 4 },
+        { item_name: 'Component Pouch', list_price_gp: 25, stock_on_hand: 2 },
+        { item_name: 'Crystal Focus', list_price_gp: 10, stock_on_hand: 3 }
+      ];
+
+      if (shopType === 'Blacksmith') return blacksmith;
+      if (shopType === 'Outfitter') return outfitter;
+      if (shopType === 'Arcane') return arcane;
+      return general;
     }
 
     async function createShop() {
       try {
         if (!client) initClient();
+        const name = shopNameInput.value.trim() || 'Test Shop';
+        const shopType = shopTypeInput.value;
+        const regionType = regionTypeInput.value;
 
-        setStatus('Creating shop...');
-
-        const { data: shopData, error: shopError } = await client
+        const { data: shop, error: shopError } = await client
           .from('shops')
           .insert({
-            name: 'Test Shop',
-            shop_type: 'General',
-            region_type: 'city',
+            name,
+            shop_type: shopType,
+            region_type: regionType,
             price_variance_seed: 1.0
           })
           .select()
@@ -211,31 +493,276 @@
 
         if (shopError) throw shopError;
 
-        const { data: inventoryData, error: inventoryError } = await client
+        const inventoryRows = getSampleInventory(shopType).map(item => ({
+          shop_id: shop.id,
+          item_name: item.item_name,
+          list_price_gp: item.list_price_gp,
+          stock_on_hand: item.stock_on_hand
+        }));
+
+        const { error: inventoryError } = await client
           .from('shop_inventory')
-          .insert([
-            { shop_id: shopData.id, item_name: 'Sword', list_price_gp: 10, stock_on_hand: 5 },
-            { shop_id: shopData.id, item_name: 'Rope', list_price_gp: 1, stock_on_hand: 10 }
-          ])
-          .select();
+          .insert(inventoryRows);
 
         if (inventoryError) throw inventoryError;
 
-        setStatus('Shop created.');
-        setOutput({
-          shop: shopData,
-          inventory: inventoryData
-        });
+        shopNameInput.value = '';
+        setStatus(`Shop created: ${shop.name}`);
+        await refreshShops();
       } catch (err) {
         setStatus('Create shop failed: ' + err.message);
-        setOutput({ error: err.message });
       }
+    }
+
+    async function refreshPlayers() {
+      const { data, error } = await client
+        .from('app_players')
+        .select('id, display_name, created_at')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      playerListEl.innerHTML = data.length
+        ? data.map(p => `
+          <div class="list-row">
+            <strong>${escapeHtml(p.display_name)}</strong>
+            <div class="muted">${new Date(p.created_at).toLocaleString()}</div>
+          </div>
+        `).join('')
+        : `<div class="muted">No players yet.</div>`;
+
+      selectedPlayerEl.innerHTML = `<option value="">Select player</option>` + data.map(p =>
+        `<option value="${p.id}">${escapeHtml(p.display_name)}</option>`
+      ).join('');
+
+      if (currentPlayer && data.some(p => p.id === currentPlayer.id)) {
+        selectedPlayerEl.value = currentPlayer.id;
+      }
+    }
+
+    async function refreshShops() {
+      const { data, error } = await client
+        .from('shops')
+        .select('id, name, shop_type, region_type, created_at')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      shopListEl.innerHTML = data.length
+        ? data.map(s => `
+          <div class="list-row">
+            <strong>${escapeHtml(s.name)}</strong>
+            <div style="margin-top:6px;">
+              <span class="pill">${escapeHtml(s.shop_type)}</span>
+              <span class="pill">${escapeHtml(s.region_type)}</span>
+            </div>
+          </div>
+        `).join('')
+        : `<div class="muted">No shops yet.</div>`;
+
+      selectedShopEl.innerHTML = `<option value="">Select shop</option>` + data.map(s =>
+        `<option value="${s.id}">${escapeHtml(s.name)} - ${escapeHtml(s.shop_type)}</option>`
+      ).join('');
+
+      if (currentShop && data.some(s => s.id === currentShop.id)) {
+        selectedShopEl.value = currentShop.id;
+      }
+    }
+
+    async function refreshWallet(playerId) {
+      if (!playerId) {
+        walletValueEl.textContent = '-';
+        return;
+      }
+
+      const { data, error } = await client
+        .from('player_wallets')
+        .select('balance_cp')
+        .eq('player_id', playerId)
+        .single();
+
+      if (error) throw error;
+      walletValueEl.textContent = cpToGp(data.balance_cp);
+    }
+
+    async function loadStorefront() {
+      try {
+        if (!client) initClient();
+
+        const playerId = selectedPlayerEl.value;
+        const shopId = selectedShopEl.value;
+
+        if (!playerId || !shopId) {
+          setStatus('Select both a player and a shop.');
+          return;
+        }
+
+        const [{ data: player, error: playerError }, { data: shop, error: shopError }] = await Promise.all([
+          client.from('app_players').select('id, display_name').eq('id', playerId).single(),
+          client.from('shops').select('id, name, shop_type, region_type').eq('id', shopId).single()
+        ]);
+
+        if (playerError) throw playerError;
+        if (shopError) throw shopError;
+
+        currentPlayer = player;
+        currentShop = shop;
+
+        await refreshWallet(player.id);
+
+        const { data: inventory, error: invError } = await client
+          .from('shop_inventory')
+          .select('id, item_name, list_price_gp, stock_on_hand')
+          .eq('shop_id', shop.id)
+          .order('item_name', { ascending: true });
+
+        if (invError) throw invError;
+
+        storefrontMetaEl.textContent = `${player.display_name} browsing ${shop.name} (${shop.shop_type}, ${shop.region_type})`;
+
+        renderInventory(inventory);
+        await refreshPurchases(shop.id);
+
+        setStatus('Store loaded.');
+      } catch (err) {
+        setStatus('Load store failed: ' + err.message);
+      }
+    }
+
+    function renderInventory(items) {
+      if (!items.length) {
+        inventoryWrapEl.innerHTML = `<div class="muted">This shop has no inventory.</div>`;
+        return;
+      }
+
+      inventoryWrapEl.innerHTML = `<div class="cards">${
+        items.map(item => `
+          <div class="card">
+            <div class="item-name">${escapeHtml(item.item_name)}</div>
+            <div class="meta">Stock: ${item.stock_on_hand}</div>
+            <div class="price">${Number(item.list_price_gp).toFixed(2)} gp</div>
+            <button class="small" onclick="buyItem('${item.id}', '${escapeJs(item.item_name)}', ${Number(item.list_price_gp)}, ${item.stock_on_hand})" ${item.stock_on_hand <= 0 ? 'disabled' : ''}>
+              ${item.stock_on_hand <= 0 ? 'Out of Stock' : 'Buy 1'}
+            </button>
+          </div>
+        `).join('')
+      }</div>`;
+    }
+
+    async function refreshPurchases(shopId) {
+      const { data, error } = await client
+        .from('purchases')
+        .select('id, item_name, quantity, total_price_gp, created_at')
+        .eq('shop_id', shopId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      purchaseListEl.innerHTML = data.length
+        ? data.map(p => `
+          <div class="list-row">
+            <strong>${escapeHtml(p.item_name)}</strong>
+            <div class="muted">Qty ${p.quantity} - ${Number(p.total_price_gp).toFixed(2)} gp</div>
+          </div>
+        `).join('')
+        : `<div class="muted">No purchases yet.</div>`;
+    }
+
+    async function buyItem(inventoryId, itemName, listPriceGp, stockOnHand) {
+      try {
+        if (!currentPlayer || !currentShop) {
+          setStatus('Load a player and shop first.');
+          return;
+        }
+
+        if (stockOnHand <= 0) {
+          setStatus('Item is out of stock.');
+          return;
+        }
+
+        const { data: wallet, error: walletError } = await client
+          .from('player_wallets')
+          .select('balance_cp')
+          .eq('player_id', currentPlayer.id)
+          .single();
+
+        if (walletError) throw walletError;
+
+        const priceCp = gpToCp(listPriceGp);
+        if (wallet.balance_cp < priceCp) {
+          setStatus('Not enough gold.');
+          return;
+        }
+
+        const { error: walletUpdateError } = await client
+          .from('player_wallets')
+          .update({ balance_cp: wallet.balance_cp - priceCp })
+          .eq('player_id', currentPlayer.id);
+
+        if (walletUpdateError) throw walletUpdateError;
+
+        const { data: invRow, error: invFetchError } = await client
+          .from('shop_inventory')
+          .select('stock_on_hand')
+          .eq('id', inventoryId)
+          .single();
+
+        if (invFetchError) throw invFetchError;
+        if (invRow.stock_on_hand <= 0) throw new Error('Item went out of stock.');
+
+        const { error: invUpdateError } = await client
+          .from('shop_inventory')
+          .update({ stock_on_hand: invRow.stock_on_hand - 1 })
+          .eq('id', inventoryId);
+
+        if (invUpdateError) throw invUpdateError;
+
+        const { error: purchaseError } = await client
+          .from('purchases')
+          .insert({
+            shop_id: currentShop.id,
+            item_name: itemName,
+            quantity: 1,
+            total_price_gp: listPriceGp
+          });
+
+        if (purchaseError) throw purchaseError;
+
+        setStatus(`Purchased ${itemName} for ${Number(listPriceGp).toFixed(2)} gp.`);
+        await refreshWallet(currentPlayer.id);
+        await loadStorefront();
+      } catch (err) {
+        setStatus('Purchase failed: ' + err.message);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function escapeJs(str) {
+      return String(str).replaceAll("\\", "\\\\").replaceAll("'", "\\'");
+    }
+
+    async function refreshAll() {
+      if (!client) return;
+      await refreshPlayers();
+      await refreshShops();
     }
 
     document.getElementById('saveBtn').addEventListener('click', saveConfig);
     document.getElementById('testBtn').addEventListener('click', testConnection);
-    document.getElementById('playerBtn').addEventListener('click', createPlayer);
-    document.getElementById('shopBtn').addEventListener('click', createShop);
+    document.getElementById('createPlayerBtn').addEventListener('click', createPlayer);
+    document.getElementById('createShopBtn').addEventListener('click', createShop);
+    document.getElementById('loadStoreBtn').addEventListener('click', loadStorefront);
+
+    window.buyItem = buyItem;
 
     loadSavedConfig();
   </script>
