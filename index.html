@@ -383,7 +383,13 @@
           </div>
           <div class="grid2">
             <div class="panel" style="background:#0d1627">
-              <h3>Inventory</h3>
+              <div class="hero" style="margin-bottom:12px">
+                <div><h3>Inventory</h3></div>
+                <div class="seg">
+                  <button id="portalInventoryCardViewBtn" class="active">Cards</button>
+                  <button id="portalInventoryTableViewBtn">Table</button>
+                </div>
+              </div>
               <div id="portalInventoryWrap" class="cards" style="margin-top:12px"></div>
             </div>
             <div class="panel" style="background:#0d1627">
@@ -415,6 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let libraryViewMode = 'cards';
   let shopInventoryViewMode = 'cards';
   let playerViewMode = 'cards';
+  let portalInventoryViewMode = 'cards';
   let appChannel = null;
   let portalChannel = null;
   let portalState = {
@@ -471,6 +478,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if ($('shopInventoryTableViewBtn')) $('shopInventoryTableViewBtn').classList.toggle('active', shopInventoryViewMode === 'table');
     if ($('playerCardViewBtn')) $('playerCardViewBtn').classList.toggle('active', playerViewMode === 'cards');
     if ($('playerTableViewBtn')) $('playerTableViewBtn').classList.toggle('active', playerViewMode === 'table');
+    if ($('portalInventoryCardViewBtn')) $('portalInventoryCardViewBtn').classList.toggle('active', portalInventoryViewMode === 'cards');
+    if ($('portalInventoryTableViewBtn')) $('portalInventoryTableViewBtn').classList.toggle('active', portalInventoryViewMode === 'table');
   }
   function setBusy(btn, busy=true) {
     if (!btn) return;
@@ -1331,14 +1340,39 @@ document.addEventListener('DOMContentLoaded', () => {
     if ($('portalTypeFilter')) $('portalTypeFilter').innerHTML = `<option value="">All item types</option>` + guessedTypes.map(t => `<option value="${t}" ${t===typeFilter?'selected':''}>${t}</option>`).join('');
     if ($('portalSourceFilter')) $('portalSourceFilter').innerHTML = `<option value="">All sources</option>` + guessedSources.map(s => `<option value="${s.toLowerCase()}" ${s.toLowerCase()===sourceFilter?'selected':''}>${s}</option>`).join('');
 
-    $('portalInventoryWrap').innerHTML = filtered.length ? filtered.map(i => `
-      <div class="card">
-        <div class="title">${escapeHtml(i.item_name)}</div>
-        <div class="money" style="margin-top:8px">${cpToDisplay(effectivePriceCp(i))}</div>
-        <div class="small-meta">Stock: ${i.stock_on_hand}</div>
-        <div class="item-desc">${escapeHtml(i.description || 'No description.')}</div>
-        <button style="margin-top:14px" data-action="portal-add-to-cart" data-id="${i.id}" ${i.stock_on_hand <= 0 ? 'disabled' : ''}>${i.stock_on_hand <= 0 ? 'Out of Stock' : 'Add to Cart'}</button>
-      </div>`).join('') : `<div class="empty">No items match your current filters.</div>`;
+    if (portalInventoryViewMode === 'table') {
+      $('portalInventoryWrap').className = '';
+      $('portalInventoryWrap').innerHTML = filtered.length ? `
+        <div class="table-wrap">
+          <table class="ms-table">
+            <thead>
+              <tr><th>Item</th><th>Price</th><th>Stock</th><th>Description</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              ${filtered.map(i => `
+                <tr>
+                  <td><strong>${escapeHtml(i.item_name)}</strong></td>
+                  <td class="money">${cpToDisplay(effectivePriceCp(i))}</td>
+                  <td>${i.stock_on_hand}</td>
+                  <td>${escapeHtml((i.description || '').slice(0, 160))}${(i.description || '').length > 160 ? '…' : ''}</td>
+                  <td><button class="small secondary" data-action="portal-add-to-cart" data-id="${i.id}" ${i.stock_on_hand <= 0 ? 'disabled' : ''}>${i.stock_on_hand <= 0 ? 'Out' : 'Add'}</button></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : `<div class="empty">No items match your current filters.</div>`;
+    } else {
+      $('portalInventoryWrap').className = 'cards';
+      $('portalInventoryWrap').innerHTML = filtered.length ? filtered.map(i => `
+        <div class="card">
+          <div class="title">${escapeHtml(i.item_name)}</div>
+          <div class="money" style="margin-top:8px">${cpToDisplay(effectivePriceCp(i))}</div>
+          <div class="small-meta">Stock: ${i.stock_on_hand}</div>
+          <div class="item-desc">${escapeHtml(i.description || 'No description.')}</div>
+          <button style="margin-top:14px" data-action="portal-add-to-cart" data-id="${i.id}" ${i.stock_on_hand <= 0 ? 'disabled' : ''}>${i.stock_on_hand <= 0 ? 'Out of Stock' : 'Add to Cart'}</button>
+        </div>`).join('') : `<div class="empty">No items match your current filters.</div>`;
+    }
+
+    syncViewButtons();
     await renderPortalCart();
   }
 
@@ -1512,6 +1546,8 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (btn.id === 'addTempItemBtn') await addTemporaryItemToShop();
       else if (btn.id === 'playerCardViewBtn') { playerViewMode = 'cards'; await refreshPlayers(); }
       else if (btn.id === 'playerTableViewBtn') { playerViewMode = 'table'; await refreshPlayers(); }
+      else if (btn.id === 'portalInventoryCardViewBtn') { portalInventoryViewMode = 'cards'; if (portalState.shopId) await loadPortalShop(); }
+      else if (btn.id === 'portalInventoryTableViewBtn') { portalInventoryViewMode = 'table'; if (portalState.shopId) await loadPortalShop(); }
       else if (btn.id === 'navCampaign') setScreen('campaign');
       else if (btn.id === 'navShops') setScreen('shops');
       else if (btn.id === 'navLibrary') setScreen('library');
