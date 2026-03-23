@@ -1068,6 +1068,114 @@ async function renderPortalCart(){
   if($('portalRemainingInline')) $('portalRemainingInline').textContent=remainingText;
 }
 
+
+function bindListeners(){
+  $('selectedCampaign')?.addEventListener('change', async()=>{ appState.currentCampaignId=$('selectedCampaign').value||null; try{ ensureClient(); await refreshAll(); }catch(err){ setStatus(err.message); } });
+  $('manageShopSelect')?.addEventListener('change', async()=>{ appState.currentManageShopId=$('manageShopSelect').value||null; try{ ensureClient(); await refreshShopBuilder(); }catch(err){ setStatus(err.message); } });
+  $('librarySearch')?.addEventListener('input', async()=>{ try{ ensureClient(); await refreshLibrary(); }catch(err){ setStatus(err.message); } });
+  $('libraryShopTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await refreshLibrary(); }catch(err){ setStatus(err.message); } });
+  $('librarySourceFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await refreshLibrary(); }catch(err){ setStatus(err.message); } });
+  $('shopItemSearch')?.addEventListener('input', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
+  $('shopItemTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
+  $('shopItemSourceFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
+  $('portalShopSelect')?.addEventListener('change', ()=>{ appState.portal.shopId=$('portalShopSelect').value||''; });
+  $('portalItemSearch')?.addEventListener('input', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
+  $('portalTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
+  $('portalSourceFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
+
+  document.body.addEventListener('click', async(e)=>{
+    const head = e.target.closest('.sortable');
+    if(!head) return;
+    try{
+      toggleSort(head.dataset.sortBucket, head.dataset.sortKey);
+      if(head.dataset.sortBucket==='players') await refreshPlayers();
+      else if(head.dataset.sortBucket==='library') await refreshLibrary();
+      else if(head.dataset.sortBucket==='shopLibrary') await renderShopLibrarySearch();
+      else if(head.dataset.sortBucket==='shopInventory') await refreshShopBuilder();
+      else if(head.dataset.sortBucket==='portalInventory') await loadPortalShop();
+    } catch(err){ setStatus(err.message || String(err)); }
+  });
+
+  document.body.addEventListener('click', async(e)=>{
+    const btn=e.target.closest('button');
+    if(!btn) return;
+    const noDb=['navCampaign','navShops','navLibrary','navInvoices'];
+    try{
+      if(!noDb.includes(btn.id)) ensureClient();
+      setBusy(btn,true);
+
+      if(btn.id==='saveBtn') await saveConfig();
+      else if(btn.id==='testBtn') await testConnection();
+      else if(btn.id==='createCampaignBtn') await createCampaign();
+      else if(btn.id==='deleteCampaignBtn') await deleteCampaign();
+      else if(btn.id==='refreshBtn') await refreshAll();
+      else if(btn.id==='createShopBtn') await createShop();
+      else if(btn.id==='createShopInlineBtn') await createShopFromBuilder();
+      else if(btn.id==='createLibraryItemBtn') await createLibraryItem();
+      else if(btn.id==='refreshLibraryBtn') await refreshLibrary();
+      else if(btn.id==='generateInventoryBtn') await generateInventoryForShop();
+      else if(btn.id==='clearInventoryBtn') await clearInventoryForShop();
+      else if(btn.id==='addTempItemBtn') await addTemporaryItemToShop();
+      else if(btn.id==='applyShopShuffleBtn') await applyShopShuffle();
+      else if(btn.id==='resetShopPricesBtn') await resetShopPrices();
+      else if(btn.id==='navCampaign') setScreen('campaign');
+      else if(btn.id==='navShops') setScreen('shops');
+      else if(btn.id==='navLibrary') setScreen('library');
+      else if(btn.id==='navInvoices') setScreen('invoices');
+
+      else if(btn.id==='playerCardViewBtn'){ appState.views.players='cards'; await refreshPlayers(); }
+      else if(btn.id==='playerTableViewBtn'){ appState.views.players='table'; await refreshPlayers(); }
+      else if(btn.id==='libraryCardViewBtn'){ appState.views.library='cards'; await refreshLibrary(); }
+      else if(btn.id==='libraryTableViewBtn'){ appState.views.library='table'; await refreshLibrary(); }
+      else if(btn.id==='shopInventoryCardViewBtn'){ appState.views.shopInventory='cards'; await refreshShopBuilder(); }
+      else if(btn.id==='shopInventoryTableViewBtn'){ appState.views.shopInventory='table'; await refreshShopBuilder(); }
+      else if(btn.id==='shopLibraryCardViewBtn'){ appState.views.shopLibrary='cards'; await renderShopLibrarySearch(); }
+      else if(btn.id==='shopLibraryTableViewBtn'){ appState.views.shopLibrary='table'; await renderShopLibrarySearch(); }
+      else if(btn.id==='portalInventoryCardViewBtn'){ appState.views.portalInventory='cards'; if(appState.portal.shopId) await loadPortalShop(); }
+      else if(btn.id==='portalInventoryTableViewBtn'){ appState.views.portalInventory='table'; if(appState.portal.shopId) await loadPortalShop(); }
+
+      else if(btn.id==='joinCampaignBtn') await joinCampaignFromPortal();
+      else if(btn.id==='resumePlayerBtn') await resumePlayer();
+      else if(btn.id==='forgetPlayerBtn') forgetPlayer();
+      else if(btn.id==='leaveCampaignBtn') forgetPlayer();
+      else if(btn.id==='savePortalProfileBtn') await savePortalProfile();
+      else if(btn.id==='openPortalShopBtn') await openPortalShop();
+      else if(btn.id==='reloadPortalShopBtn') await loadPortalShop();
+      else if(btn.id==='portalCheckoutBtn') await portalCheckout();
+
+      else if(btn.dataset.action==='save-gm-player') await saveGMPlayerWallet(btn.dataset.id);
+      else if(btn.dataset.action==='delete-player') await deletePlayer(btn.dataset.id);
+      else if(btn.dataset.action==='manage-shop'){ appState.currentManageShopId=btn.dataset.id; $('manageShopSelect').value=appState.currentManageShopId; setScreen('shops'); await refreshShopBuilder(); }
+      else if(btn.dataset.action==='delete-shop') await deleteShop(btn.dataset.id);
+
+      else if(btn.dataset.action==='save-library-item') await saveLibraryItem(btn.dataset.id);
+      else if(btn.dataset.action==='delete-library-item') await deleteLibraryItem(btn.dataset.id);
+      else if(btn.dataset.action==='toggle-library-details') $('lib-extra-'+btn.dataset.id).classList.toggle('hidden');
+
+      else if(btn.dataset.action==='add-library-item-to-shop') await addLibraryItemToShop(btn.dataset.id);
+      else if(btn.dataset.action==='save-inventory') await saveInventoryRow(btn.dataset.id);
+      else if(btn.dataset.action==='delete-inventory') await deleteInventoryRow(btn.dataset.id);
+      else if(btn.dataset.action==='toggle-inventory-details') $('inventory-extra-'+btn.dataset.id).classList.toggle('hidden');
+      else if(btn.dataset.action==='shuffle-item-price') await shuffleItemPrice(btn.dataset.id);
+      else if(btn.dataset.action==='reset-item-price') await resetItemPrice(btn.dataset.id);
+      else if(btn.dataset.action==='toggle-desc') toggleDescById(btn.dataset.id, btn);
+      else if(btn.dataset.action==='lookup-invoice-item') await lookupInvoiceItem(btn.dataset.id);
+
+      else if(btn.dataset.action==='portal-add-to-cart') await portalAddToCart(btn.dataset.id);
+      else if(btn.dataset.action==='portal-cart-minus') await portalChangeCart(btn.dataset.id, Number(btn.dataset.qty));
+      else if(btn.dataset.action==='portal-cart-plus') await portalChangeCart(btn.dataset.id, Number(btn.dataset.qty));
+      else if(btn.dataset.action==='portal-cart-remove') await portalRemoveCartItem(btn.dataset.id);
+
+    } catch(err){
+      console.error(err);
+      alert(err.message || String(err));
+      setStatus(err.message || String(err));
+    } finally {
+      setBusy(btn,false);
+    }
+  });
+}
+
 function loadSavedConfig(){
   if($('url')) $('url').value = APP_CONFIG.SUPABASE_URL || localStorage.getItem('url') || '';
   if($('key')) $('key').value = APP_CONFIG.SUPABASE_ANON_KEY || localStorage.getItem('key') || '';
