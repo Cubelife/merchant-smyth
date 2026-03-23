@@ -779,7 +779,7 @@ async function generateInventoryForShop(){
   if(!selected.length) return setStatus('No matching items found for the chosen rarity mix.');
 
   const mult=shop.region_type==='village'?1.15:shop.region_type==='town'?1.05:1;
-  const rows=selected.map(item=>({
+  let rows=selected.map(item=>({
     shop_id:shopId,
     srd_item_id:item.id,
     item_name:item.name,
