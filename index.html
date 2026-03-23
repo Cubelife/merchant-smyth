@@ -633,28 +633,54 @@ async function refreshCampaigns(){
 async function refreshPlayers(){
   const client=ensureClient();
   const campaignId=$('selectedCampaign').value;
-  if(!campaignId){ $('playerCards').innerHTML=`<div class="empty">Select a campaign.</div>`; return; }
-  const {data:players,error}=await client.from('campaign_players').select('id,display_name,last_seen_at').eq('campaign_id',campaignId).order('display_name');
-  if(error) throw error;
-  const ids=sortedPlayers.map(p=>p.id);
-  const walletMap={};
-  if(ids.length){
-    const {data:wallets,error:wErr}=await client.from('player_wallets').select('player_id,balance_cp').in('player_id',ids);
-    if(wErr) throw wErr;
-    wallets.forEach(w=>walletMap[w.player_id]=w.balance_cp);
+  if(!campaignId){
+    $('playerCards').innerHTML=`<div class="empty">Select a campaign.</div>`;
+    return;
   }
-  if(!players.length){ $('playerCards').className=''; $('playerCards').innerHTML=`<div class="empty">No connected players yet.</div>`; syncViewButtons(); return; }
+
+  const {data:players,error}=await client
+    .from('campaign_players')
+    .select('id,display_name,last_seen_at')
+    .eq('campaign_id',campaignId)
+    .order('display_name');
+  if(error) throw error;
+
+  const ids = players.map(p=>p.id);
+  const walletMap = {};
+  if(ids.length){
+    const {data:wallets,error:wErr}=await client
+      .from('player_wallets')
+      .select('player_id,balance_cp')
+      .in('player_id',ids);
+    if(wErr) throw wErr;
+    wallets.forEach(w => { walletMap[w.player_id] = w.balance_cp; });
+  }
+
+  if(!players.length){
+    $('playerCards').className='';
+    $('playerCards').innerHTML=`<div class="empty">No connected players yet.</div>`;
+    syncViewButtons();
+    return;
+  }
+
   const sortedPlayers = applySort(players, appState.sorts.players);
 
   if(appState.views.players==='table'){
     $('playerCards').className='';
     $('playerCards').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th class="sortable" data-sort-bucket="players" data-sort-key="display_name">Name</th><th class="sortable" data-sort-bucket="players" data-sort-key="last_seen_at">Last Seen</th><th>GP</th><th>SP</th><th>CP</th><th>Actions</th></tr></thead><tbody>${
-      sortedPlayers.map(p=>{ const parts=cpToParts(walletMap[p.id]||0); return `<tr><td><strong>${escapeHtml(p.display_name||'Unnamed Player')}</strong></td><td>${p.last_seen_at?new Date(p.last_seen_at).toLocaleString():'Never'}</td><td><input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}"></td><td><input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}"></td><td><input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}"></td><td><div class="row"><button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button><button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button></div></td></tr>`; }).join('')
+      sortedPlayers.map(p=>{
+        const parts=cpToParts(walletMap[p.id]||0);
+        return `<tr><td><strong>${escapeHtml(p.display_name||'Unnamed Player')}</strong></td><td>${p.last_seen_at?new Date(p.last_seen_at).toLocaleString():'Never'}</td><td><input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}"></td><td><input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}"></td><td><input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}"></td><td><div class="row"><button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button><button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button></div></td></tr>`;
+      }).join('')
     }</tbody></table></div>`;
   } else {
     $('playerCards').className='cards';
-    $('playerCards').innerHTML=sortedPlayers.map(p=>{ const parts=cpToParts(walletMap[p.id]||0); return `<div class="card"><div class="title">🧝 ${escapeHtml(p.display_name||'Unnamed Player')}</div><div class="small-meta">Last seen: ${p.last_seen_at?new Date(p.last_seen_at).toLocaleString():'Never'}</div><div class="grid3" style="margin-top:10px"><input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}"><input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}"><input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}"></div><div class="row" style="margin-top:12px"><button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button><button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button></div></div>`; }).join('');
+    $('playerCards').innerHTML=sortedPlayers.map(p=>{
+      const parts=cpToParts(walletMap[p.id]||0);
+      return `<div class="card"><div class="title">🧝 ${escapeHtml(p.display_name||'Unnamed Player')}</div><div class="small-meta">Last seen: ${p.last_seen_at?new Date(p.last_seen_at).toLocaleString():'Never'}</div><div class="grid3" style="margin-top:10px"><input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}"><input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}"><input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}"></div><div class="row" style="margin-top:12px"><button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button><button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button></div></div>`;
+    }).join('');
   }
+
   syncViewButtons();
 }
 async function saveGMPlayerWallet(id){ const client=ensureClient(); const cp=moneyToCp($('gm-gp-'+id).value,$('gm-sp-'+id).value,$('gm-cp-'+id).value); const {error}=await client.from('player_wallets').update({balance_cp:cp}).eq('player_id',id); if(error) throw error; await refreshPlayers(); }
