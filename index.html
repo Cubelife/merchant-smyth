@@ -1177,6 +1177,108 @@ function bindListeners(){
 }
 
 
+
+async function portalCheckout(){
+  const client=ensureClient();
+
+  const {data:cartItems,error:cErr}=await client
+    .from('cart_items')
+    .select('id,inventory_id,quantity')
+    .eq('cart_id',appState.portal.cartId);
+  if(cErr) throw cErr;
+  if(!cartItems.length) throw new Error('Cart is empty.');
+
+  const {data:player,error:pErr}=await client
+    .from('campaign_players')
+    .select('id,display_name,campaign_id')
+    .eq('id',appState.portal.playerId)
+    .single();
+  if(pErr) throw pErr;
+
+  const {data:shop,error:sErr}=await client
+    .from('campaign_shops')
+    .select('id,name')
+    .eq('id',appState.portal.shopId)
+    .single();
+  if(sErr) throw sErr;
+
+  const invIds=cartItems.map(c=>c.inventory_id);
+  const {data:invRows,error:iErr}=await client
+    .from('shop_inventory')
+    .select('id,srd_item_id,item_name,base_price_cp,override_price_cp,stock_on_hand')
+    .in('id',invIds);
+  if(iErr) throw iErr;
+
+  const invMap=Object.fromEntries((invRows||[]).map(i=>[i.id,i]));
+  let totalCp=0;
+
+  for(const ci of cartItems){
+    const inv=invMap[ci.inventory_id];
+    if(!inv) throw new Error('One or more cart items are no longer available.');
+    if(ci.quantity > inv.stock_on_hand) throw new Error(`Not enough stock for ${inv.item_name}.`);
+    totalCp += effectivePriceCp(inv) * ci.quantity;
+  }
+
+  if(appState.portal.walletCp < totalCp) throw new Error('Not enough money in wallet.');
+
+  const {data:invoice,error:invErr}=await client
+    .from('checkout_invoices')
+    .insert({
+      campaign_id:player.campaign_id,
+      player_id:player.id,
+      shop_id:shop.id,
+      player_name_snapshot:player.display_name,
+      shop_name_snapshot:shop.name,
+      total_cp:totalCp
+    })
+    .select()
+    .single();
+  if(invErr) throw invErr;
+
+  const invoiceLines=cartItems.map(ci=>{
+    const inv=invMap[ci.inventory_id];
+    const unitPrice=effectivePriceCp(inv);
+    return {
+      invoice_id:invoice.id,
+      srd_item_id:inv.srd_item_id,
+      item_name_snapshot:inv.item_name,
+      quantity:ci.quantity,
+      unit_price_cp:unitPrice,
+      line_total_cp:unitPrice * ci.quantity
+    };
+  });
+
+  const {error:lineErr}=await client.from('checkout_invoice_items').insert(invoiceLines);
+  if(lineErr) throw lineErr;
+
+  const {error:wErr}=await client
+    .from('player_wallets')
+    .update({balance_cp:appState.portal.walletCp - totalCp})
+    .eq('player_id',appState.portal.playerId);
+  if(wErr) throw wErr;
+
+  for(const ci of cartItems){
+    const inv=invMap[ci.inventory_id];
+    const {error:uErr}=await client
+      .from('shop_inventory')
+      .update({stock_on_hand:inv.stock_on_hand - ci.quantity})
+      .eq('id',ci.inventory_id);
+    if(uErr) throw uErr;
+  }
+
+  const {error:cartErr}=await client
+    .from('carts')
+    .update({status:'submitted', updated_at:new Date().toISOString()})
+    .eq('id',appState.portal.cartId);
+  if(cartErr) throw cartErr;
+
+  appState.portal.walletCp = appState.portal.walletCp - totalCp;
+  appState.portal.cartId = '';
+  await loadPortalWorkspace();
+  await loadPortalShop();
+  alert('Checkout submitted.');
+}
+
 async function refreshAll(){
   ensureClient();
   await loadShopTypeCatalog();
