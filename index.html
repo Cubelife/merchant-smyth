@@ -70,12 +70,18 @@
     .desc-collapsed{max-height:2.8em;overflow:hidden;position:relative}
     .desc-collapsed::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1.2em;background:linear-gradient(180deg, rgba(13,22,39,0), rgba(13,22,39,1))}
     .linkish{background:transparent;border:none;color:#9fc3ff;padding:0;font-size:13px;width:auto}
-    .sticky-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .shop-controls{display:grid;grid-template-columns:1.2fr 180px 180px;gap:10px;align-items:end}
-.split-stack{display:grid;grid-template-columns:1fr;gap:16px}
-.table-wrap td .inline-desc{display:block;margin-top:6px}
-.rarity-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.rarity-grid input{width:100%}
+    .sticky-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sticky-actions .small{padding:6px 8px;font-size:12px}
+.narrow-input{max-width:92px;min-width:72px}
+.toolbar-compact{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.toolbar-compact > *{flex:0 0 auto}
+.toolbar-compact .grow{flex:1 1 220px}
+.mini-panel{padding:12px;border:1px solid var(--border);border-radius:14px;background:#0d1627}
+.sortable{cursor:pointer;user-select:none}
+.sortable::after{content:' ↕';color:var(--muted);font-weight:400}
+.table-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.table-controls .grow{flex:1 1 200px}
+    .shop-controls{display:grid;grid-template-columns:1fr 180px 180px;gap:10px;align-items:end}
     .range-box{display:flex;gap:8px;align-items:center}
     .busy{opacity:.7;pointer-events:none}
     @media (max-width:1200px){
@@ -187,10 +193,26 @@
           </div>
         </div>
 
-        <div class="toolbar">
-          <select id="manageShopSelect"></select>
-          <button id="generateInventoryBtn" class="secondary">Generate from Library</button>
-          <button id="clearInventoryBtn" class="danger">Clear Inventory</button>
+        <div class="grid2">
+          <div class="mini-panel">
+            <h3 style="margin-bottom:10px">Manage Existing Shop</h3>
+            <div class="toolbar-compact">
+              <select id="manageShopSelect" class="grow"></select>
+            </div>
+          </div>
+          <div class="mini-panel">
+            <h3 style="margin-bottom:10px">Create Shop</h3>
+            <div class="toolbar-compact">
+              <input id="shopNameInline" class="grow" placeholder="Shop name">
+              <select id="shopTypeInline"></select>
+              <select id="regionTypeInline">
+                <option value="city">City</option>
+                <option value="town">Town</option>
+                <option value="village">Village</option>
+              </select>
+              <button id="createShopInlineBtn">Add Shop</button>
+            </div>
+          </div>
         </div>
 
         <div id="shopSummary" class="notice">Select a shop to start.</div>
@@ -198,31 +220,19 @@
         <div class="notice" style="margin-top:16px">
           <div class="shop-controls">
             <div>
-              <label>Shop Price Shuffle Range (%)</label>
+              <label>Shop Price Shuffle Range</label>
               <div class="range-box">
                 <input id="shopRangeMin" type="number" step="1" placeholder="-10">
                 <span class="small-meta">to</span>
                 <input id="shopRangeMax" type="number" step="1" placeholder="10">
               </div>
-              <div class="small-meta" style="margin-top:6px">Example: -10 to 10 means each item price is randomly adjusted between -10% and +10% of its base price, then saved for this shop.</div>
             </div>
             <button id="applyShopShuffleBtn" class="secondary">Shuffle Whole Shop</button>
             <button id="resetShopPricesBtn" class="danger">Reset Shop Prices</button>
           </div>
-          <div style="margin-top:16px">
-            <label>Generate from Library by Rarity</label>
-            <div class="small-meta" style="margin:6px 0 10px">Choose how many items to stock from each rarity. Leave blank or 0 to skip a rarity.</div>
-            <div class="rarity-grid">
-              <div><label>Common</label><input id="rarityCommon" type="number" min="0" placeholder="10"></div>
-              <div><label>Uncommon</label><input id="rarityUncommon" type="number" min="0" placeholder="5"></div>
-              <div><label>Rare</label><input id="rarityRare" type="number" min="0" placeholder="2"></div>
-              <div><label>Very Rare</label><input id="rarityVeryRare" type="number" min="0" placeholder="1"></div>
-              <div><label>Legendary</label><input id="rarityLegendary" type="number" min="0" placeholder="0"></div>
-            </div>
-          </div>
         </div>
 
-        <div class="split-stack" style="margin-top:16px">
+        <div class="grid2" style="margin-top:16px">
           <div class="panel" style="background:#0d1627">
             <div class="hero" style="margin-bottom:12px">
               <div><h3>Current Shop Inventory</h3></div>
@@ -450,6 +460,13 @@ const appState = {
   currentManageShopId: null,
   shopTypeCatalog: [],
   views: { players:'cards', library:'cards', shopInventory:'cards', shopLibrary:'cards', portalInventory:'cards' },
+  sorts: {
+    players:{key:'display_name',dir:'asc'},
+    library:{key:'name',dir:'asc'},
+    shopInventory:{key:'item_name',dir:'asc'},
+    shopLibrary:{key:'name',dir:'asc'},
+    portalInventory:{key:'item_name',dir:'asc'}
+  },
   portal: {
     playerId: localStorage.getItem('ms_portal_player_id') || '',
     campaignId: localStorage.getItem('ms_portal_campaign_id') || '',
@@ -485,6 +502,24 @@ function syncViewButtons(){
     portalInventoryTableViewBtn: appState.views.portalInventory==='table'
   };
   Object.entries(map).forEach(([id,active])=>{ const el=$(id); if(el) el.classList.toggle('active', active); });
+}
+
+function applySort(rows, sortState){
+  const dir = sortState.dir === 'asc' ? 1 : -1;
+  const key = sortState.key;
+  return rows.slice().sort((a,b)=>{
+    const avRaw = a[key] ?? '';
+    const bvRaw = b[key] ?? '';
+    const an = Number(avRaw), bn = Number(bvRaw);
+    const bothNum = !Number.isNaN(an) && !Number.isNaN(bn) && avRaw !== '' && bvRaw !== '';
+    if (bothNum) return (an - bn) * dir;
+    return String(avRaw).toLowerCase().localeCompare(String(bvRaw).toLowerCase()) * dir;
+  });
+}
+function toggleSort(bucket, key){
+  const s = appState.sorts[bucket];
+  if (s.key === key) s.dir = s.dir === 'asc' ? 'desc' : 'asc';
+  else { s.key = key; s.dir = 'asc'; }
 }
 function setScreen(name){
   const ids={campaign:'screenCampaign',shops:'screenShops',library:'screenLibrary',invoices:'screenInvoices'};
@@ -601,23 +636,24 @@ async function refreshPlayers(){
   if(!campaignId){ $('playerCards').innerHTML=`<div class="empty">Select a campaign.</div>`; return; }
   const {data:players,error}=await client.from('campaign_players').select('id,display_name,last_seen_at').eq('campaign_id',campaignId).order('display_name');
   if(error) throw error;
-  const ids=players.map(p=>p.id);
+  const ids=sortedPlayers.map(p=>p.id);
   const walletMap={};
   if(ids.length){
     const {data:wallets,error:wErr}=await client.from('player_wallets').select('player_id,balance_cp').in('player_id',ids);
     if(wErr) throw wErr;
     wallets.forEach(w=>walletMap[w.player_id]=w.balance_cp);
   }
+  const sortedPlayers = applySort(players, appState.sorts.players);
   if(!players.length){ $('playerCards').className=''; $('playerCards').innerHTML=`<div class="empty">No connected players yet.</div>`; syncViewButtons(); return; }
 
   if(appState.views.players==='table'){
     $('playerCards').className='';
-    $('playerCards').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Name</th><th>Last Seen</th><th>GP</th><th>SP</th><th>CP</th><th>Actions</th></tr></thead><tbody>${
-      players.map(p=>{ const parts=cpToParts(walletMap[p.id]||0); return `<tr><td><strong>${escapeHtml(p.display_name||'Unnamed Player')}</strong></td><td>${p.last_seen_at?new Date(p.last_seen_at).toLocaleString():'Never'}</td><td><input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}"></td><td><input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}"></td><td><input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}"></td><td><div class="row"><button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button><button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button></div></td></tr>`; }).join('')
+    $('playerCards').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th class="sortable" data-sort-bucket="players" data-sort-key="display_name">Name</th><th class="sortable" data-sort-bucket="players" data-sort-key="last_seen_at">Last Seen</th><th>GP</th><th>SP</th><th>CP</th><th>Actions</th></tr></thead><tbody>${
+      sortedPlayers.map(p=>{ const parts=cpToParts(walletMap[p.id]||0); return `<tr><td><strong>${escapeHtml(p.display_name||'Unnamed Player')}</strong></td><td>${p.last_seen_at?new Date(p.last_seen_at).toLocaleString():'Never'}</td><td><input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}"></td><td><input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}"></td><td><input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}"></td><td><div class="row"><button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button><button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button></div></td></tr>`; }).join('')
     }</tbody></table></div>`;
   } else {
     $('playerCards').className='cards';
-    $('playerCards').innerHTML=players.map(p=>{ const parts=cpToParts(walletMap[p.id]||0); return `<div class="card"><div class="title">🧝 ${escapeHtml(p.display_name||'Unnamed Player')}</div><div class="small-meta">Last seen: ${p.last_seen_at?new Date(p.last_seen_at).toLocaleString():'Never'}</div><div class="grid3" style="margin-top:10px"><input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}"><input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}"><input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}"></div><div class="row" style="margin-top:12px"><button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button><button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button></div></div>`; }).join('');
+    $('playerCards').innerHTML=sortedPlayers.map(p=>{ const parts=cpToParts(walletMap[p.id]||0); return `<div class="card"><div class="title">🧝 ${escapeHtml(p.display_name||'Unnamed Player')}</div><div class="small-meta">Last seen: ${p.last_seen_at?new Date(p.last_seen_at).toLocaleString():'Never'}</div><div class="grid3" style="margin-top:10px"><input id="gm-gp-${p.id}" type="number" min="0" value="${parts.gp}"><input id="gm-sp-${p.id}" type="number" min="0" value="${parts.sp}"><input id="gm-cp-${p.id}" type="number" min="0" value="${parts.cp}"></div><div class="row" style="margin-top:12px"><button class="small secondary" data-action="save-gm-player" data-id="${p.id}">Save Wallet</button><button class="small danger" data-action="delete-player" data-id="${p.id}">Remove</button></div></div>`; }).join('');
   }
   syncViewButtons();
 }
@@ -625,6 +661,26 @@ async function saveGMPlayerWallet(id){ const client=ensureClient(); const cp=mon
 async function deletePlayer(id){ const client=ensureClient(); if(!confirm('Remove this player from the campaign?')) return; const {error}=await client.from('campaign_players').delete().eq('id',id); if(error) throw error; await refreshPlayers(); }
 
 async function createShop(){ const client=ensureClient(); const campaignId=$('selectedCampaign').value; if(!campaignId) return setStatus('Select a campaign first.'); const name=$('shopName').value.trim(); if(!name) return setStatus('Enter a shop name.'); const {data,error}=await client.from('campaign_shops').insert({campaign_id:campaignId,name,shop_type:$('shopType').value,region_type:$('regionType').value}).select().single(); if(error) throw error; appState.currentManageShopId=data.id; $('shopName').value=''; await refreshShops(); await loadPortalShops(); }
+async function createShopFromBuilder(){
+  const client=ensureClient();
+  const campaignId=$('selectedCampaign').value;
+  if(!campaignId) return setStatus('Select a campaign first.');
+  const name=$('shopNameInline').value.trim();
+  if(!name) return setStatus('Enter a shop name.');
+  const {data,error}=await client.from('campaign_shops').insert({
+    campaign_id:campaignId,
+    name,
+    shop_type:$('shopTypeInline').value,
+    region_type:$('regionTypeInline').value
+  }).select().single();
+  if(error) throw error;
+  appState.currentManageShopId=data.id;
+  $('shopNameInline').value='';
+  await refreshShops();
+  $('manageShopSelect').value = data.id;
+  await refreshShopBuilder();
+}
+
 async function deleteShop(id){ const client=ensureClient(); if(!confirm('Delete this shop?')) return; const {error}=await client.from('campaign_shops').delete().eq('id',id); if(error) throw error; if(appState.currentManageShopId===id) appState.currentManageShopId=null; await refreshShops(); }
 async function refreshShops(){
   const client=ensureClient(); const campaignId=$('selectedCampaign').value;
@@ -653,11 +709,12 @@ async function refreshLibrary(){
   const {data,error}=await client.from('srd_items').select('id,name,category,shop_type,shop_type_slugs,base_price_cp,default_stock,description,item_type,source').order('name');
   if(error) throw error;
   let rows=(data||[]).filter(item=>{ const hay=`${item.name||''} ${item.description||''}`.toLowerCase(); return (!search||hay.includes(search)) && (!shopTypeFilter||item.shop_type===shopTypeFilter||String(item.shop_type_slugs||'').split('|').includes(shopTypeFilter)) && (!sourceFilter||item.source===sourceFilter); });
+  rows = applySort(rows, appState.sorts.library);
   if(!rows.length){ $('libraryWrap').className=''; $('libraryWrap').innerHTML=`<div class="empty">No items match your current filters.</div>`; syncViewButtons(); return; }
 
   if(appState.views.library==='table'){
     $('libraryWrap').className='';
-    $('libraryWrap').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Name</th><th>Shop Type</th><th>Type</th><th>Source</th><th>Cost</th><th>Stock</th><th>Actions</th></tr></thead><tbody>${
+    $('libraryWrap').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th class="sortable" data-sort-bucket="library" data-sort-key="name">Name</th><th class="sortable" data-sort-bucket="library" data-sort-key="shop_type">Shop Type</th><th class="sortable" data-sort-bucket="library" data-sort-key="item_type">Type</th><th class="sortable" data-sort-bucket="library" data-sort-key="source">Source</th><th class="sortable" data-sort-bucket="library" data-sort-key="base_price_cp">Cost</th><th class="sortable" data-sort-bucket="library" data-sort-key="default_stock">Stock</th><th>Actions</th></tr></thead><tbody>${
       rows.map(item=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(item.item_type||item.category||item.name)}</span><strong>${escapeHtml(item.name)}</strong></div><div class="small-meta">${escapeHtml((item.description||'').slice(0,110))}${(item.description||'').length>110?'…':''}</div></td><td>${escapeHtml(shopLabel(item.shop_type))}</td><td>${escapeHtml(item.item_type||item.category||'')}</td><td>${escapeHtml(item.source||'')}</td><td>${cpToCostIcons(item.base_price_cp)}</td><td>${item.default_stock??1}</td><td><div class="row"><button class="small secondary" data-action="toggle-library-details" data-id="${item.id}">Details</button><button class="small danger" data-action="delete-library-item" data-id="${item.id}">Delete</button></div><div id="lib-extra-${item.id}" class="hidden" style="margin-top:10px"><div class="compact-grid"><div><label>Name</label><input id="lib-name-${item.id}" value="${escapeHtml(item.name)}"></div><div><label>Category</label><input id="lib-category-${item.id}" value="${escapeHtml(item.category||'')}"></div><div><label>Type</label><input id="lib-type-${item.id}" value="${escapeHtml(item.item_type||'')}"></div><div><label>Source</label><input id="lib-source-${item.id}" value="${escapeHtml(item.source||'')}"></div><div><label>Shop type</label><select id="lib-shoptype-${item.id}">${appState.shopTypeCatalog.map(t=>`<option value="${t.slug}" ${t.slug===item.shop_type?'selected':''}>${escapeHtml(t.name)}</option>`).join('')}</select></div><div><label>Shop tags</label><input id="lib-shoptypes-${item.id}" value="${escapeHtml(item.shop_type_slugs||item.shop_type||'')}"></div><div><label>Base CP</label><input type="number" id="lib-price-${item.id}" value="${item.base_price_cp??0}"></div><div><label>Stock</label><input type="number" id="lib-stock-${item.id}" value="${item.default_stock??1}"></div></div><div style="margin-top:10px"><label>Description</label><textarea id="lib-desc-${item.id}">${escapeHtml(item.description||'')}</textarea></div><div class="row" style="margin-top:10px"><button class="small secondary" data-action="save-library-item" data-id="${item.id}">Save</button></div></div></td></tr>`).join('')
     }</tbody></table></div>`;
   } else {
@@ -673,10 +730,8 @@ async function generateInventoryForShop(){
   if(!shopId) return setStatus('Select a shop first.');
   const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,name,shop_type,region_type').eq('id',shopId).single();
   if(sErr) throw sErr;
-
   const {data:items,error:iErr}=await client.from('srd_items').select('id,name,base_price_cp,default_stock,description,shop_type,shop_type_slugs,rarity').order('name');
   if(iErr) throw iErr;
-
   const matching=(items||[]).filter(item=>item.shop_type===shop.shop_type||String(item.shop_type_slugs||'').split('|').includes(shop.shop_type));
   if(!matching.length) return setStatus(`No library items found for ${shopLabel(shop.shop_type)}.`);
 
@@ -687,10 +742,8 @@ async function generateInventoryForShop(){
     {key:'very rare', count:Number($('rarityVeryRare')?.value || 0)},
     {key:'legendary', count:Number($('rarityLegendary')?.value || 0)},
   ];
-
   let selected = [];
   const hasRarityChoice = rarityTargets.some(r => r.count > 0);
-
   if (hasRarityChoice) {
     for (const target of rarityTargets) {
       if (target.count <= 0) continue;
@@ -701,19 +754,9 @@ async function generateInventoryForShop(){
   } else {
     selected = matching.slice().sort(() => Math.random() - 0.5);
   }
-
   if(!selected.length) return setStatus('No matching items found for the chosen rarity mix.');
-
-  const multiplier=shop.region_type==='village'?1.15:shop.region_type==='town'?1.05:1;
-  const rows=selected.map(item=>({
-    shop_id:shopId,
-    srd_item_id:item.id,
-    item_name:item.name,
-    base_price_cp:item.base_price_cp==null?null:Math.round(item.base_price_cp*multiplier),
-    stock_on_hand:item.default_stock||1,
-    description:item.description||null
-  })).filter(r=>r.base_price_cp!=null);
-
+  const mult=shop.region_type==='village'?1.15:shop.region_type==='town'?1.05:1;
+  const rows=selected.map(item=>({shop_id:shopId,srd_item_id:item.id,item_name:item.name,base_price_cp:item.base_price_cp==null?null:Math.round(item.base_price_cp*mult),stock_on_hand:item.default_stock||1,description:item.description||null})).filter(r=>r.base_price_cp!=null);
   const {error}=await client.from('shop_inventory').insert(rows);
   if(error) throw error;
   setStatus(`Generated ${rows.length} items for ${shop.name}.`);
@@ -733,7 +776,7 @@ async function addLibraryItemToShop(itemId){
   const {error}=await client.from('shop_inventory').insert(payload); if(error) throw error; await refreshShopBuilder();
 }
 
-async function addTemporaryItemToShop(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const name=$('tempItemName').value.trim(); if(!name) return setStatus('Enter a temporary item name.'); const payload={ shop_id:shopId, srd_item_id:null, item_name:name, base_price_cp:Number($('tempItemPrice').value||0), stock_on_hand:Number($('tempItemStock').value||0), description:$('tempItemDesc').value.trim()||null }; const {error}=await client.from('shop_inventory').insert(payload); if(error) throw error; ['tempItemName','tempItemPrice','tempItemStock','tempItemDesc'].forEach(id=>$(id).value=''); setStatus(`Shuffled prices using ${low}% to ${high}% and saved them for this shop.`); await refreshShopBuilder(); }
+async function addTemporaryItemToShop(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const name=$('tempItemName').value.trim(); if(!name) return setStatus('Enter a temporary item name.'); const payload={ shop_id:shopId, srd_item_id:null, item_name:name, base_price_cp:Number($('tempItemPrice').value||0), stock_on_hand:Number($('tempItemStock').value||0), description:$('tempItemDesc').value.trim()||null }; const {error}=await client.from('shop_inventory').insert(payload); if(error) throw error; ['tempItemName','tempItemPrice','tempItemStock','tempItemDesc'].forEach(id=>$(id).value=''); await refreshShopBuilder(); }
 async function clearInventoryForShop(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); if(!confirm('Delete all inventory rows for this shop?')) return; const {error}=await client.from('shop_inventory').delete().eq('shop_id',shopId); if(error) throw error; await refreshShopBuilder(); }
 
 async function renderShopLibrarySearch(){
@@ -743,12 +786,13 @@ async function renderShopLibrarySearch(){
   const {data:items,error}=await client.from('srd_items').select('id,name,description,base_price_cp,default_stock,shop_type,shop_type_slugs,source,item_type,category').order('name'); if(error){ $('shopLibraryResults').innerHTML=`<div class="empty">${escapeHtml(error.message)}</div>`; return; }
   let rows=(items||[]).filter(item=>item.shop_type===typeFilter||String(item.shop_type_slugs||'').split('|').includes(typeFilter));
   rows=rows.filter(item=>{ const hay=`${item.name||''} ${item.description||''}`.toLowerCase(); return (!search||hay.includes(search)) && (!sourceFilter||item.source===sourceFilter); });
+  rows = applySort(rows, appState.sorts.shopLibrary);
   if(!rows.length){ $('shopLibraryResults').className=''; $('shopLibraryResults').innerHTML=`<div class="empty">No compatible items match your current filters.</div>`; syncViewButtons(); return; }
 
   if(appState.views.shopLibrary==='table'){
     $('shopLibraryResults').className='';
-    $('shopLibraryResults').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Item</th><th>Type</th><th>Source</th><th>Cost</th><th>Stock</th><th>Action</th></tr></thead><tbody>${
-      rows.map(item=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(item.item_type||item.category||item.name)}</span><strong>${escapeHtml(item.name)}</strong></div><div id="shoplib-desc-${item.id}" class="item-desc desc-collapsed inline-desc">${escapeHtml(item.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="shoplib-desc-${item.id}">More</button></td><td>${escapeHtml(item.item_type||item.category||'')}</td><td>${escapeHtml(item.source||'')}</td><td>${item.base_price_cp==null?'—':cpToCostIcons(item.base_price_cp)}</td><td>${item.default_stock??1}</td><td><button class="small secondary" data-action="add-library-item-to-shop" data-id="${item.id}">Add</button></td><td><button class="small secondary" data-action="add-library-item-to-shop" data-id="${item.id}">Add</button></td></tr>`).join('')
+    $('shopLibraryResults').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Item</th><th>Type</th><th>Source</th><th>Cost</th><th>Stock</th><th>Description</th><th>Action</th></tr></thead><tbody>${
+      rows.map(item=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(item.item_type||item.category||item.name)}</span><strong>${escapeHtml(item.name)}</strong></div><div id="shoplib-desc-${item.id}" class="item-desc desc-collapsed inline-desc">${escapeHtml(item.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="shoplib-desc-${item.id}">More</button></td><td>${escapeHtml(item.item_type||item.category||'')}</td><td>${escapeHtml(item.source||'')}</td><td>${item.base_price_cp==null?'—':cpToCostIcons(item.base_price_cp)}</td><td>${item.default_stock??1}</td><td><div id="shoplib-desc-${item.id}" class="item-desc desc-collapsed">${escapeHtml(item.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="shoplib-desc-${item.id}">More</button></td><td><button class="small secondary" data-action="add-library-item-to-shop" data-id="${item.id}">Add</button></td></tr>`).join('')
     }</tbody></table></div>`;
   } else {
     $('shopLibraryResults').className='cards';
@@ -763,16 +807,17 @@ async function refreshShopBuilder(){
   const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,name,shop_type,region_type').eq('id',shopId).single(); if(sErr) throw sErr;
   $('shopSummary').innerHTML=`<strong>${escapeHtml(shop.name)}</strong><div class="small-meta" style="margin-top:6px">${escapeHtml(shopLabel(shop.shop_type))} • ${escapeHtml(shop.region_type)}</div>`;
   const {data:rows,error}=await client.from('shop_inventory').select('id,item_name,base_price_cp,override_price_cp,stock_on_hand,description').eq('shop_id',shopId).order('item_name'); if(error) throw error;
+  rows = applySort(rows, appState.sorts.shopInventory);
   if(!rows.length){ $('inventoryWrap').innerHTML=`<div class="empty">No inventory yet. Generate from the library or add items below.</div>`; await renderShopLibrarySearch(); syncViewButtons(); return; }
 
   if(appState.views.shopInventory==='table'){
     $('inventoryWrap').className='';
-    $('inventoryWrap').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Item</th><th>Current</th><th>Base</th><th>Stock</th><th>Override</th><th>Actions</th></tr></thead><tbody>${
-      rows.map(r=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(r.item_name+' '+(r.description||''))}</span><strong>${escapeHtml(r.item_name)}</strong></div><div id="inv-desc-${r.id}" class="item-desc desc-collapsed inline-desc">${escapeHtml(r.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="inv-desc-${r.id}">More</button><div id="inventory-extra-${r.id}" class="hidden" style="margin-top:10px"><label>Edit Description</label><textarea id="desc-${r.id}">${escapeHtml(r.description||'')}</textarea></div></td><td>${cpToCostIcons(effectivePriceCp(r))}</td><td>${cpToCostIcons(r.base_price_cp)}</td><td><input type="number" id="stock-${r.id}" value="${r.stock_on_hand}"></td><td><input type="number" id="price-${r.id}" value="${r.override_price_cp??''}" placeholder="Blank = base"></td><td><div class="sticky-actions"><button class="small secondary" data-action="toggle-inventory-details" data-id="${r.id}">Edit</button><button class="small secondary" data-action="shuffle-item-price" data-id="${r.id}">🎲</button><button class="small secondary" data-action="reset-item-price" data-id="${r.id}">↺</button><button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button><button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button></div></td><td><div class="sticky-actions"><button class="small secondary" data-action="toggle-inventory-details" data-id="${r.id}">Edit</button><button class="small secondary" data-action="shuffle-item-price" data-id="${r.id}">🎲</button><button class="small secondary" data-action="reset-item-price" data-id="${r.id}">↺</button><button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button><button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button></div></td></tr>`).join('')
+    $('inventoryWrap').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Item</th><th>Current</th><th>Base</th><th>Stock</th><th>Override</th><th>Description</th><th>Actions</th></tr></thead><tbody>${
+      rows.map(r=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(r.item_name+' '+(r.description||''))}</span><strong>${escapeHtml(r.item_name)}</strong></div><div id="inv-desc-${r.id}" class="item-desc desc-collapsed inline-desc">${escapeHtml(r.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="inv-desc-${r.id}">More</button><div id="inventory-extra-${r.id}" class="hidden" style="margin-top:10px"><label>Edit Description</label><textarea id="desc-${r.id}">${escapeHtml(r.description||'')}</textarea></div></td><td>${cpToCostIcons(effectivePriceCp(r))}</td><td>${cpToCostIcons(r.base_price_cp)}</td><td><input type="number" class="narrow-input" id="stock-${r.id}" value="${r.stock_on_hand}"></td><td><input type="number" class="narrow-input" id="price-${r.id}" value="${r.override_price_cp??''}" placeholder="Blank = base"></td><td><div id="inv-desc-${r.id}" class="item-desc desc-collapsed">${escapeHtml(r.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="inv-desc-${r.id}">More</button><div id="inventory-extra-${r.id}" class="hidden" style="margin-top:10px"><label>Edit Description</label><textarea id="desc-${r.id}">${escapeHtml(r.description||'')}</textarea></div></td><td><div class="sticky-actions"><button class="small secondary" data-action="toggle-inventory-details" data-id="${r.id}">Edit</button><button class="small secondary" data-action="shuffle-item-price" data-id="${r.id}">🎲</button><button class="small secondary" data-action="reset-item-price" data-id="${r.id}">↺</button><button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button><button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button></div></td></tr>`).join('')
     }</tbody></table></div>`;
   } else {
     $('inventoryWrap').className='cards';
-    $('inventoryWrap').innerHTML=rows.map(r=>`<div class="card"><div class="item-name"><span class="item-icon">${itemIconFor(r.item_name+' '+(r.description||''))}</span><strong>${escapeHtml(r.item_name)}</strong></div><div style="margin-top:6px">${cpToCostIcons(effectivePriceCp(r))}</div><div class="small-meta">Base: ${cpToDisplay(r.base_price_cp)}</div><div class="compact-grid" style="margin-top:10px"><div><label>Override CP</label><input type="number" id="price-${r.id}" value="${r.override_price_cp??''}" placeholder="Blank = base"></div><div><label>Stock</label><input type="number" id="stock-${r.id}" value="${r.stock_on_hand}"></div></div><div id="inv-card-desc-${r.id}" class="item-desc desc-collapsed" style="margin-top:10px">${escapeHtml(r.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="inv-card-desc-${r.id}">More</button><div style="margin-top:10px"><label>Description</label><textarea id="desc-${r.id}">${escapeHtml(r.description||'')}</textarea></div><div class="sticky-actions" style="margin-top:12px"><button class="small secondary" data-action="shuffle-item-price" data-id="${r.id}">🎲 Shuffle</button><button class="small secondary" data-action="reset-item-price" data-id="${r.id}">↺ Default</button><button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button><button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button></div></div>`).join('');
+    $('inventoryWrap').innerHTML=rows.map(r=>`<div class="card"><div class="item-name"><span class="item-icon">${itemIconFor(r.item_name+' '+(r.description||''))}</span><strong>${escapeHtml(r.item_name)}</strong></div><div style="margin-top:6px">${cpToCostIcons(effectivePriceCp(r))}</div><div class="small-meta">Base: ${cpToDisplay(r.base_price_cp)}</div><div class="compact-grid" style="margin-top:10px"><div><label>Override CP</label><input type="number" class="narrow-input" id="price-${r.id}" value="${r.override_price_cp??''}" placeholder="Blank = base"></div><div><label>Stock</label><input type="number" class="narrow-input" id="stock-${r.id}" value="${r.stock_on_hand}"></div></div><div id="inv-card-desc-${r.id}" class="item-desc desc-collapsed" style="margin-top:10px">${escapeHtml(r.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="inv-card-desc-${r.id}">More</button><div style="margin-top:10px"><label>Description</label><textarea id="desc-${r.id}">${escapeHtml(r.description||'')}</textarea></div><div class="sticky-actions" style="margin-top:12px"><button class="small secondary" data-action="shuffle-item-price" data-id="${r.id}">🎲 Shuffle</button><button class="small secondary" data-action="reset-item-price" data-id="${r.id}">↺ Default</button><button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button><button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button></div></div>`).join('');
   }
   await renderShopLibrarySearch(); syncViewButtons();
 }
@@ -780,7 +825,7 @@ async function refreshShopBuilder(){
 async function shuffleItemPrice(id){ const client=ensureClient(); const min=Number($('shopRangeMin').value||0), max=Number($('shopRangeMax').value||0); const low=Math.min(min,max), high=Math.max(min,max); const {data,error}=await client.from('shop_inventory').select('base_price_cp').eq('id',id).single(); if(error) throw error; const pct=low + Math.random()*(high-low); $('price-'+id).value=Math.max(0,Math.round(Number(data.base_price_cp||0)*(1+pct/100))); }
 async function resetItemPrice(id){ $('price-'+id).value=''; }
 async function applyShopShuffle(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const min=Number($('shopRangeMin').value||0), max=Number($('shopRangeMax').value||0); const low=Math.min(min,max), high=Math.max(min,max); const {data:rows,error}=await client.from('shop_inventory').select('id,base_price_cp').eq('shop_id',shopId); if(error) throw error; for(const r of rows||[]){ const pct=low + Math.random()*(high-low); const override_price_cp=Math.max(0,Math.round(Number(r.base_price_cp||0)*(1+pct/100))); const {error:uErr}=await client.from('shop_inventory').update({override_price_cp}).eq('id',r.id); if(uErr) throw uErr; } await refreshShopBuilder(); }
-async function resetShopPrices(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const {error}=await client.from('shop_inventory').update({override_price_cp:null}).eq('shop_id',shopId); if(error) throw error; setStatus('Reset all shop prices to base values.'); await refreshShopBuilder(); }
+async function resetShopPrices(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const {error}=await client.from('shop_inventory').update({override_price_cp:null}).eq('shop_id',shopId); if(error) throw error; await refreshShopBuilder(); }
 async function saveInventoryRow(id){ const client=ensureClient(); const payload={ override_price_cp:$('price-'+id).value===''?null:Number($('price-'+id).value), stock_on_hand:Number($('stock-'+id).value||0), description:$('desc-'+id).value.trim()||null }; const {error}=await client.from('shop_inventory').update(payload).eq('id',id); if(error) throw error; await refreshShopBuilder(); }
 async function deleteInventoryRow(id){ const client=ensureClient(); const {error}=await client.from('shop_inventory').delete().eq('id',id); if(error) throw error; await refreshShopBuilder(); }
 
@@ -810,14 +855,15 @@ async function loadPortalShop(){
   $('portalTypeFilter').innerHTML=`<option value="">All item types</option>`+guessedTypes.map(t=>`<option value="${t}" ${t===typeFilter?'selected':''}>${t}</option>`).join('');
   $('portalSourceFilter').innerHTML=`<option value="">All sources</option>`+guessedSources.map(s=>`<option value="${s.toLowerCase()}" ${s.toLowerCase()===sourceFilter?'selected':''}>${s}</option>`).join('');
 
+  const sortedFiltered = applySort(filtered, appState.sorts.portalInventory);
   if(appState.views.portalInventory==='table'){
     $('portalInventoryWrap').className='';
-    $('portalInventoryWrap').innerHTML=filtered.length?`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Item</th><th>Price</th><th>Stock</th><th>Description</th><th>Action</th></tr></thead><tbody>${
-      filtered.map(i=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(i.item_name+' '+(i.description||''))}</span><strong>${escapeHtml(i.item_name)}</strong></div></td><td>${cpToCostIcons(effectivePriceCp(i))}</td><td>${i.stock_on_hand}</td><td><div id="portal-desc-${i.id}" class="item-desc desc-collapsed">${escapeHtml(i.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="portal-desc-${i.id}">More</button></td><td><button class="small secondary" data-action="portal-add-to-cart" data-id="${i.id}" ${i.stock_on_hand<=0?'disabled':''}>${i.stock_on_hand<=0?'Out':'Add'}</button></td></tr>`).join('')
+    $('portalInventoryWrap').innerHTML=sortedFiltered.length?`<div class="table-wrap"><table class="ms-table"><thead><tr><th class="sortable" data-sort-bucket="portalInventory" data-sort-key="item_name">Item</th><th class="sortable" data-sort-bucket="portalInventory" data-sort-key="override_price_cp">Price</th><th class="sortable" data-sort-bucket="portalInventory" data-sort-key="stock_on_hand">Stock</th><th>Description</th><th>Action</th></tr></thead><tbody>${
+      sortedFiltered.map(i=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(i.item_name+' '+(i.description||''))}</span><strong>${escapeHtml(i.item_name)}</strong></div></td><td>${cpToCostIcons(effectivePriceCp(i))}</td><td>${i.stock_on_hand}</td><td><div id="portal-desc-${i.id}" class="item-desc desc-collapsed">${escapeHtml(i.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="portal-desc-${i.id}">More</button></td><td><button class="small secondary" data-action="portal-add-to-cart" data-id="${i.id}" ${i.stock_on_hand<=0?'disabled':''}>${i.stock_on_hand<=0?'Out':'Add'}</button></td></tr>`).join('')
     }</tbody></table></div>`:`<div class="empty">No items match your current filters.</div>`;
   } else {
     $('portalInventoryWrap').className='cards';
-    $('portalInventoryWrap').innerHTML=filtered.length?filtered.map(i=>`<div class="card"><div class="item-name"><span class="item-icon">${itemIconFor(i.item_name+' '+(i.description||''))}</span><div class="title">${escapeHtml(i.item_name)}</div></div><div style="margin-top:8px">${cpToCostIcons(effectivePriceCp(i))}</div><div class="small-meta">Stock: ${i.stock_on_hand}</div><div id="portal-card-desc-${i.id}" class="item-desc desc-collapsed">${escapeHtml(i.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="portal-card-desc-${i.id}">More</button><button style="margin-top:14px" data-action="portal-add-to-cart" data-id="${i.id}" ${i.stock_on_hand<=0?'disabled':''}>${i.stock_on_hand<=0?'Out of Stock':'Add to Cart'}</button></div>`).join(''):`<div class="empty">No items match your current filters.</div>`;
+    $('portalInventoryWrap').innerHTML=sortedFiltered.length?sortedFiltered.map(i=>`<div class="card"><div class="item-name"><span class="item-icon">${itemIconFor(i.item_name+' '+(i.description||''))}</span><div class="title">${escapeHtml(i.item_name)}</div></div><div style="margin-top:8px">${cpToCostIcons(effectivePriceCp(i))}</div><div class="small-meta">Stock: ${i.stock_on_hand}</div><div id="portal-card-desc-${i.id}" class="item-desc desc-collapsed">${escapeHtml(i.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="portal-card-desc-${i.id}">More</button><button style="margin-top:14px" data-action="portal-add-to-cart" data-id="${i.id}" ${i.stock_on_hand<=0?'disabled':''}>${i.stock_on_hand<=0?'Out of Stock':'Add to Cart'}</button></div>`).join(''):`<div class="empty">No items match your current filters.</div>`;
   }
   syncViewButtons();
   await renderPortalCart();
@@ -845,6 +891,19 @@ function bindListeners(){
   $('portalSourceFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
 
   document.body.addEventListener('click', async(e)=>{
+    const head = e.target.closest('.sortable');
+    if(!head) return;
+    try{
+      toggleSort(head.dataset.sortBucket, head.dataset.sortKey);
+      if(head.dataset.sortBucket==='players') await refreshPlayers();
+      else if(head.dataset.sortBucket==='library') await refreshLibrary();
+      else if(head.dataset.sortBucket==='shopLibrary') await renderShopLibrarySearch();
+      else if(head.dataset.sortBucket==='shopInventory') await refreshShopBuilder();
+      else if(head.dataset.sortBucket==='portalInventory') await loadPortalShop();
+    } catch(err){ setStatus(err.message || String(err)); }
+  });
+
+  document.body.addEventListener('click', async(e)=>{
     const btn=e.target.closest('button');
     if(!btn) return;
     const noDb=['navCampaign','navShops','navLibrary','navInvoices'];
@@ -858,6 +917,7 @@ function bindListeners(){
       else if(btn.id==='deleteCampaignBtn') await deleteCampaign();
       else if(btn.id==='refreshBtn') await refreshAll();
       else if(btn.id==='createShopBtn') await createShop();
+      else if(btn.id==='createShopInlineBtn') await createShopFromBuilder();
       else if(btn.id==='createLibraryItemBtn') await createLibraryItem();
       else if(btn.id==='refreshLibraryBtn') await refreshLibrary();
       else if(btn.id==='generateInventoryBtn') await generateInventoryForShop();
