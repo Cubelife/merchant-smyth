@@ -824,8 +824,8 @@ async function refreshShopBuilder(){
   if(!shopId){ $('shopSummary').innerHTML='Select a shop to start.'; $('inventoryWrap').innerHTML=''; $('shopLibraryResults').innerHTML=`<div class="empty">Select a shop to browse compatible items.</div>`; return; }
   const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,name,shop_type,region_type').eq('id',shopId).single(); if(sErr) throw sErr;
   $('shopSummary').innerHTML=`<strong>${escapeHtml(shop.name)}</strong><div class="small-meta" style="margin-top:6px">${escapeHtml(shopLabel(shop.shop_type))} • ${escapeHtml(shop.region_type)}</div>`;
-  const {data:rows,error}=await client.from('shop_inventory').select('id,item_name,base_price_cp,override_price_cp,stock_on_hand,description').eq('shop_id',shopId).order('item_name'); if(error) throw error;
-  rows = applySort(rows, appState.sorts.shopInventory);
+  const {data:shopRows,error}=await client.from('shop_inventory').select('id,item_name,base_price_cp,override_price_cp,stock_on_hand,description').eq('shop_id',shopId).order('item_name'); if(error) throw error;
+  let rows = applySort(shopRows || [], appState.sorts.shopInventory);
   if(!rows.length){ $('inventoryWrap').innerHTML=`<div class="empty">No inventory yet. Generate from the library or add items below.</div>`; await renderShopLibrarySearch(); syncViewButtons(); return; }
 
   if(appState.views.shopInventory==='table'){
