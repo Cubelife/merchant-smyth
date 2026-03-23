@@ -1176,6 +1176,18 @@ function bindListeners(){
   });
 }
 
+
+async function refreshAll(){
+  ensureClient();
+  await loadShopTypeCatalog();
+  populateShopTypeSelects();
+  await refreshCampaigns();
+  await refreshPlayers();
+  await refreshShops();
+  await refreshLibrary();
+  await refreshInvoices();
+}
+
 function loadSavedConfig(){
   if($('url')) $('url').value = APP_CONFIG.SUPABASE_URL || localStorage.getItem('url') || '';
   if($('key')) $('key').value = APP_CONFIG.SUPABASE_ANON_KEY || localStorage.getItem('key') || '';
