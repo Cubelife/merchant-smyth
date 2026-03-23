@@ -313,7 +313,7 @@
               </div>
             </div>
             <div class="toolbar">
-              <label class="small-meta" style="display:flex;align-items:center;gap:8px;flex:0 0 auto"><input type="checkbox" id="showAllLibrary" style="width:auto"> All items</label>
+              
               <input id="shopItemSearch" placeholder="Search library items">
               <select id="shopItemTypeFilter"></select>
               <select id="shopItemSourceFilter"></select>
@@ -626,7 +626,7 @@ function populateShopTypeSelects(){
   if($('shopTypeInline')) $('shopTypeInline').innerHTML=options;
   if($('itemShopType')) $('itemShopType').innerHTML=options;
   if($('libraryShopTypeFilter')) $('libraryShopTypeFilter').innerHTML=`<option value="">All shop types</option>`+options;
-  if($('shopItemTypeFilter')) $('shopItemTypeFilter').innerHTML=`<option value="">Compatible with selected shop</option>`+options;
+  if($('shopItemTypeFilter')) $('shopItemTypeFilter').innerHTML=`<option value="">Compatible with selected shop</option><option value="__all__">All items</option>`+options;
   if($('shopTypeCatalogList')) $('shopTypeCatalogList').innerHTML = appState.shopTypeCatalog.map(t=>`<div class="notice"><strong>${escapeHtml(t.name)}</strong><div class="small-meta">${escapeHtml(t.slug)}</div><div class="item-desc">${escapeHtml(t.description||'')}</div></div>`).join('');
 }
 function teardownRealtime(){
@@ -857,7 +857,7 @@ async function renderShopLibrarySearch(){
   const search=$('shopItemSearch').value.trim().toLowerCase(); const typeFilter=$('shopItemTypeFilter').value||shop.shop_type; const sourceFilter=$('shopItemSourceFilter').value;
   const {data:items,error}=await client.from('srd_items').select('id,name,description,base_price_cp,default_stock,shop_type,shop_type_slugs,source,item_type,category').order('name'); if(error){ $('shopLibraryResults').innerHTML=`<div class="empty">${escapeHtml(error.message)}</div>`; return; }
   let rows;
-    if ($('showAllLibrary')?.checked) {
+    if (typeFilter === '__all__') {
       rows = items || [];
     } else {
       rows = (items||[]).filter(item=>item.shop_type===typeFilter||String(item.shop_type_slugs||'').split('|').includes(typeFilter));
@@ -984,7 +984,7 @@ function bindListeners(){
   $('shopItemSearch')?.addEventListener('input', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
   $('shopItemTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
   $('shopItemSourceFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
-  $('showAllLibrary')?.addEventListener('change', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
+
   $('portalShopSelect')?.addEventListener('change', ()=>{ appState.portal.shopId=$('portalShopSelect').value||''; });
   $('portalItemSearch')?.addEventListener('input', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
   $('portalTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
