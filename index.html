@@ -94,6 +94,8 @@
 .portal-cart-sticky{position:sticky;top:16px}
 .portal-section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .portal-soft{background:#0b1526;border:1px solid var(--border);border-radius:14px;padding:12px}
+.portal-soft strong{color:var(--text)}
+#portalWalletInline,#portalCartInline,#portalRemainingInline{color:var(--text)}
 .portal-divider{height:1px;background:var(--border);margin:10px 0}
 @media (max-width:1200px){.portal-shop-shell{grid-template-columns:1fr}}
 
@@ -851,6 +853,31 @@ if($('showAllLibrary')?.checked){
   await refreshShopBuilder();
 }
 
+
+function addlibraryitemtoshop(itemId){ return addLibraryItemToShop(itemId); }
+async function addLibraryItemToShop(itemId){
+  const client=ensureClient();
+  const shopId=$('manageShopSelect').value;
+  if(!shopId) return setStatus('Select a shop first.');
+
+  const {data:item,error:iErr}=await client.from('srd_items').select('*').eq('id', itemId).single();
+  if(iErr) throw iErr;
+
+  const payload = {
+    shop_id: shopId,
+    srd_item_id: item.id,
+    item_name: item.name,
+    base_price_cp: item.base_price_cp || 0,
+    stock_on_hand: item.default_stock || 1,
+    description: item.description || null
+  };
+
+  const {error} = await client.from('shop_inventory').insert(payload);
+  if(error) throw error;
+
+  await refreshShopBuilder();
+}
+
 async function addTemporaryItemToShop(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const name=$('tempItemName').value.trim(); if(!name) return setStatus('Enter a temporary item name.'); const payload={ shop_id:shopId, srd_item_id:null, item_name:name, base_price_cp:getMoneyInputs('tempItem',''), stock_on_hand:Number($('tempItemStock').value||0), description:$('tempItemDesc').value.trim()||null }; const {error}=await client.from('shop_inventory').insert(payload); if(error) throw error; ['tempItemName','tempItemGp','tempItemSp','tempItemCp','tempItemStock','tempItemDesc'].forEach(id=>{ if($(id)) $(id).value=''; }); await refreshShopBuilder(); }
 async function clearInventoryForShop(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); if(!confirm('Delete all inventory rows for this shop?')) return; const {error}=await client.from('shop_inventory').delete().eq('shop_id',shopId); if(error) throw error; await refreshShopBuilder(); }
 
@@ -973,117 +1000,72 @@ async function loadPortalShop(){
 async function portalAddToCart(inventoryId){ const client=ensureClient(); const {data:inv,error:invErr}=await client.from('shop_inventory').select('id,stock_on_hand').eq('id',inventoryId).single(); if(invErr) throw invErr; if(inv.stock_on_hand<=0) throw new Error('Item is out of stock.'); const {data:existing,error:eErr}=await client.from('cart_items').select('id,quantity').eq('cart_id',appState.portal.cartId).eq('inventory_id',inventoryId).limit(1); if(eErr) throw eErr; if(existing.length){ const newQty=existing[0].quantity+1; if(newQty>inv.stock_on_hand) throw new Error('Not enough stock.'); const {error}=await client.from('cart_items').update({quantity:newQty}).eq('id',existing[0].id); if(error) throw error; } else { const {error}=await client.from('cart_items').insert({cart_id:appState.portal.cartId,inventory_id:inventoryId,quantity:1}); if(error) throw error; } await renderPortalCart(); }
 async function portalChangeCart(cartItemId, qty){ const client=ensureClient(); if(qty<=0) return portalRemoveCartItem(cartItemId); const {data:item,error:cErr}=await client.from('cart_items').select('inventory_id').eq('id',cartItemId).single(); if(cErr) throw cErr; const {data:inv,error:iErr}=await client.from('shop_inventory').select('stock_on_hand').eq('id',item.inventory_id).single(); if(iErr) throw iErr; if(qty>inv.stock_on_hand) throw new Error('Not enough stock.'); const {error}=await client.from('cart_items').update({quantity:qty}).eq('id',cartItemId); if(error) throw error; await renderPortalCart(); }
 async function portalRemoveCartItem(cartItemId){ const client=ensureClient(); const {error}=await client.from('cart_items').delete().eq('id',cartItemId); if(error) throw error; await renderPortalCart(); }
-async function renderPortalCart(){ const client=ensureClient(); if(!appState.portal.cartId) return; const {data:rows,error}=await client.from('cart_items').select('id,inventory_id,quantity').eq('cart_id',appState.portal.cartId); if(error) throw error; if(!rows.length){ $('portalCartWrap').innerHTML=`<div class="empty">Cart is empty.</div>`; $('portalCartTotalDisplay').textContent=cpToDisplay(0); $('portalRemainingDisplay').textContent=cpToDisplay(appState.portal.walletCp); return; } const invIds=rows.map(r=>r.inventory_id); const {data:invRows,error:iErr}=await client.from('shop_inventory').select('id,item_name,base_price_cp,override_price_cp,stock_on_hand').in('id',invIds); if(iErr) throw iErr; const invMap=Object.fromEntries(invRows.map(i=>[i.id,i])); let totalCp=0; $('portalCartWrap').innerHTML=rows.map(r=>{ const inv=invMap[r.inventory_id]; const line=effectivePriceCp(inv)*r.quantity; totalCp+=line; return `<div class="card"><div class="row space"><div><strong>${escapeHtml(inv.item_name)}</strong><div class="small-meta">Qty ${r.quantity}</div><div style="margin-top:6px">${cpToCostIcons(line)}</div></div><div class="row"><button class="small secondary" data-action="portal-cart-minus" data-id="${r.id}" data-qty="${r.quantity-1}">-</button><button class="small secondary" data-action="portal-cart-plus" data-id="${r.id}" data-qty="${r.quantity+1}">+</button><button class="small danger" data-action="portal-cart-remove" data-id="${r.id}">Remove</button></div></div></div>`; }).join(''); $('portalCartTotalDisplay').textContent=cpToDisplay(totalCp); $('portalRemainingDisplay').textContent=cpToDisplay(Math.max(appState.portal.walletCp-totalCp,0)); }
-async function portalCheckout(){ const client=ensureClient(); const {data:cartItems,error:cErr}=await client.from('cart_items').select('id,inventory_id,quantity').eq('cart_id',appState.portal.cartId); if(cErr) throw cErr; if(!cartItems.length) throw new Error('Cart is empty.'); const {data:player,error:pErr}=await client.from('campaign_players').select('id,display_name,campaign_id').eq('id',appState.portal.playerId).single(); if(pErr) throw pErr; const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,name').eq('id',appState.portal.shopId).single(); if(sErr) throw sErr; const invIds=cartItems.map(c=>c.inventory_id); const {data:invRows,error:iErr}=await client.from('shop_inventory').select('id,srd_item_id,item_name,base_price_cp,override_price_cp,stock_on_hand').in('id',invIds); if(iErr) throw iErr; const invMap=Object.fromEntries(invRows.map(i=>[i.id,i])); let totalCp=0; for(const ci of cartItems){ const inv=invMap[ci.inventory_id]; if(ci.quantity>inv.stock_on_hand) throw new Error(`Not enough stock for ${inv.item_name}.`); totalCp += effectivePriceCp(inv)*ci.quantity; } if(appState.portal.walletCp<totalCp) throw new Error('Not enough money in wallet.'); const {data:invoice,error:invErr}=await client.from('checkout_invoices').insert({ campaign_id:player.campaign_id, player_id:player.id, shop_id:shop.id, player_name_snapshot:player.display_name, shop_name_snapshot:shop.name, total_cp:totalCp }).select().single(); if(invErr) throw invErr; const invoiceLines=cartItems.map(ci=>{ const inv=invMap[ci.inventory_id]; const unitPrice=effectivePriceCp(inv); return { invoice_id:invoice.id, srd_item_id:inv.srd_item_id, item_name_snapshot:inv.item_name, quantity:ci.quantity, unit_price_cp:unitPrice, line_total_cp:unitPrice*ci.quantity }; }); const {error:lineErr}=await client.from('checkout_invoice_items').insert(invoiceLines); if(lineErr) throw lineErr; const {error:wErr}=await client.from('player_wallets').update({balance_cp:appState.portal.walletCp-totalCp}).eq('player_id',appState.portal.playerId); if(wErr) throw wErr; for(const ci of cartItems){ const inv=invMap[ci.inventory_id]; const {error}=await client.from('shop_inventory').update({stock_on_hand:inv.stock_on_hand-ci.quantity}).eq('id',ci.inventory_id); if(error) throw error; } const {error:cUpdErr}=await client.from('carts').update({status:'submitted',updated_at:new Date().toISOString()}).eq('id',appState.portal.cartId); if(cUpdErr) throw cUpdErr; appState.portal.walletCp-=totalCp; appState.portal.cartId=''; await loadPortalWorkspace(); await loadPortalShop(); alert('Checkout submitted.'); }
+async function renderPortalCart(){
+  const client=ensureClient();
+  if(!appState.portal.cartId) return;
 
-async function refreshAll(){ ensureClient(); await loadShopTypeCatalog(); populateShopTypeSelects(); await refreshCampaigns(); await refreshPlayers(); await refreshShops(); await refreshLibrary(); await refreshInvoices(); }
+  const {data:rows,error}=await client
+    .from('cart_items')
+    .select('id,inventory_id,quantity')
+    .eq('cart_id',appState.portal.cartId);
+  if(error) throw error;
 
-function bindListeners(){
-  $('selectedCampaign')?.addEventListener('change', async()=>{ appState.currentCampaignId=$('selectedCampaign').value||null; try{ ensureClient(); await refreshAll(); }catch(err){ setStatus(err.message); } });
-  $('manageShopSelect')?.addEventListener('change', async()=>{ appState.currentManageShopId=$('manageShopSelect').value||null; try{ ensureClient(); await refreshShopBuilder(); }catch(err){ setStatus(err.message); } });
-  $('librarySearch')?.addEventListener('input', async()=>{ try{ ensureClient(); await refreshLibrary(); }catch(err){ setStatus(err.message); } });
-  $('libraryShopTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await refreshLibrary(); }catch(err){ setStatus(err.message); } });
-  $('librarySourceFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await refreshLibrary(); }catch(err){ setStatus(err.message); } });
-  $('shopItemSearch')?.addEventListener('input', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
-  $('shopItemTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
-  $('shopItemSourceFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
+  const walletText = cpToDisplay(appState.portal.walletCp);
 
-  $('portalShopSelect')?.addEventListener('change', ()=>{ appState.portal.shopId=$('portalShopSelect').value||''; });
-  $('portalItemSearch')?.addEventListener('input', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
-  $('portalTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
-  $('portalSourceFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
+  if(!rows.length){
+    $('portalCartWrap').innerHTML=`<div class="empty">Cart is empty.</div>`;
+    $('portalCartTotalDisplay').textContent=cpToDisplay(0);
+    $('portalRemainingDisplay').textContent=walletText;
+    if($('portalWalletInline')) $('portalWalletInline').textContent=walletText;
+    if($('portalCartInline')) $('portalCartInline').textContent=cpToDisplay(0);
+    if($('portalRemainingInline')) $('portalRemainingInline').textContent=walletText;
+    return;
+  }
 
-  document.body.addEventListener('click', async(e)=>{
-    const head = e.target.closest('.sortable');
-    if(!head) return;
-    try{
-      toggleSort(head.dataset.sortBucket, head.dataset.sortKey);
-      if(head.dataset.sortBucket==='players') await refreshPlayers();
-      else if(head.dataset.sortBucket==='library') await refreshLibrary();
-      else if(head.dataset.sortBucket==='shopLibrary') await renderShopLibrarySearch();
-      else if(head.dataset.sortBucket==='shopInventory') await refreshShopBuilder();
-      else if(head.dataset.sortBucket==='portalInventory') await loadPortalShop();
-    } catch(err){ setStatus(err.message || String(err)); }
-  });
+  const invIds=rows.map(r=>r.inventory_id);
+  const {data:invRows,error:iErr}=await client
+    .from('shop_inventory')
+    .select('id,item_name,base_price_cp,override_price_cp,stock_on_hand')
+    .in('id',invIds);
+  if(iErr) throw iErr;
 
-  document.body.addEventListener('click', async(e)=>{
-    const btn=e.target.closest('button');
-    if(!btn) return;
-    const noDb=['navCampaign','navShops','navLibrary','navInvoices'];
-    try{
-      if(!noDb.includes(btn.id)) ensureClient();
-      setBusy(btn,true);
+  const invMap=Object.fromEntries((invRows||[]).map(i=>[i.id,i]));
+  let totalCp=0;
 
-      if(btn.id==='saveBtn') await saveConfig();
-      else if(btn.id==='testBtn') await testConnection();
-      else if(btn.id==='createCampaignBtn') await createCampaign();
-      else if(btn.id==='deleteCampaignBtn') await deleteCampaign();
-      else if(btn.id==='refreshBtn') await refreshAll();
-      else if(btn.id==='createShopBtn') await createShop();
-      else if(btn.id==='createShopInlineBtn') await createShopFromBuilder();
-      else if(btn.id==='createLibraryItemBtn') await createLibraryItem();
-      else if(btn.id==='refreshLibraryBtn') await refreshLibrary();
-      else if(btn.id==='generateInventoryBtn') await generateInventoryForShop();
-      else if(btn.id==='clearInventoryBtn') await clearInventoryForShop();
-      else if(btn.id==='addTempItemBtn') await addTemporaryItemToShop();
-      else if(btn.id==='applyShopShuffleBtn') await applyShopShuffle();
-      else if(btn.id==='resetShopPricesBtn') await resetShopPrices();
-      else if(btn.id==='navCampaign') setScreen('campaign');
-      else if(btn.id==='navShops') setScreen('shops');
-      else if(btn.id==='navLibrary') setScreen('library');
-      else if(btn.id==='navInvoices') setScreen('invoices');
+  $('portalCartWrap').innerHTML=rows.map(r=>{
+    const inv=invMap[r.inventory_id];
+    if(!inv) return '';
+    const unitCp = effectivePriceCp(inv);
+    const line=unitCp * r.quantity;
+    totalCp += line;
+    return `<div class="portal-soft">
+      <div class="row space">
+        <div>
+          <strong>${escapeHtml(inv.item_name)}</strong>
+          <div class="small-meta">Qty ${r.quantity} • Unit ${cpToDisplay(unitCp)}</div>
+        </div>
+        <div>${cpToCostIcons(line)}</div>
+      </div>
+      <div class="portal-divider"></div>
+      <div class="row space">
+        <div class="row">
+          <button class="small secondary" data-action="portal-cart-minus" data-id="${r.id}" data-qty="${r.quantity-1}">-</button>
+          <button class="small secondary" data-action="portal-cart-plus" data-id="${r.id}" data-qty="${r.quantity+1}">+</button>
+        </div>
+        <button class="small danger" data-action="portal-cart-remove" data-id="${r.id}">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
 
-      else if(btn.id==='playerCardViewBtn'){ appState.views.players='cards'; await refreshPlayers(); }
-      else if(btn.id==='playerTableViewBtn'){ appState.views.players='table'; await refreshPlayers(); }
-      else if(btn.id==='libraryCardViewBtn'){ appState.views.library='cards'; await refreshLibrary(); }
-      else if(btn.id==='libraryTableViewBtn'){ appState.views.library='table'; await refreshLibrary(); }
-      else if(btn.id==='shopInventoryCardViewBtn'){ appState.views.shopInventory='cards'; await refreshShopBuilder(); }
-      else if(btn.id==='shopInventoryTableViewBtn'){ appState.views.shopInventory='table'; await refreshShopBuilder(); }
-      else if(btn.id==='shopLibraryCardViewBtn'){ appState.views.shopLibrary='cards'; await renderShopLibrarySearch(); }
-      else if(btn.id==='shopLibraryTableViewBtn'){ appState.views.shopLibrary='table'; await renderShopLibrarySearch(); }
-      else if(btn.id==='portalInventoryCardViewBtn'){ appState.views.portalInventory='cards'; if(appState.portal.shopId) await loadPortalShop(); }
-      else if(btn.id==='portalInventoryTableViewBtn'){ appState.views.portalInventory='table'; if(appState.portal.shopId) await loadPortalShop(); }
+  const remaining = Math.max(appState.portal.walletCp-totalCp,0);
+  const totalText = cpToDisplay(totalCp);
+  const remainingText = cpToDisplay(remaining);
 
-      else if(btn.id==='joinCampaignBtn') await joinCampaignFromPortal();
-      else if(btn.id==='resumePlayerBtn') await resumePlayer();
-      else if(btn.id==='forgetPlayerBtn') forgetPlayer();
-      else if(btn.id==='leaveCampaignBtn') forgetPlayer();
-      else if(btn.id==='savePortalProfileBtn') await savePortalProfile();
-      else if(btn.id==='openPortalShopBtn') await openPortalShop();
-      else if(btn.id==='reloadPortalShopBtn') await loadPortalShop();
-      else if(btn.id==='portalCheckoutBtn') await portalCheckout();
-
-      else if(btn.dataset.action==='save-gm-player') await saveGMPlayerWallet(btn.dataset.id);
-      else if(btn.dataset.action==='delete-player') await deletePlayer(btn.dataset.id);
-      else if(btn.dataset.action==='manage-shop'){ appState.currentManageShopId=btn.dataset.id; $('manageShopSelect').value=appState.currentManageShopId; setScreen('shops'); await refreshShopBuilder(); }
-      else if(btn.dataset.action==='delete-shop') await deleteShop(btn.dataset.id);
-
-      else if(btn.dataset.action==='save-library-item') await saveLibraryItem(btn.dataset.id);
-      else if(btn.dataset.action==='delete-library-item') await deleteLibraryItem(btn.dataset.id);
-      else if(btn.dataset.action==='toggle-library-details') $('lib-extra-'+btn.dataset.id).classList.toggle('hidden');
-
-      else if(btn.dataset.action==='add-library-item-to-shop') await addLibraryItemToShop(btn.dataset.id);
-      else if(btn.dataset.action==='save-inventory') await saveInventoryRow(btn.dataset.id);
-      else if(btn.dataset.action==='delete-inventory') await deleteInventoryRow(btn.dataset.id);
-      else if(btn.dataset.action==='toggle-inventory-details') $('inventory-extra-'+btn.dataset.id).classList.toggle('hidden');
-      else if(btn.dataset.action==='shuffle-item-price') await shuffleItemPrice(btn.dataset.id);
-      else if(btn.dataset.action==='reset-item-price') await resetItemPrice(btn.dataset.id);
-      else if(btn.dataset.action==='toggle-desc') toggleDescById(btn.dataset.id, btn);
-      else if(btn.dataset.action==='lookup-invoice-item') await lookupInvoiceItem(btn.dataset.id);
-
-      else if(btn.dataset.action==='portal-add-to-cart') await portalAddToCart(btn.dataset.id);
-      else if(btn.dataset.action==='portal-cart-minus') await portalChangeCart(btn.dataset.id, Number(btn.dataset.qty));
-      else if(btn.dataset.action==='portal-cart-plus') await portalChangeCart(btn.dataset.id, Number(btn.dataset.qty));
-      else if(btn.dataset.action==='portal-cart-remove') await portalRemoveCartItem(btn.dataset.id);
-
-    } catch(err){
-      console.error(err);
-      alert(err.message || String(err));
-      setStatus(err.message || String(err));
-    } finally {
-      setBusy(btn,false);
-    }
-  });
+  $('portalCartTotalDisplay').textContent=totalText;
+  $('portalRemainingDisplay').textContent=remainingText;
+  if($('portalWalletInline')) $('portalWalletInline').textContent=walletText;
+  if($('portalCartInline')) $('portalCartInline').textContent=totalText;
+  if($('portalRemainingInline')) $('portalRemainingInline').textContent=remainingText;
 }
 
 function loadSavedConfig(){
