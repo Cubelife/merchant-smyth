@@ -71,7 +71,11 @@
     .desc-collapsed::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1.2em;background:linear-gradient(180deg, rgba(13,22,39,0), rgba(13,22,39,1))}
     .linkish{background:transparent;border:none;color:#9fc3ff;padding:0;font-size:13px;width:auto}
     .sticky-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .shop-controls{display:grid;grid-template-columns:1fr 180px 180px;gap:10px;align-items:end}
+    .shop-controls{display:grid;grid-template-columns:1.2fr 180px 180px;gap:10px;align-items:end}
+.split-stack{display:grid;grid-template-columns:1fr;gap:16px}
+.table-wrap td .inline-desc{display:block;margin-top:6px}
+.rarity-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.rarity-grid input{width:100%}
     .range-box{display:flex;gap:8px;align-items:center}
     .busy{opacity:.7;pointer-events:none}
     @media (max-width:1200px){
@@ -194,19 +198,31 @@
         <div class="notice" style="margin-top:16px">
           <div class="shop-controls">
             <div>
-              <label>Shop Price Shuffle Range</label>
+              <label>Shop Price Shuffle Range (%)</label>
               <div class="range-box">
                 <input id="shopRangeMin" type="number" step="1" placeholder="-10">
                 <span class="small-meta">to</span>
                 <input id="shopRangeMax" type="number" step="1" placeholder="10">
               </div>
+              <div class="small-meta" style="margin-top:6px">Example: -10 to 10 means each item price is randomly adjusted between -10% and +10% of its base price, then saved for this shop.</div>
             </div>
             <button id="applyShopShuffleBtn" class="secondary">Shuffle Whole Shop</button>
             <button id="resetShopPricesBtn" class="danger">Reset Shop Prices</button>
           </div>
+          <div style="margin-top:16px">
+            <label>Generate from Library by Rarity</label>
+            <div class="small-meta" style="margin:6px 0 10px">Choose how many items to stock from each rarity. Leave blank or 0 to skip a rarity.</div>
+            <div class="rarity-grid">
+              <div><label>Common</label><input id="rarityCommon" type="number" min="0" placeholder="10"></div>
+              <div><label>Uncommon</label><input id="rarityUncommon" type="number" min="0" placeholder="5"></div>
+              <div><label>Rare</label><input id="rarityRare" type="number" min="0" placeholder="2"></div>
+              <div><label>Very Rare</label><input id="rarityVeryRare" type="number" min="0" placeholder="1"></div>
+              <div><label>Legendary</label><input id="rarityLegendary" type="number" min="0" placeholder="0"></div>
+            </div>
+          </div>
         </div>
 
-        <div class="grid2" style="margin-top:16px">
+        <div class="split-stack" style="margin-top:16px">
           <div class="panel" style="background:#0d1627">
             <div class="hero" style="margin-bottom:12px">
               <div><h3>Current Shop Inventory</h3></div>
@@ -423,7 +439,7 @@
 </div>
 
 <script>
-const APP_CONFIG = { SUPABASE_URL: "https://eelwiyjufnlnclofyjdi.supabase.co", SUPABASE_ANON_KEY: "sb_publishable_y4Fgcc_vXfusEylpu4zpuA_Izg-tefy" };
+const APP_CONFIG = { SUPABASE_URL: "", SUPABASE_ANON_KEY: "" };
 const $ = (id) => document.getElementById(id);
 
 const appState = {
@@ -651,7 +667,58 @@ async function refreshLibrary(){
   syncViewButtons();
 }
 
-async function generateInventoryForShop(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,name,shop_type,region_type').eq('id',shopId).single(); if(sErr) throw sErr; const {data:items,error:iErr}=await client.from('srd_items').select('id,name,base_price_cp,default_stock,description,shop_type,shop_type_slugs').order('name'); if(iErr) throw iErr; const matching=(items||[]).filter(item=>item.shop_type===shop.shop_type||String(item.shop_type_slugs||'').split('|').includes(shop.shop_type)); if(!matching.length) return setStatus(`No library items found for ${shopLabel(shop.shop_type)}.`); const mult=shop.region_type==='village'?1.15:shop.region_type==='town'?1.05:1; const rows=matching.map(item=>({shop_id:shopId,srd_item_id:item.id,item_name:item.name,base_price_cp:item.base_price_cp==null?null:Math.round(item.base_price_cp*mult),stock_on_hand:item.default_stock||1,description:item.description||null})).filter(r=>r.base_price_cp!=null); const {error}=await client.from('shop_inventory').insert(rows); if(error) throw error; await refreshShopBuilder(); }
+async function generateInventoryForShop(){
+  const client=ensureClient();
+  const shopId=$('manageShopSelect').value;
+  if(!shopId) return setStatus('Select a shop first.');
+  const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,name,shop_type,region_type').eq('id',shopId).single();
+  if(sErr) throw sErr;
+
+  const {data:items,error:iErr}=await client.from('srd_items').select('id,name,base_price_cp,default_stock,description,shop_type,shop_type_slugs,rarity').order('name');
+  if(iErr) throw iErr;
+
+  const matching=(items||[]).filter(item=>item.shop_type===shop.shop_type||String(item.shop_type_slugs||'').split('|').includes(shop.shop_type));
+  if(!matching.length) return setStatus(`No library items found for ${shopLabel(shop.shop_type)}.`);
+
+  const rarityTargets = [
+    {key:'common', count:Number($('rarityCommon')?.value || 0)},
+    {key:'uncommon', count:Number($('rarityUncommon')?.value || 0)},
+    {key:'rare', count:Number($('rarityRare')?.value || 0)},
+    {key:'very rare', count:Number($('rarityVeryRare')?.value || 0)},
+    {key:'legendary', count:Number($('rarityLegendary')?.value || 0)},
+  ];
+
+  let selected = [];
+  const hasRarityChoice = rarityTargets.some(r => r.count > 0);
+
+  if (hasRarityChoice) {
+    for (const target of rarityTargets) {
+      if (target.count <= 0) continue;
+      const pool = matching.filter(item => String(item.rarity || 'common').toLowerCase() === target.key);
+      const shuffled = pool.slice().sort(() => Math.random() - 0.5);
+      selected.push(...shuffled.slice(0, target.count));
+    }
+  } else {
+    selected = matching.slice().sort(() => Math.random() - 0.5);
+  }
+
+  if(!selected.length) return setStatus('No matching items found for the chosen rarity mix.');
+
+  const multiplier=shop.region_type==='village'?1.15:shop.region_type==='town'?1.05:1;
+  const rows=selected.map(item=>({
+    shop_id:shopId,
+    srd_item_id:item.id,
+    item_name:item.name,
+    base_price_cp:item.base_price_cp==null?null:Math.round(item.base_price_cp*multiplier),
+    stock_on_hand:item.default_stock||1,
+    description:item.description||null
+  })).filter(r=>r.base_price_cp!=null);
+
+  const {error}=await client.from('shop_inventory').insert(rows);
+  if(error) throw error;
+  setStatus(`Generated ${rows.length} items for ${shop.name}.`);
+  await refreshShopBuilder();
+}
 
 async function addLibraryItemToShop(itemId){
   const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.');
@@ -666,7 +733,7 @@ async function addLibraryItemToShop(itemId){
   const {error}=await client.from('shop_inventory').insert(payload); if(error) throw error; await refreshShopBuilder();
 }
 
-async function addTemporaryItemToShop(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const name=$('tempItemName').value.trim(); if(!name) return setStatus('Enter a temporary item name.'); const payload={ shop_id:shopId, srd_item_id:null, item_name:name, base_price_cp:Number($('tempItemPrice').value||0), stock_on_hand:Number($('tempItemStock').value||0), description:$('tempItemDesc').value.trim()||null }; const {error}=await client.from('shop_inventory').insert(payload); if(error) throw error; ['tempItemName','tempItemPrice','tempItemStock','tempItemDesc'].forEach(id=>$(id).value=''); await refreshShopBuilder(); }
+async function addTemporaryItemToShop(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const name=$('tempItemName').value.trim(); if(!name) return setStatus('Enter a temporary item name.'); const payload={ shop_id:shopId, srd_item_id:null, item_name:name, base_price_cp:Number($('tempItemPrice').value||0), stock_on_hand:Number($('tempItemStock').value||0), description:$('tempItemDesc').value.trim()||null }; const {error}=await client.from('shop_inventory').insert(payload); if(error) throw error; ['tempItemName','tempItemPrice','tempItemStock','tempItemDesc'].forEach(id=>$(id).value=''); setStatus(`Shuffled prices using ${low}% to ${high}% and saved them for this shop.`); await refreshShopBuilder(); }
 async function clearInventoryForShop(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); if(!confirm('Delete all inventory rows for this shop?')) return; const {error}=await client.from('shop_inventory').delete().eq('shop_id',shopId); if(error) throw error; await refreshShopBuilder(); }
 
 async function renderShopLibrarySearch(){
@@ -680,8 +747,8 @@ async function renderShopLibrarySearch(){
 
   if(appState.views.shopLibrary==='table'){
     $('shopLibraryResults').className='';
-    $('shopLibraryResults').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Item</th><th>Type</th><th>Source</th><th>Cost</th><th>Stock</th><th>Description</th><th>Action</th></tr></thead><tbody>${
-      rows.map(item=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(item.item_type||item.category||item.name)}</span><strong>${escapeHtml(item.name)}</strong></div></td><td>${escapeHtml(item.item_type||item.category||'')}</td><td>${escapeHtml(item.source||'')}</td><td>${item.base_price_cp==null?'—':cpToCostIcons(item.base_price_cp)}</td><td>${item.default_stock??1}</td><td><div id="shoplib-desc-${item.id}" class="item-desc desc-collapsed">${escapeHtml(item.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="shoplib-desc-${item.id}">More</button></td><td><button class="small secondary" data-action="add-library-item-to-shop" data-id="${item.id}">Add</button></td></tr>`).join('')
+    $('shopLibraryResults').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Item</th><th>Type</th><th>Source</th><th>Cost</th><th>Stock</th><th>Action</th></tr></thead><tbody>${
+      rows.map(item=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(item.item_type||item.category||item.name)}</span><strong>${escapeHtml(item.name)}</strong></div><div id="shoplib-desc-${item.id}" class="item-desc desc-collapsed inline-desc">${escapeHtml(item.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="shoplib-desc-${item.id}">More</button></td><td>${escapeHtml(item.item_type||item.category||'')}</td><td>${escapeHtml(item.source||'')}</td><td>${item.base_price_cp==null?'—':cpToCostIcons(item.base_price_cp)}</td><td>${item.default_stock??1}</td><td><button class="small secondary" data-action="add-library-item-to-shop" data-id="${item.id}">Add</button></td><td><button class="small secondary" data-action="add-library-item-to-shop" data-id="${item.id}">Add</button></td></tr>`).join('')
     }</tbody></table></div>`;
   } else {
     $('shopLibraryResults').className='cards';
@@ -700,8 +767,8 @@ async function refreshShopBuilder(){
 
   if(appState.views.shopInventory==='table'){
     $('inventoryWrap').className='';
-    $('inventoryWrap').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Item</th><th>Current</th><th>Base</th><th>Stock</th><th>Override</th><th>Description</th><th>Actions</th></tr></thead><tbody>${
-      rows.map(r=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(r.item_name+' '+(r.description||''))}</span><strong>${escapeHtml(r.item_name)}</strong></div></td><td>${cpToCostIcons(effectivePriceCp(r))}</td><td>${cpToCostIcons(r.base_price_cp)}</td><td><input type="number" id="stock-${r.id}" value="${r.stock_on_hand}"></td><td><input type="number" id="price-${r.id}" value="${r.override_price_cp??''}" placeholder="Blank = base"></td><td><div id="inv-desc-${r.id}" class="item-desc desc-collapsed">${escapeHtml(r.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="inv-desc-${r.id}">More</button><div id="inventory-extra-${r.id}" class="hidden" style="margin-top:10px"><label>Edit Description</label><textarea id="desc-${r.id}">${escapeHtml(r.description||'')}</textarea></div></td><td><div class="sticky-actions"><button class="small secondary" data-action="toggle-inventory-details" data-id="${r.id}">Edit</button><button class="small secondary" data-action="shuffle-item-price" data-id="${r.id}">🎲</button><button class="small secondary" data-action="reset-item-price" data-id="${r.id}">↺</button><button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button><button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button></div></td></tr>`).join('')
+    $('inventoryWrap').innerHTML=`<div class="table-wrap"><table class="ms-table"><thead><tr><th>Item</th><th>Current</th><th>Base</th><th>Stock</th><th>Override</th><th>Actions</th></tr></thead><tbody>${
+      rows.map(r=>`<tr><td><div class="item-name"><span class="item-icon">${itemIconFor(r.item_name+' '+(r.description||''))}</span><strong>${escapeHtml(r.item_name)}</strong></div><div id="inv-desc-${r.id}" class="item-desc desc-collapsed inline-desc">${escapeHtml(r.description||'No description.')}</div><button class="linkish" data-action="toggle-desc" data-id="inv-desc-${r.id}">More</button><div id="inventory-extra-${r.id}" class="hidden" style="margin-top:10px"><label>Edit Description</label><textarea id="desc-${r.id}">${escapeHtml(r.description||'')}</textarea></div></td><td>${cpToCostIcons(effectivePriceCp(r))}</td><td>${cpToCostIcons(r.base_price_cp)}</td><td><input type="number" id="stock-${r.id}" value="${r.stock_on_hand}"></td><td><input type="number" id="price-${r.id}" value="${r.override_price_cp??''}" placeholder="Blank = base"></td><td><div class="sticky-actions"><button class="small secondary" data-action="toggle-inventory-details" data-id="${r.id}">Edit</button><button class="small secondary" data-action="shuffle-item-price" data-id="${r.id}">🎲</button><button class="small secondary" data-action="reset-item-price" data-id="${r.id}">↺</button><button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button><button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button></div></td><td><div class="sticky-actions"><button class="small secondary" data-action="toggle-inventory-details" data-id="${r.id}">Edit</button><button class="small secondary" data-action="shuffle-item-price" data-id="${r.id}">🎲</button><button class="small secondary" data-action="reset-item-price" data-id="${r.id}">↺</button><button class="small secondary" data-action="save-inventory" data-id="${r.id}">Save</button><button class="small danger" data-action="delete-inventory" data-id="${r.id}">Delete</button></div></td></tr>`).join('')
     }</tbody></table></div>`;
   } else {
     $('inventoryWrap').className='cards';
@@ -713,7 +780,7 @@ async function refreshShopBuilder(){
 async function shuffleItemPrice(id){ const client=ensureClient(); const min=Number($('shopRangeMin').value||0), max=Number($('shopRangeMax').value||0); const low=Math.min(min,max), high=Math.max(min,max); const {data,error}=await client.from('shop_inventory').select('base_price_cp').eq('id',id).single(); if(error) throw error; const pct=low + Math.random()*(high-low); $('price-'+id).value=Math.max(0,Math.round(Number(data.base_price_cp||0)*(1+pct/100))); }
 async function resetItemPrice(id){ $('price-'+id).value=''; }
 async function applyShopShuffle(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const min=Number($('shopRangeMin').value||0), max=Number($('shopRangeMax').value||0); const low=Math.min(min,max), high=Math.max(min,max); const {data:rows,error}=await client.from('shop_inventory').select('id,base_price_cp').eq('shop_id',shopId); if(error) throw error; for(const r of rows||[]){ const pct=low + Math.random()*(high-low); const override_price_cp=Math.max(0,Math.round(Number(r.base_price_cp||0)*(1+pct/100))); const {error:uErr}=await client.from('shop_inventory').update({override_price_cp}).eq('id',r.id); if(uErr) throw uErr; } await refreshShopBuilder(); }
-async function resetShopPrices(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const {error}=await client.from('shop_inventory').update({override_price_cp:null}).eq('shop_id',shopId); if(error) throw error; await refreshShopBuilder(); }
+async function resetShopPrices(){ const client=ensureClient(); const shopId=$('manageShopSelect').value; if(!shopId) return setStatus('Select a shop first.'); const {error}=await client.from('shop_inventory').update({override_price_cp:null}).eq('shop_id',shopId); if(error) throw error; setStatus('Reset all shop prices to base values.'); await refreshShopBuilder(); }
 async function saveInventoryRow(id){ const client=ensureClient(); const payload={ override_price_cp:$('price-'+id).value===''?null:Number($('price-'+id).value), stock_on_hand:Number($('stock-'+id).value||0), description:$('desc-'+id).value.trim()||null }; const {error}=await client.from('shop_inventory').update(payload).eq('id',id); if(error) throw error; await refreshShopBuilder(); }
 async function deleteInventoryRow(id){ const client=ensureClient(); const {error}=await client.from('shop_inventory').delete().eq('id',id); if(error) throw error; await refreshShopBuilder(); }
 
