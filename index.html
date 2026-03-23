@@ -41,14 +41,14 @@
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
     .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-    .card{background:var(--panel2);border:1px solid var(--border);border-radius:16px;padding:14px}
+    .card{padding:12px;background:var(--panel2);border:1px solid var(--border);border-radius:16px;padding:14px}
     .title{font-size:18px;font-weight:800}
     .row{display:flex;gap:10px;align-items:center}
     .space{justify-content:space-between}
     .pill{display:inline-block;background:#21304e;color:#dce5fa;padding:4px 8px;border-radius:999px;font-size:12px;margin-right:6px;margin-top:8px}
     .money{color:#f5d27a;font-weight:800}
     .compact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:14px}
+    .table-wrap{max-height:600px;overflow:auto;overflow:auto;border:1px solid var(--border);border-radius:14px}
     table.ms-table{width:100%;border-collapse:collapse;background:#0d1627}
     .ms-table th,.ms-table td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
     .ms-table th{position:sticky;top:0;background:#12203a}
@@ -80,6 +80,20 @@
 .compact-money{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .compact-money input{min-width:0}
 .tight-note{font-size:12px;line-height:1.35;color:var(--muted)}
+.portal-shop-shell{display:grid;grid-template-columns:1.25fr .75fr;gap:16px}
+.portal-filterbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.portal-filterbar>*{flex:1 1 160px}
+.portal-item-card{background:linear-gradient(180deg,#12203a,#0f1a2d);border:1px solid var(--border);border-radius:18px;padding:14px;display:grid;gap:10px}
+.portal-item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.portal-qty-row{display:flex;gap:8px;align-items:center}
+.portal-qty-row button{width:auto;min-width:40px}
+.portal-price-line{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.portal-cart-sticky{position:sticky;top:16px}
+.portal-section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.portal-soft{background:#0b1526;border:1px solid var(--border);border-radius:14px;padding:12px}
+.portal-divider{height:1px;background:var(--border);margin:10px 0}
+@media (max-width:1200px){.portal-shop-shell{grid-template-columns:1fr}}
+
 .sortable{cursor:pointer;user-select:none}
 .sortable::after{content:' ↕';color:var(--muted);font-weight:400}
 .inline-desc{display:block;margin-top:6px}
@@ -299,6 +313,7 @@
               </div>
             </div>
             <div class="toolbar">
+              <label class="small-meta" style="display:flex;align-items:center;gap:8px;flex:0 0 auto"><input type="checkbox" id="showAllLibrary" style="width:auto"> All items</label>
               <input id="shopItemSearch" placeholder="Search library items">
               <select id="shopItemTypeFilter"></select>
               <select id="shopItemSourceFilter"></select>
@@ -451,29 +466,40 @@
               <p id="portalShopMeta" class="sub"></p>
             </div>
           </div>
-          <div class="toolbar">
-            <input id="portalItemSearch" placeholder="Search shop items">
-            <select id="portalSourceFilter"><option value="">All sources</option></select>
-            <select id="portalTypeFilter"><option value="">All item types</option></select>
-          </div>
-          <div class="grid2">
+          <div class="portal-shop-shell">
             <div class="panel" style="background:#0d1627">
-              <div class="hero" style="margin-bottom:12px">
-                <div><h3>Inventory</h3></div>
+              <div class="portal-section-title">
+                <div>
+                  <h3>Shopfront</h3>
+                  <div class="small-meta">Browse stock, search quickly, and add items to your cart.</div>
+                </div>
                 <div class="seg">
                   <button id="portalInventoryCardViewBtn" class="active">Cards</button>
                   <button id="portalInventoryTableViewBtn">Table</button>
                 </div>
               </div>
+              <div class="portal-filterbar">
+                <input id="portalItemSearch" placeholder="Search shop items">
+                <select id="portalSourceFilter"><option value="">All sources</option></select>
+                <select id="portalTypeFilter"><option value="">All item types</option></select>
+              </div>
               <div id="portalInventoryWrap" class="cards"></div>
             </div>
-            <div class="panel" style="background:#0d1627">
-              <h3>Your Cart</h3>
-              <div id="portalCartWrap" class="stack" style="margin-top:12px"></div>
-              <div class="grid2" style="margin-top:14px">
-                <button id="portalCheckoutBtn" class="success">Submit Checkout</button>
-                <button id="reloadPortalShopBtn" class="secondary">Reload Shop</button>
+            <div class="panel portal-cart-sticky" style="background:#0d1627">
+              <div class="portal-section-title">
+                <div>
+                  <h3>Your Cart</h3>
+                  <div class="small-meta">Review your purchases before checkout.</div>
+                </div>
+                <button id="reloadPortalShopBtn" class="small secondary">Reload</button>
               </div>
+              <div class="portal-soft">
+                <div class="row space"><span class="small-meta">Wallet</span><strong id="portalWalletInline">-</strong></div>
+                <div class="row space" style="margin-top:8px"><span class="small-meta">Cart Total</span><strong id="portalCartInline">0 gp, 0 sp, 0 cp</strong></div>
+                <div class="row space" style="margin-top:8px"><span class="small-meta">Remaining</span><strong id="portalRemainingInline">-</strong></div>
+              </div>
+              <div id="portalCartWrap" class="stack" style="margin-top:12px"></div>
+              <button id="portalCheckoutBtn" class="success" style="margin-top:14px">Submit Checkout</button>
             </div>
           </div>
         </div>
@@ -483,7 +509,7 @@
 </div>
 
 <script>
-const APP_CONFIG = { SUPABASE_URL: "https://eelwiyjufnlnclofyjdi.supabase.co", SUPABASE_ANON_KEY: "sb_publishable_y4Fgcc_vXfusEylpu4zpuA_Izg-tefy" };
+const APP_CONFIG = { SUPABASE_URL: "", SUPABASE_ANON_KEY: "" };
 const $ = (id) => document.getElementById(id);
 
 const appState = {
@@ -770,7 +796,12 @@ async function generateInventoryForShop(){
   const {data:items,error:iErr}=await client.from('srd_items').select('id,name,base_price_cp,default_stock,description,shop_type,shop_type_slugs,rarity').order('name');
   if(iErr) throw iErr;
 
-  const matching=(items||[]).filter(item=>item.shop_type===shop.shop_type||String(item.shop_type_slugs||'').split('|').includes(shop.shop_type));
+  let matching;
+if($('showAllLibrary')?.checked){
+  matching = items || [];
+} else {
+  matching = (items||[]).filter(item=>item.shop_type===shop.shop_type||String(item.shop_type_slugs||'').split('|').includes(shop.shop_type));
+}
   if(!matching.length) return setStatus(`No library items found for ${shopLabel(shop.shop_type)}.`);
 
   const rarityTargets = [
@@ -825,7 +856,12 @@ async function renderShopLibrarySearch(){
   const {data:shop,error:sErr}=await client.from('campaign_shops').select('id,shop_type').eq('id',shopId).single(); if(sErr) return;
   const search=$('shopItemSearch').value.trim().toLowerCase(); const typeFilter=$('shopItemTypeFilter').value||shop.shop_type; const sourceFilter=$('shopItemSourceFilter').value;
   const {data:items,error}=await client.from('srd_items').select('id,name,description,base_price_cp,default_stock,shop_type,shop_type_slugs,source,item_type,category').order('name'); if(error){ $('shopLibraryResults').innerHTML=`<div class="empty">${escapeHtml(error.message)}</div>`; return; }
-  let rows=(items||[]).filter(item=>item.shop_type===typeFilter||String(item.shop_type_slugs||'').split('|').includes(typeFilter));
+  let rows;
+    if ($('showAllLibrary')?.checked) {
+      rows = items || [];
+    } else {
+      rows = (items||[]).filter(item=>item.shop_type===typeFilter||String(item.shop_type_slugs||'').split('|').includes(typeFilter));
+    }
   rows=rows.filter(item=>{ const hay=`${item.name||''} ${item.description||''}`.toLowerCase(); return (!search||hay.includes(search)) && (!sourceFilter||item.source===sourceFilter); });
   rows = applySort(rows, appState.sorts.shopLibrary);
   if(!rows.length){ $('shopLibraryResults').className=''; $('shopLibraryResults').innerHTML=`<div class="empty">No compatible items match your current filters.</div>`; syncViewButtons(); return; }
@@ -918,7 +954,7 @@ async function loadPortalShop(){
   $('portalTypeFilter').innerHTML=`<option value="">All item types</option>`+guessedTypes.map(t=>`<option value="${t}" ${t===typeFilter?'selected':''}>${t}</option>`).join('');
   $('portalSourceFilter').innerHTML=`<option value="">All sources</option>`+guessedSources.map(s=>`<option value="${s.toLowerCase()}" ${s.toLowerCase()===sourceFilter?'selected':''}>${s}</option>`).join('');
 
-  const sortedFiltered = applySort(filtered, appState.sorts.portalInventory);
+  let sortedFiltered = applySort(filtered, appState.sorts.portalInventory);
   if(appState.views.portalInventory==='table'){
     $('portalInventoryWrap').className='';
     $('portalInventoryWrap').innerHTML=filtered.length?`<div class="table-wrap"><table class="ms-table"><thead><tr><th class="sortable" data-sort-bucket="portalInventory" data-sort-key="item_name">Item</th><th class="sortable" data-sort-bucket="portalInventory" data-sort-key="override_price_cp">Price</th><th class="sortable" data-sort-bucket="portalInventory" data-sort-key="stock_on_hand">Stock</th><th>Description</th><th>Action</th></tr></thead><tbody>${
@@ -948,6 +984,7 @@ function bindListeners(){
   $('shopItemSearch')?.addEventListener('input', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
   $('shopItemTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
   $('shopItemSourceFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
+  $('showAllLibrary')?.addEventListener('change', async()=>{ try{ ensureClient(); await renderShopLibrarySearch(); }catch(err){ setStatus(err.message); } });
   $('portalShopSelect')?.addEventListener('change', ()=>{ appState.portal.shopId=$('portalShopSelect').value||''; });
   $('portalItemSearch')?.addEventListener('input', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
   $('portalTypeFilter')?.addEventListener('change', async()=>{ try{ ensureClient(); if(appState.portal.shopId) await loadPortalShop(); }catch(err){ setStatus(err.message); } });
